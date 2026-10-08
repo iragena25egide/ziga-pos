@@ -29,6 +29,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import ZigaLogo from "@/components/ZigaLogo";
 
 /* ─────────────────────────────────────────────────────────────
    Left panel: App Preview Mockup
@@ -507,12 +508,7 @@ export default function LoginPage() {
 
         {/* Brand */}
         <div className="relative z-10 flex items-center gap-3">
-          <div
-            className="w-9 h-9 rounded-lg flex items-center justify-center font-bold text-white flex-shrink-0"
-            style={{ backgroundColor: "#1b5ebe" }}
-          >
-            Z
-          </div>
+          <ZigaLogo size={34} showText={false} theme="dark" />
           <div>
             <p className="text-white font-bold text-lg tracking-tight leading-none">ZIGA POS</p>
             <p className="text-white/40 text-[10px] font-medium tracking-widest uppercase mt-0.5">
@@ -569,12 +565,7 @@ export default function LoginPage() {
 
           {/* Mobile logo */}
           <div className="lg:hidden flex items-center gap-2 mb-8">
-            <div
-              className="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-white text-sm"
-              style={{ backgroundColor: "#0b1d3a" }}
-            >
-              Z
-            </div>
+            <ZigaLogo size={32} showText={false} />
             <span className="font-bold text-gray-900 text-base tracking-tight">ZIGA POS</span>
           </div>
 

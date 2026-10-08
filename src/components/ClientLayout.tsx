@@ -23,6 +23,7 @@ import {
 import api from "@/lib/api";
 import { OfflineIndicator, OfflineSyncProvider } from "./OfflineSync";
 import LiveHelpChat from "./LiveHelpChat";
+import ZigaLogo from "./ZigaLogo";
 
 const navigation = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard },
@@ -116,12 +117,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
             <div className="flex flex-col items-center gap-5">
               {/* Logo mark */}
               <div className="flex items-center gap-3">
-                <div
-                  className="w-10 h-10 rounded-lg flex items-center justify-center"
-                  style={{ backgroundColor: "#0b1d3a" }}
-                >
-                  <span className="text-white font-bold text-sm tracking-wider">Z</span>
-                </div>
+                <ZigaLogo size={36} showText={false} />
                 <div>
                   <p className="text-[#0b1d3a] font-bold text-xl tracking-tight leading-none">ZIGA POS</p>
                   <p className="text-[#6b7280] text-[10px] font-medium tracking-widest uppercase mt-0.5">
@@ -160,12 +156,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
               >
                 {/* Brand */}
                 <div className="h-16 flex items-center px-5 border-b border-white/8 flex-shrink-0">
-                  <div
-                    className="w-7 h-7 rounded-md flex items-center justify-center mr-2.5 flex-shrink-0"
-                    style={{ backgroundColor: "#1b5ebe" }}
-                  >
-                    <span className="text-white font-bold text-xs">Z</span>
-                  </div>
+                  <ZigaLogo size={26} showText={false} theme="dark" className="mr-2.5 flex-shrink-0" />
                   <div>
                     <p className="text-white font-bold text-sm tracking-tight leading-none">ZIGA POS</p>
                     <p className="text-white/40 text-[9px] font-medium tracking-widest uppercase mt-0.5">
