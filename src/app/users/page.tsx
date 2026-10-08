@@ -43,7 +43,11 @@ import {
 import { usePagination } from "@/hooks/use-pagination";
 import { PaginationControls } from "@/components/ui/pagination-controls";
 
+import { useRouter } from "next/navigation";
+
 export default function UsersPage() {
+  const router = useRouter();
+  const [currentUser, setCurrentUser] = useState<any>(null);
   const [usersList, setUsersList] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -56,12 +60,20 @@ export default function UsersPage() {
   const [userToDelete, setUserToDelete] = useState<any | null>(null);
 
   useEffect(() => {
-    fetchUsers();
+    checkPermissionAndFetch();
   }, []);
 
-  const fetchUsers = async () => {
+  const checkPermissionAndFetch = async () => {
     setLoading(true);
     try {
+      const meRes = await api.get("/users/me/");
+      setCurrentUser(meRes.data);
+      const isSuper = Boolean(meRes.data?.is_superuser || meRes.data?.role === "super_admin");
+      if (!isSuper) {
+        toast.error("Access restricted: Only Super Administrators can manage users.");
+        router.replace("/");
+        return;
+      }
       const res = await api.get("/users/");
       setUsersList(Array.isArray(res.data) ? res.data : res.data?.results || []);
     } catch (err) {

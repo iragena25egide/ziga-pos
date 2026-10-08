@@ -128,7 +128,6 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
         { name: "Reports", href: "/reports", icon: FileText },
         { name: "Balance", href: "/balance", icon: FileText },
         { name: "My Profile", href: "/profile", icon: UserCircle },
-        { name: "Users", href: "/users", icon: Users },
       ];
 
   const currentPage = navItems.find((n) => n.href === pathname)?.name ?? (isSuperAdmin ? "Admin Hub" : "Dashboard");
