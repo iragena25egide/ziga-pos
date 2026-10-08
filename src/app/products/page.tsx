@@ -88,7 +88,7 @@ export default function ProductsPage() {
     try {
       const [productsData, companiesData, userRes] = await Promise.all([
         fetchWithCache("/products/", "nexus_cached_products"),
-        fetchWithCache("/companies/", "nexus_cached_companies"),
+        fetchWithCache("/companies/", "nexus_cached_companies").catch(() => []),
         api.get("/users/me/").catch(() => ({ data: null })),
       ]);
       const safeProducts = Array.isArray(productsData)
