@@ -329,7 +329,7 @@ export default function AdminDashboardPage() {
     };
   }, []);
 
-  // Load chat messages when a company is selected
+  // Load chat messages when a company is selected (with auto-sync polling fallback)
   useEffect(() => {
     if (!selectedCompanyId) {
       setChatMessages([]);
@@ -339,8 +339,28 @@ export default function AdminDashboardPage() {
     const fetchCompanyChat = async () => {
       try {
         const res = await api.get(`/support-messages/?company_id=${selectedCompanyId}`);
-        const list = Array.isArray(res.data) ? res.data : res.data?.results || [];
-        setChatMessages(list);
+        const list: SupportMessage[] = Array.isArray(res.data) ? res.data : res.data?.results || [];
+        setChatMessages((prev) => {
+          const pendingOptimistic = prev.filter(
+            (p) =>
+              !p.id &&
+              !list.some(
+                (s) =>
+                  (p.client_id && s.client_id === p.client_id) ||
+                  (s.message === p.message && Boolean(s.is_admin) === Boolean(p.is_admin))
+              )
+          );
+
+          if (
+            pendingOptimistic.length === 0 &&
+            prev.length === list.length &&
+            prev.every((p, i) => p.id === list[i].id && p.message === list[i].message)
+          ) {
+            return prev;
+          }
+
+          return [...list, ...pendingOptimistic];
+        });
 
         setConversations((prev) =>
           prev.map((c) => (c.company_id === selectedCompanyId ? { ...c, unread_count: 0 } : c))
@@ -351,7 +371,28 @@ export default function AdminDashboardPage() {
     };
 
     fetchCompanyChat();
+
+    // Auto-sync polling every 3.5s so messages are delivered even if customer or socket is offline!
+    const pollInterval = setInterval(fetchCompanyChat, 3500);
+
+    return () => clearInterval(pollInterval);
   }, [selectedCompanyId]);
+
+  // Periodic conversations update so new customer messages refresh even when socket is disconnected
+  useEffect(() => {
+    const fetchConversations = async () => {
+      try {
+        const res = await api.get("/support-messages/conversations/");
+        if (res.data) {
+          const list = Array.isArray(res.data) ? res.data : res.data?.results || [];
+          setConversations(list);
+        }
+      } catch (err) {}
+    };
+
+    const convInterval = setInterval(fetchConversations, 6000);
+    return () => clearInterval(convInterval);
+  }, []);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });

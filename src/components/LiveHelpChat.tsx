@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   MessageSquareText,
@@ -66,22 +66,77 @@ export default function LiveHelpChat({ currentUser }: { currentUser?: any }) {
   const companyId = currentUser?.company || null;
   const isAdmin = currentUser?.is_superuser || currentUser?.role === "super_admin";
 
-  // Load message history via REST API
+  const isOpenRef = useRef(isOpen);
   useEffect(() => {
-    if (isAdmin) return;
-    const fetchHistory = async () => {
-      try {
-        const res = await api.get("/support-messages/");
-        setMessages(res.data?.results || res.data || []);
-      } catch (err) {
-        // Silently fail if not logged in
-      }
-    };
+    isOpenRef.current = isOpen;
+  }, [isOpen]);
 
+  // Load message history via REST API (handles offline catch-up and synchronization)
+  const fetchHistory = useCallback(async () => {
+    if (isAdmin) return;
+    try {
+      const res = await api.get("/support-messages/");
+      const list: Message[] = Array.isArray(res.data) ? res.data : res.data?.results || [];
+
+      setMessages((prev) => {
+        // Keep optimistic messages that haven't received server response yet
+        const pendingOptimistic = prev.filter(
+          (p) =>
+            !p.id &&
+            !list.some(
+              (s) =>
+                (p.client_id && s.client_id === p.client_id) ||
+                (s.message === p.message && Boolean(s.is_admin) === Boolean(p.is_admin))
+            )
+        );
+
+        // If list is identical to existing, skip state update to prevent UI flicker
+        if (
+          pendingOptimistic.length === 0 &&
+          prev.length === list.length &&
+          prev.every((p, i) => p.id === list[i].id && p.message === list[i].message)
+        ) {
+          return prev;
+        }
+
+        return [...list, ...pendingOptimistic];
+      });
+
+      // Update unread count for admin messages when drawer is closed
+      if (!isOpenRef.current) {
+        const unreadAdmin = list.filter((m) => m.is_admin && !m.is_read).length;
+        setUnreadCount(unreadAdmin);
+      }
+    } catch (err) {
+      // Silently fail if not logged in or temporary offline
+    }
+  }, [isAdmin]);
+
+  // Re-fetch immediately whenever companyId changes or when user opens the chat drawer
+  useEffect(() => {
     if (companyId) {
       fetchHistory();
     }
-  }, [companyId]);
+  }, [companyId, fetchHistory]);
+
+  useEffect(() => {
+    if (isOpen) {
+      fetchHistory();
+      setUnreadCount(0);
+    }
+  }, [isOpen, fetchHistory]);
+
+  // Background Auto-Sync Polling:
+  // When chat is open: poll every 3.5s so messages are delivered even if socket is disconnected/offline!
+  // When chat is closed: poll every 12s in background to update unread badge!
+  useEffect(() => {
+    if (isAdmin) return;
+    const pollInterval = setInterval(() => {
+      fetchHistory();
+    }, isOpen ? 3500 : 12000);
+
+    return () => clearInterval(pollInterval);
+  }, [isAdmin, isOpen, fetchHistory]);
 
   // Connect to Socket.IO and listen for events
   useEffect(() => {
@@ -93,6 +148,8 @@ export default function LiveHelpChat({ currentUser }: { currentUser?: any }) {
       if (companyId) {
         socket.emit("join_company", { company_id: companyId });
       }
+      // Instantly catch up on any messages received while offline/reconnecting
+      fetchHistory();
     };
 
     const handleDisconnect = () => {
