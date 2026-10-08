@@ -303,7 +303,8 @@ export default function POSPage() {
 
     pdf.setFontSize(16);
     pdf.setFont("helvetica", "bold");
-    pdf.text("NEXUS POS", 40, 15, { align: "center" });
+    const headerTitle = (receipt.company_name || "ZIGA POS").toUpperCase();
+    pdf.text(headerTitle, 40, 15, { align: "center" });
 
     pdf.setFontSize(8);
     pdf.setFont("helvetica", "normal");
@@ -404,10 +405,12 @@ export default function POSPage() {
     if (!receipt) return;
     try {
       const pdf = await generateReceiptPDF();
-      const safeCustomerName = (receipt.customer_name || "Guest")
-        .replace(/\s+/g, "-")
+      const safeCustomerName = (receipt.customer_name || "customer")
+        .trim()
+        .replace(/[^a-zA-Z0-9_-]/g, "-")
+        .replace(/-+/g, "-")
         .toLowerCase();
-      pdf.save(`${safeCustomerName}-nexus-receipt.pdf`);
+      pdf.save(`${safeCustomerName}-ziga-receipt.pdf`);
     } catch (err: any) {
       console.error("PDF generation error:", err);
       toast.error(`Failed to generate PDF: ${err.message}`);

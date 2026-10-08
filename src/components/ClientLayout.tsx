@@ -246,6 +246,10 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
         { name: "My Profile", href: "/profile", icon: UserCircle },
       ];
 
+  const [navAvatarErr, setNavAvatarErr] = useState(false);
+  const storedAvatar = typeof window !== "undefined" ? (localStorage.getItem("user_avatar") || (user?.email ? localStorage.getItem(`user_avatar_${user.email.toLowerCase()}`) : null)) : null;
+  const userAvatarUrl = user?.avatar || storedAvatar || (user?.email ? `https://unavatar.io/${encodeURIComponent(user.email)}?fallback=false` : null);
+
   const currentPage = navItems.find((n) => n.href === pathname)?.name ?? (isSuperAdmin ? "Admin Hub" : "Dashboard");
   const userInitials = user
     ? (user.first_name?.[0] ?? user.username?.[0] ?? "U").toUpperCase()
@@ -565,12 +569,21 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
                         onClick={() => setShowProfileMenu(!showProfileMenu)}
                         className="flex items-center gap-2 pl-1.5 pr-2.5 py-1 border border-gray-200 rounded-full hover:bg-gray-50 transition-colors"
                       >
-                        <div
-                          className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0"
-                          style={{ backgroundColor: "#0b1d3a" }}
-                        >
-                          {userInitials}
-                        </div>
+                        {userAvatarUrl && !navAvatarErr ? (
+                          <img
+                            src={userAvatarUrl}
+                            alt="Avatar"
+                            onError={() => setNavAvatarErr(true)}
+                            className="w-6 h-6 rounded-full object-cover flex-shrink-0 border border-gray-200"
+                          />
+                        ) : (
+                          <div
+                            className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0"
+                            style={{ backgroundColor: "#0b1d3a" }}
+                          >
+                            {userInitials}
+                          </div>
+                        )}
                         <div className="text-left hidden sm:block">
                           <p className="text-[#111827] text-[11px] font-semibold leading-tight">
                             {userDisplayName}

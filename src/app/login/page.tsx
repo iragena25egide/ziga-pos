@@ -323,6 +323,20 @@ export default function LoginPage() {
             toast.error("Google Sign-In failed.");
             return;
           }
+          try {
+            const parts = response.credential.split('.');
+            if (parts.length === 3) {
+              const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
+              if (payload.picture) {
+                localStorage.setItem("user_avatar", payload.picture);
+                if (payload.email) {
+                  localStorage.setItem(`user_avatar_${payload.email.toLowerCase()}`, payload.picture);
+                }
+              }
+            }
+          } catch (e) {
+            console.warn("Could not decode Google avatar", e);
+          }
           setGoogleIdToken(response.credential);
           // Check if this Google user is signing in or first time registering
           setGoogleOnboardingOpen(true);

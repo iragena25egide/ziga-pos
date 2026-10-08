@@ -217,7 +217,8 @@ export default function PaymentsPage() {
 
     // Header
     doc.setFontSize(16); doc.setFont("helvetica", "bold");
-    doc.text("NEXUS POS", 40, 12, { align: "center" });
+    const headerTitle = (detail.company_name || "ZIGA POS").toUpperCase();
+    doc.text(headerTitle, 40, 12, { align: "center" });
     doc.setFontSize(8); doc.setFont("helvetica", "normal");
     doc.text("Kigali, Rwanda", 40, 18, { align: "center" });
     doc.text("+250 788 123 456", 40, 22, { align: "center" });
@@ -277,7 +278,12 @@ export default function PaymentsPage() {
     doc.text("Thank you for your business!", 40, y, { align: "center" });
 
     if (mode === 'download') {
-      doc.save(`receipt-${detail.saleId || detail.id}-${detail.client.replace(/\s+/g, '-').toLowerCase()}.pdf`);
+      const safeCustomerName = (detail.client || "customer")
+        .trim()
+        .replace(/[^a-zA-Z0-9_-]/g, "-")
+        .replace(/-+/g, "-")
+        .toLowerCase();
+      doc.save(`${safeCustomerName}-ziga-receipt.pdf`);
     } else {
       doc.autoPrint();
       window.open(doc.output('bloburl'), '_blank');
@@ -442,7 +448,9 @@ export default function PaymentsPage() {
 
                 {/* Store Name */}
                 <div className="text-center mb-5">
-                  <h2 className="text-2xl font-black tracking-widest text-slate-900 uppercase">NEXUS POS</h2>
+                  <h2 className="text-2xl font-black tracking-widest text-slate-900 uppercase">
+                    {detail.company_name || "ZIGA POS"}
+                  </h2>
                   <p className="text-xs text-slate-400 mt-1">Kigali, Rwanda</p>
                   <p className="text-xs text-slate-400">+250 788 123 456</p>
                 </div>

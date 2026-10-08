@@ -73,7 +73,7 @@ export default function BalancePage() {
     
     doc.setFontSize(20);
     doc.setFont("helvetica", "bold");
-    doc.text("NEXUS POS", 105, 15, { align: "center" });
+    doc.text("ZIGA POS", 105, 15, { align: "center" });
     
     doc.setFontSize(10);
     doc.setFont("helvetica", "normal");

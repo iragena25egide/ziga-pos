@@ -100,7 +100,8 @@ export default function ReportsPage() {
     
     pdf.setFontSize(16);
     pdf.setFont("helvetica", "bold");
-    pdf.text("NEXUS POS", 40, 15, { align: "center" });
+    const headerTitle = (selectedSale.company_name || "ZIGA POS").toUpperCase();
+    pdf.text(headerTitle, 40, 15, { align: "center" });
 
     pdf.setFontSize(8);
     pdf.setFont("helvetica", "normal");
@@ -199,9 +200,13 @@ export default function ReportsPage() {
     if (!selectedSale) return;
     try {
       const pdf = await generateReceiptPDF();
-      const safeCustomerName = (selectedSale.customer_name || "Guest").replace(/\s+/g, '-').toLowerCase();
+      const safeCustomerName = (selectedSale.customer_name || "customer")
+        .trim()
+        .replace(/[^a-zA-Z0-9_-]/g, "-")
+        .replace(/-+/g, "-")
+        .toLowerCase();
       const formattedDate = new Date(selectedSale.created_at).toISOString().split('T')[0];
-      pdf.save(`${safeCustomerName}-nexus-receipt-${formattedDate}.pdf`);
+      pdf.save(`${safeCustomerName}-ziga-receipt-${formattedDate}.pdf`);
     } catch (err: any) {
       console.error("PDF generation error:", err);
       toast.error(`Failed to generate PDF: ${err.message}`);
@@ -213,7 +218,7 @@ export default function ReportsPage() {
     
     doc.setFontSize(20);
     doc.setFont("helvetica", "bold");
-    doc.text("NEXUS POS", 105, 15, { align: "center" });
+    doc.text("ZIGA POS", 105, 15, { align: "center" });
     
     doc.setFontSize(10);
     doc.setFont("helvetica", "normal");

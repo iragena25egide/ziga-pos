@@ -52,7 +52,8 @@ export default function ReceiptViewPage() {
     
     pdf.setFontSize(16);
     pdf.setFont("helvetica", "bold");
-    pdf.text("NEXUS POS", 40, 15, { align: "center" });
+    const headerTitle = (receipt.company_name || "ZIGA POS").toUpperCase();
+    pdf.text(headerTitle, 40, 15, { align: "center" });
 
     pdf.setFontSize(8);
     pdf.setFont("helvetica", "normal");
@@ -141,8 +142,12 @@ export default function ReceiptViewPage() {
     if (!receipt) return;
     try {
       const pdf = await generateReceiptPDF();
-      const safeCustomerName = (receipt.customer_name || "Guest").replace(/\s+/g, '-').toLowerCase();
-      pdf.save(`${safeCustomerName}-nexus-receipt.pdf`);
+      const safeCustomerName = (receipt.customer_name || "customer")
+        .trim()
+        .replace(/[^a-zA-Z0-9_-]/g, "-")
+        .replace(/-+/g, "-")
+        .toLowerCase();
+      pdf.save(`${safeCustomerName}-ziga-receipt.pdf`);
     } catch (err) {
       console.error("Download error", err);
     }
@@ -172,7 +177,7 @@ export default function ReceiptViewPage() {
       <Card className="w-full max-w-md glass-dark border-border/50 shadow-2xl">
         <CardHeader className="text-center pb-2">
           <CardTitle className="text-2xl font-bold text-primary flex items-center justify-center gap-2">
-            <ReceiptText className="w-6 h-6" /> NEXUS POS
+            <ReceiptText className="w-6 h-6" /> {receipt.company_name || "ZIGA POS"}
           </CardTitle>
           <p className="text-sm text-muted-foreground mt-1">Receipt #{receipt.id}</p>
         </CardHeader>
