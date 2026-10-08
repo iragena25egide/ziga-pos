@@ -33,13 +33,9 @@ export default function LiveHelpChat({ currentUser }: { currentUser?: any }) {
   const companyId = currentUser?.company || (typeof window !== "undefined" ? localStorage.getItem("company_id") : null);
   const isAdmin = currentUser?.is_superuser || currentUser?.role === "super_admin";
 
-  // Hide the client help widget if the logged-in user is a Super Admin
-  if (isAdmin) {
-    return null;
-  }
-
   // Load message history via REST API
   useEffect(() => {
+    if (isAdmin) return;
     const fetchHistory = async () => {
       try {
         const res = await api.get("/support-messages/");
@@ -56,6 +52,7 @@ export default function LiveHelpChat({ currentUser }: { currentUser?: any }) {
 
   // Connect to Socket.IO and listen for events
   useEffect(() => {
+    if (isAdmin) return;
     const socket = getSocket();
 
     const handleConnect = () => {
@@ -111,7 +108,7 @@ export default function LiveHelpChat({ currentUser }: { currentUser?: any }) {
       socket.off("user_typing", handleTyping);
       if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
     };
-  }, [companyId, isOpen]);
+  }, [companyId, isOpen, isAdmin]);
 
   // Scroll to bottom on new messages
   useEffect(() => {
@@ -176,6 +173,10 @@ export default function LiveHelpChat({ currentUser }: { currentUser?: any }) {
       });
     }
   };
+
+  if (isAdmin) {
+    return null;
+  }
 
   return (
     <>
