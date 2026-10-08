@@ -92,27 +92,27 @@ export default function Dashboard() {
         {[
           {
             title: "Total Revenue",
-            value: `RWF ${stats?.total_revenue || "0"}`,
+            value: `RWF ${Number(stats?.total_revenue || 0).toLocaleString()}`,
             icon: <DollarSign className="h-5 w-5 text-white" />,
-            sub: "Live data",
+            sub: Number(stats?.total_revenue || 0) > 0 ? "Completed sales" : "No sales recorded yet",
           },
           {
             title: "Active Customers",
-            value: stats?.total_customers ?? 0,
+            value: Number(stats?.total_customers ?? 0).toLocaleString(),
             icon: <Users className="h-5 w-5 text-white" />,
-            sub: "Live data",
+            sub: Number(stats?.total_customers ?? 0) > 0 ? "Registered clients" : "No customers added yet",
           },
           {
             title: "Total Products",
-            value: stats?.total_products ?? 0,
+            value: Number(stats?.total_products ?? 0).toLocaleString(),
             icon: <Package className="h-5 w-5 text-white" />,
-            sub: "Live data",
+            sub: Number(stats?.total_products ?? 0) > 0 ? "In inventory" : "Add products to begin",
           },
           {
             title: "Total Orders",
-            value: stats?.total_sales ?? 0,
+            value: Number(stats?.total_sales ?? 0).toLocaleString(),
             icon: <ShoppingCart className="h-5 w-5 text-white" />,
-            sub: "Live data",
+            sub: Number(stats?.total_sales ?? 0) > 0 ? "Processed receipts" : "Ready for checkout",
           },
         ].map((card) => (
           <motion.div key={card.title} variants={item}>
@@ -125,8 +125,8 @@ export default function Dashboard() {
                   {card.title}
                 </p>
                 <p className="text-2xl font-bold text-gray-900 tracking-tight">{card.value}</p>
-                <p className="text-[11px] font-medium" style={{ color: BLUE }}>
-                  ↑ {card.sub}
+                <p className="text-[11px] font-medium text-gray-500">
+                  {card.sub}
                 </p>
               </div>
               <div

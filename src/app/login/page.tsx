@@ -247,9 +247,47 @@ export default function LoginPage() {
   const [forgotEmail, setForgotEmail] = useState("");
   const [forgotOtp, setForgotOtp] = useState("");
   const [forgotNewPassword, setForgotNewPassword] = useState("");
-  const [forgotConfirmPassword, setForgotConfirmPassword] = useState("");
-  const [showForgotPass, setShowForgotPass] = useState(false);
-  const [forgotLoading, setForgotLoading] = useState(false);
+  // Google first-time store onboarding modal
+  const [googleOnboardingOpen, setGoogleOnboardingOpen] = useState(false);
+  const [googleIdToken, setGoogleIdToken] = useState("");
+  const [googleCompanyData, setGoogleCompanyData] = useState({
+    companyName: "",
+    address: "",
+    tinNumber: "",
+  });
+  const [googleSubmitting, setGoogleSubmitting] = useState(false);
+
+  const submitGoogleAuth = async (idToken: string, companyInfo?: { companyName: string; address: string; tinNumber: string }) => {
+    try {
+      setGoogleSubmitting(true);
+      toast.loading("Authenticating with Google…", { id: "google-auth" });
+      const payload: any = { id_token: idToken };
+      if (companyInfo?.companyName) {
+        payload.company_name = companyInfo.companyName;
+        payload.address = companyInfo.address;
+        payload.tin_number = companyInfo.tinNumber;
+      }
+      const res = await api.post("/auth/google/", payload);
+      toast.dismiss("google-auth");
+      if (res.data?.pending) {
+        setGoogleOnboardingOpen(false);
+        toast.success("Google account registered! Pending Super Admin approval.", { duration: 6000 });
+        return;
+      }
+      // Store ONLY standard JWT access and refresh tokens — no credentials or user details
+      localStorage.setItem("access_token", res.data.access);
+      localStorage.setItem("refresh_token", res.data.refresh);
+      setGoogleOnboardingOpen(false);
+      toast.success("Signed in successfully!");
+      router.push("/");
+    } catch (err: any) {
+      toast.dismiss("google-auth");
+      const msg = err.response?.data?.error || err.response?.data?.detail;
+      toast.error(msg || "Google authentication failed.");
+    } finally {
+      setGoogleSubmitting(false);
+    }
+  };
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -282,31 +320,9 @@ export default function LoginPage() {
             toast.error("Google Sign-In failed.");
             return;
           }
-          try {
-            toast.loading("Authenticating with Google…", { id: "google-auth" });
-            const res = await api.post("/auth/google/", { id_token: response.credential });
-            if (res.data?.pending) {
-              toast.dismiss("google-auth");
-              toast.success("Google account registered! Pending Super Admin approval.", { duration: 6000 });
-              return;
-            }
-            localStorage.setItem("access_token", res.data.access);
-            localStorage.setItem("refresh_token", res.data.refresh);
-            if (res.data.company_id) localStorage.setItem("company_id", String(res.data.company_id));
-            if (res.data.company_name) localStorage.setItem("company_name", res.data.company_name);
-            if (res.data.company_address) localStorage.setItem("company_address", res.data.company_address);
-            if (res.data.company_phone) localStorage.setItem("company_phone", res.data.company_phone);
-            if (res.data.company_tin) localStorage.setItem("company_tin", res.data.company_tin);
-            if (res.data.username) localStorage.setItem("username", res.data.username);
-            if (res.data.role) localStorage.setItem("role", res.data.role);
-            toast.dismiss("google-auth");
-            toast.success(`Welcome, ${res.data.username || res.data.email}!`);
-            router.push("/");
-          } catch (err: any) {
-            toast.dismiss("google-auth");
-            const msg = err.response?.data?.error || err.response?.data?.detail;
-            toast.error(msg || "Google authentication failed.");
-          }
+          setGoogleIdToken(response.credential);
+          // Check if this Google user is signing in or first time registering
+          setGoogleOnboardingOpen(true);
         },
         auto_select: false,
         cancel_on_tap_outside: true,
@@ -353,17 +369,9 @@ export default function LoginPage() {
     setLoginLoading(true);
     try {
       const res = await api.post("/token/", { username: loginEmail, password: loginPassword });
+      // Only store JWT tokens in localStorage — zero company/user metadata leaks
       localStorage.setItem("access_token", res.data.access);
       localStorage.setItem("refresh_token", res.data.refresh);
-      if (res.data.company_id) localStorage.setItem("company_id", String(res.data.company_id));
-      if (res.data.company_name) localStorage.setItem("company_name", res.data.company_name);
-      if (res.data.company_address) localStorage.setItem("company_address", res.data.company_address);
-      if (res.data.company_phone) localStorage.setItem("company_phone", res.data.company_phone);
-      if (res.data.company_tin) localStorage.setItem("company_tin", res.data.company_tin);
-      if (res.data.username) localStorage.setItem("username", res.data.username);
-      if (res.data.role) localStorage.setItem("role", res.data.role);
-      if (res.data.is_superuser !== undefined)
-        localStorage.setItem("is_superuser", String(res.data.is_superuser));
       toast.success("Welcome back to Ziga POS!");
       router.push("/");
     } catch (err: any) {
@@ -384,10 +392,6 @@ export default function LoginPage() {
   const validateStep1 = () => {
     if (!registerData.companyName.trim()) {
       toast.error("Please enter your Company Name.");
-      return false;
-    }
-    if (!registerData.tinNumber.trim()) {
-      toast.error("Please enter your TIN / Tax Number.");
       return false;
     }
     return true;
@@ -874,16 +878,15 @@ export default function LoginPage() {
 
                       <div>
                         <Label htmlFor="reg-tin" className="text-xs font-medium text-gray-700">
-                          TIN / Tax Number <span className="text-red-500">*</span>
+                          TIN / Tax Number <span className="text-gray-400 font-normal">(Optional)</span>
                         </Label>
                         <Input
                           id="reg-tin"
                           type="text"
                           className="mt-1 h-9 border-gray-300 focus:border-[#1b5ebe] focus:ring-[#1b5ebe] rounded-md text-xs"
-                          placeholder="109283746"
+                          placeholder="e.g. 109283746 (Optional)"
                           value={registerData.tinNumber}
                           onChange={(e) => setRegisterData({ ...registerData, tinNumber: e.target.value })}
-                          required
                         />
                       </div>
 
@@ -1280,6 +1283,91 @@ export default function LoginPage() {
               </form>
             )}
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Google First-Time Setup Modal ── */}
+      <Dialog open={googleOnboardingOpen} onOpenChange={setGoogleOnboardingOpen}>
+        <DialogContent className="bg-white rounded-2xl max-w-sm p-6">
+          <DialogHeader>
+            <div className="w-10 h-10 rounded-xl bg-blue-50 text-[#1b5ebe] flex items-center justify-center mb-2">
+              <Building2 className="w-5 h-5" />
+            </div>
+            <DialogTitle className="text-base font-bold text-gray-900">
+              Complete Your Business Profile
+            </DialogTitle>
+            <DialogDescription className="text-xs text-gray-500 leading-relaxed">
+              If this is your first time signing in with Google, provide your store details below to configure your workspace and receipt headers.
+            </DialogDescription>
+          </DialogHeader>
+
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              submitGoogleAuth(googleIdToken, googleCompanyData);
+            }}
+            className="space-y-3 mt-3"
+          >
+            <div>
+              <Label className="text-xs font-medium text-gray-700">
+                Store / Company Name
+              </Label>
+              <Input
+                type="text"
+                placeholder="e.g. Kigali Fresh Market"
+                value={googleCompanyData.companyName}
+                onChange={(e) => setGoogleCompanyData({ ...googleCompanyData, companyName: e.target.value })}
+                className="mt-1 h-9 text-xs border-gray-300 rounded-md focus:border-[#1b5ebe]"
+              />
+            </div>
+
+            <div>
+              <Label className="text-xs font-medium text-gray-700">
+                Store Physical Address
+              </Label>
+              <Input
+                type="text"
+                placeholder="e.g. KN 4 Ave, Kigali"
+                value={googleCompanyData.address}
+                onChange={(e) => setGoogleCompanyData({ ...googleCompanyData, address: e.target.value })}
+                className="mt-1 h-9 text-xs border-gray-300 rounded-md focus:border-[#1b5ebe]"
+              />
+            </div>
+
+            <div>
+              <Label className="text-xs font-medium text-gray-700">
+                TIN / Tax Number <span className="text-gray-400 font-normal">(Optional)</span>
+              </Label>
+              <Input
+                type="text"
+                placeholder="e.g. 109283746"
+                value={googleCompanyData.tinNumber}
+                onChange={(e) => setGoogleCompanyData({ ...googleCompanyData, tinNumber: e.target.value })}
+                className="mt-1 h-9 text-xs border-gray-300 rounded-md focus:border-[#1b5ebe]"
+              />
+            </div>
+
+            <div className="flex items-center gap-2 pt-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => submitGoogleAuth(googleIdToken)}
+                className="h-9 px-3 text-xs border-gray-200 text-gray-600 rounded-md"
+                disabled={googleSubmitting}
+              >
+                Skip / Direct Sign In
+              </Button>
+
+              <Button
+                type="submit"
+                className="flex-1 h-9 text-xs text-white font-medium rounded-md"
+                style={{ backgroundColor: "#1b5ebe" }}
+                disabled={googleSubmitting}
+              >
+                {googleSubmitting ? "Connecting..." : "Continue"}
+              </Button>
+            </div>
+          </form>
         </DialogContent>
       </Dialog>
     </div>

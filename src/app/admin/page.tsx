@@ -40,6 +40,13 @@ import {
   Headphones,
   UserCheck,
   UserX,
+  Paperclip,
+  Pencil,
+  Check,
+  Download,
+  ExternalLink,
+  X,
+  Loader2,
 } from "lucide-react";
 import api from "@/lib/api";
 import { getSocket } from "@/lib/socket";
@@ -76,14 +83,19 @@ interface PlatformUser {
 
 interface SupportMessage {
   id?: number;
+  client_id?: string;
   company_id?: number | null;
+  company?: number | null;
   company_name?: string;
   sender_name: string;
   sender_role?: string;
   message: string;
+  attachment?: string | null;
+  attachment_url?: string | null;
   is_admin: boolean;
   is_read?: boolean;
   created_at: string;
+  updated_at?: string;
 }
 
 interface ConversationItem {
@@ -143,6 +155,16 @@ export default function AdminDashboardPage() {
   const [companyTyping, setCompanyTyping] = useState<string | null>(null);
   const [isSocketConnected, setIsSocketConnected] = useState(false);
 
+  // Admin Chat Attachment & Edit states
+  const [adminSelectedFile, setAdminSelectedFile] = useState<File | null>(null);
+  const [adminFilePreview, setAdminFilePreview] = useState<string | null>(null);
+  const [adminSubmitting, setAdminSubmitting] = useState(false);
+  const [adminEditingId, setAdminEditingId] = useState<number | null>(null);
+  const [adminEditingText, setAdminEditingText] = useState("");
+  const [adminEditLoading, setAdminEditLoading] = useState(false);
+  const [adminPreviewImage, setAdminPreviewImage] = useState<string | null>(null);
+  const adminFileInputRef = useRef<HTMLInputElement>(null);
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const typingTimerRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -201,9 +223,16 @@ export default function AdminDashboardPage() {
 
     const onNewMessage = (newMsg: SupportMessage) => {
       const activeId = selectedCompanyIdRef.current;
-      if (activeId && String(newMsg.company_id) === String(activeId)) {
+      const msgCompanyId = newMsg.company_id ?? newMsg.company;
+
+      if (activeId && String(msgCompanyId) === String(activeId)) {
         setChatMessages((prev) => {
-          if (newMsg.id && prev.some((m) => m.id === newMsg.id)) return prev;
+          if (newMsg.id && prev.some((m) => m.id === newMsg.id)) {
+            return prev.map((m) => (m.id === newMsg.id ? { ...m, ...newMsg } : m));
+          }
+          if (newMsg.client_id && prev.some((m) => m.client_id === newMsg.client_id)) {
+            return prev.map((m) => (m.client_id === newMsg.client_id ? newMsg : m));
+          }
           const optimisticIndex = prev.findIndex(
             (m) =>
               !m.id &&
@@ -215,28 +244,20 @@ export default function AdminDashboardPage() {
             updated[optimisticIndex] = newMsg;
             return updated;
           }
-          // Deduplicate by text, sender, and timestamp
-          const isDuplicate = prev.some(
-            (m) =>
-              m.message === newMsg.message &&
-              Boolean(m.is_admin) === Boolean(newMsg.is_admin) &&
-              Math.abs(new Date(m.created_at || "").getTime() - new Date(newMsg.created_at || "").getTime()) < 3000
-          );
-          if (isDuplicate) return prev;
           return [...prev, newMsg];
         });
       }
 
       setConversations((prev) => {
-        const exists = prev.some((c) => String(c.company_id) === String(newMsg.company_id));
-        if (!exists) {
+        const exists = prev.some((c) => String(c.company_id) === String(msgCompanyId));
+        if (!exists && msgCompanyId) {
           return [
             {
-              company_id: Number(newMsg.company_id),
+              company_id: Number(msgCompanyId),
               company_name: newMsg.company_name || "Company",
               is_approved: true,
               unread_count: 1,
-              last_message: newMsg.message,
+              last_message: newMsg.message || "Sent an attachment",
               last_message_at: newMsg.created_at,
               last_message_is_admin: newMsg.is_admin,
             },
@@ -244,11 +265,11 @@ export default function AdminDashboardPage() {
           ];
         }
         return prev.map((c) => {
-          if (String(c.company_id) === String(newMsg.company_id)) {
+          if (String(c.company_id) === String(msgCompanyId)) {
             const isCurrentlySelected = selectedCompanyIdRef.current === c.company_id;
             return {
               ...c,
-              last_message: newMsg.message,
+              last_message: newMsg.message || "Sent an attachment",
               last_message_at: newMsg.created_at,
               last_message_is_admin: newMsg.is_admin,
               unread_count: isCurrentlySelected ? 0 : c.unread_count + 1,
@@ -257,6 +278,20 @@ export default function AdminDashboardPage() {
           return c;
         });
       });
+    };
+
+    const onUpdateMessage = (updatedMsg: SupportMessage) => {
+      const activeId = selectedCompanyIdRef.current;
+      const msgCompanyId = updatedMsg.company_id ?? updatedMsg.company;
+      if (activeId && String(msgCompanyId) === String(activeId)) {
+        setChatMessages((prev) =>
+          prev.map((m) => (m.id === updatedMsg.id ? { ...m, ...updatedMsg } : m))
+        );
+      }
+    };
+
+    const onDeleteMessage = (data: { id: number; company_id?: number }) => {
+      setChatMessages((prev) => prev.filter((m) => m.id !== data.id));
     };
 
     const onTyping = (data: { is_admin: boolean; name: string }) => {
@@ -275,6 +310,8 @@ export default function AdminDashboardPage() {
     socket.on("connect", onConnect);
     socket.on("disconnect", onDisconnect);
     socket.on("new_message", onNewMessage);
+    socket.on("update_message", onUpdateMessage);
+    socket.on("delete_message", onDeleteMessage);
     socket.on("user_typing", onTyping);
     socket.on("company_registered", onCompanyRegistered);
 
@@ -284,6 +321,8 @@ export default function AdminDashboardPage() {
       socket.off("connect", onConnect);
       socket.off("disconnect", onDisconnect);
       socket.off("new_message", onNewMessage);
+      socket.off("update_message", onUpdateMessage);
+      socket.off("delete_message", onDeleteMessage);
       socket.off("user_typing", onTyping);
       socket.off("company_registered", onCompanyRegistered);
       if (typingTimerRef.current) clearTimeout(typingTimerRef.current);
@@ -417,45 +456,134 @@ export default function AdminDashboardPage() {
     }
   };
 
-  // Send Admin Reply via Socket.IO
+  // File Attachment Handling for Admin
+  const handleAdminFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 20 * 1024 * 1024) {
+      toast.error("File size exceeds 20MB limit.");
+      return;
+    }
+    setAdminSelectedFile(file);
+    if (file.type.startsWith("image/")) {
+      setAdminFilePreview(URL.createObjectURL(file));
+    } else {
+      setAdminFilePreview(null);
+    }
+  };
+
+  const handleAdminClearFile = () => {
+    setAdminSelectedFile(null);
+    if (adminFilePreview) {
+      URL.revokeObjectURL(adminFilePreview);
+      setAdminFilePreview(null);
+    }
+    if (adminFileInputRef.current) adminFileInputRef.current.value = "";
+  };
+
+  // Send Admin Reply (with attachment support)
   const handleSendAdminReply = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     const text = chatInput.trim();
-    if (!text || !selectedCompanyId) return;
+    if ((!text && !adminSelectedFile) || !selectedCompanyId) return;
 
-    setChatInput("");
+    const clientId = `admin_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
     const selectedComp = companies.find((c) => c.id === selectedCompanyId);
 
     const optimistic: SupportMessage = {
+      client_id: clientId,
       company_id: selectedCompanyId,
       company_name: selectedComp?.name || "Company",
       sender_name: "Super Admin",
       sender_role: "super_admin",
       message: text,
+      attachment_url: adminFilePreview || null,
       is_admin: true,
       created_at: new Date().toISOString(),
     };
 
     setChatMessages((prev) => [...prev, optimistic]);
+    setChatInput("");
+    const fileToSend = adminSelectedFile;
+    handleAdminClearFile();
+    setAdminSubmitting(true);
 
-    const socket = getSocket();
-    if (socket.connected) {
-      socket.emit("send_message", {
-        company_id: selectedCompanyId,
-        message: text,
-        sender_name: "Super Admin",
-        sender_role: "super_admin",
-        is_admin: true,
-      });
-    } else {
-      try {
-        await api.post("/support-messages/", {
-          company_id: selectedCompanyId,
+    try {
+      if (fileToSend) {
+        const formData = new FormData();
+        formData.append("company", String(selectedCompanyId));
+        formData.append("message", text);
+        formData.append("attachment", fileToSend);
+
+        const res = await api.post("/support-messages/", formData, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
+
+        const savedData: SupportMessage = res.data;
+        setChatMessages((prev) =>
+          prev.map((m) => (m.client_id === clientId ? { ...savedData, client_id: clientId } : m))
+        );
+      } else {
+        const res = await api.post("/support-messages/", {
+          company: selectedCompanyId,
           message: text,
         });
-      } catch (err) {
-        toast.error("Message delivery failed. Check network.");
+
+        const savedData: SupportMessage = res.data;
+        setChatMessages((prev) =>
+          prev.map((m) => (m.client_id === clientId ? { ...savedData, client_id: clientId } : m))
+        );
       }
+    } catch (err) {
+      toast.error("Message delivery failed. Check network.");
+      setChatMessages((prev) => prev.filter((m) => m.client_id !== clientId));
+    } finally {
+      setAdminSubmitting(false);
+    }
+  };
+
+  const handleAdminStartEdit = (msg: SupportMessage) => {
+    if (!msg.id) return;
+    setAdminEditingId(msg.id);
+    setAdminEditingText(msg.message);
+  };
+
+  const handleAdminCancelEdit = () => {
+    setAdminEditingId(null);
+    setAdminEditingText("");
+  };
+
+  const handleAdminSaveEdit = async (msgId: number) => {
+    if (!adminEditingText.trim()) {
+      toast.error("Message cannot be empty.");
+      return;
+    }
+    setAdminEditLoading(true);
+    try {
+      const res = await api.patch(`/support-messages/${msgId}/`, {
+        message: adminEditingText.trim(),
+      });
+      setChatMessages((prev) =>
+        prev.map((m) => (m.id === msgId ? { ...m, ...res.data } : m))
+      );
+      setAdminEditingId(null);
+      setAdminEditingText("");
+      toast.success("Message updated");
+    } catch (err) {
+      toast.error("Failed to edit message.");
+    } finally {
+      setAdminEditLoading(false);
+    }
+  };
+
+  const handleAdminDeleteMessage = async (msgId: number) => {
+    if (!confirm("Are you sure you want to delete this message?")) return;
+    try {
+      await api.delete(`/support-messages/${msgId}/`);
+      setChatMessages((prev) => prev.filter((m) => m.id !== msgId));
+      toast.success("Message deleted");
+    } catch (err) {
+      toast.error("Failed to delete message.");
     }
   };
 
@@ -1187,25 +1315,124 @@ export default function AdminDashboardPage() {
                         const time = m.created_at
                           ? new Date(m.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
                           : "";
+                        const isEditingThis = adminEditingId === m.id;
+                        const hasImage = m.attachment_url && /\.(jpg|jpeg|png|webp|gif|svg)(\?.*)?$/i.test(m.attachment_url);
+                        const hasFile = m.attachment_url && !hasImage;
 
                         return (
-                          <div key={m.id || idx} className={`flex flex-col ${isMe ? "items-end" : "items-start"}`}>
+                          <div
+                            key={m.id ? `msg-${m.id}` : m.client_id || `idx-${idx}`}
+                            className={`group flex flex-col ${isMe ? "items-end" : "items-start"}`}
+                          >
                             <div className="flex items-center gap-1.5 mb-1 text-[10px] text-gray-400">
                               <span className="font-semibold text-gray-600">
                                 {isMe ? "Super Admin (You)" : m.sender_name || selectedCompany.name}
                               </span>
                               <span>•</span>
                               <span>{time}</span>
+                              {m.updated_at && m.updated_at !== m.created_at && (
+                                <span className="italic text-[9px] text-gray-400">(edited)</span>
+                              )}
                             </div>
 
-                            <div
-                              className={`max-w-[75%] rounded-2xl px-4 py-2.5 text-xs shadow-xs leading-relaxed ${
-                                isMe
-                                  ? "bg-[#1b5ebe] text-white rounded-br-xs font-medium"
-                                  : "bg-white text-gray-900 border border-gray-200 rounded-bl-xs"
-                              }`}
-                            >
-                              {m.message}
+                            <div className="relative max-w-[75%]">
+                              {isEditingThis ? (
+                                <div className="bg-white border border-blue-400 rounded-xl p-2.5 shadow-md w-72">
+                                  <textarea
+                                    value={adminEditingText}
+                                    onChange={(e) => setAdminEditingText(e.target.value)}
+                                    rows={2}
+                                    className="w-full text-xs text-gray-900 border border-gray-200 rounded p-1.5 focus:outline-none focus:ring-1 focus:ring-[#1b5ebe]"
+                                  />
+                                  <div className="flex items-center justify-end gap-1.5 mt-2">
+                                    <button
+                                      type="button"
+                                      onClick={handleAdminCancelEdit}
+                                      disabled={adminEditLoading}
+                                      className="px-2 py-1 text-[11px] text-gray-500 hover:text-gray-700 rounded"
+                                    >
+                                      Cancel
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleAdminSaveEdit(m.id!)}
+                                      disabled={adminEditLoading || !adminEditingText.trim()}
+                                      className="px-2.5 py-1 text-[11px] bg-[#1b5ebe] text-white rounded font-medium flex items-center gap-1 disabled:opacity-50"
+                                    >
+                                      {adminEditLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
+                                      Save
+                                    </button>
+                                  </div>
+                                </div>
+                              ) : (
+                                <div
+                                  className={`rounded-2xl px-4 py-2.5 text-xs shadow-xs leading-relaxed ${
+                                    isMe
+                                      ? "bg-[#1b5ebe] text-white rounded-br-xs font-medium"
+                                      : "bg-white text-gray-900 border border-gray-200 rounded-bl-xs"
+                                  }`}
+                                >
+                                  {/* Attached Image */}
+                                  {hasImage && m.attachment_url && (
+                                    <div className="mb-2 overflow-hidden rounded-lg border border-black/10">
+                                      <img
+                                        src={m.attachment_url}
+                                        alt="Attachment"
+                                        onClick={() => setAdminPreviewImage(m.attachment_url!)}
+                                        className="max-h-48 w-full object-cover rounded cursor-pointer hover:opacity-90 transition-opacity"
+                                      />
+                                    </div>
+                                  )}
+
+                                  {/* Attached Document File */}
+                                  {hasFile && m.attachment_url && (
+                                    <a
+                                      href={m.attachment_url}
+                                      target="_blank"
+                                      rel="noreferrer"
+                                      className={`flex items-center gap-2 p-2 rounded-lg mb-2 text-[11px] font-medium border ${
+                                        isMe
+                                          ? "bg-white/10 hover:bg-white/20 text-white border-white/20"
+                                          : "bg-gray-100 hover:bg-gray-200 text-gray-800 border-gray-200"
+                                      }`}
+                                    >
+                                      <FileText className="w-4 h-4 shrink-0" />
+                                      <span className="truncate flex-1">
+                                        {m.attachment_url.split("/").pop()}
+                                      </span>
+                                      <Download className="w-3.5 h-3.5 shrink-0" />
+                                    </a>
+                                  )}
+
+                                  {m.message && <p className="whitespace-pre-wrap">{m.message}</p>}
+                                </div>
+                              )}
+
+                              {/* Hover Action Buttons */}
+                              {m.id && !isEditingThis && (
+                                <div
+                                  className={`absolute top-1 ${
+                                    isMe ? "-left-14" : "-right-14"
+                                  } hidden group-hover:flex items-center gap-1 bg-white border border-gray-200 shadow-md rounded-md p-0.5 z-10`}
+                                >
+                                  {isMe && (
+                                    <button
+                                      onClick={() => handleAdminStartEdit(m)}
+                                      title="Edit message"
+                                      className="p-1 text-gray-500 hover:text-[#1b5ebe] rounded transition-colors"
+                                    >
+                                      <Pencil className="w-3 h-3" />
+                                    </button>
+                                  )}
+                                  <button
+                                    onClick={() => handleAdminDeleteMessage(m.id!)}
+                                    title="Delete message"
+                                    className="p-1 text-gray-500 hover:text-red-600 rounded transition-colors"
+                                  >
+                                    <Trash2 className="w-3 h-3" />
+                                  </button>
+                                </div>
+                              )}
                             </div>
                           </div>
                         );
@@ -1222,22 +1449,75 @@ export default function AdminDashboardPage() {
                     <div ref={messagesEndRef} />
                   </div>
 
+                  {/* Attachment Preview Banner */}
+                  {adminSelectedFile && (
+                    <div className="px-4 py-2 bg-blue-50/80 border-t border-blue-100 flex items-center justify-between text-xs">
+                      <div className="flex items-center gap-2 truncate">
+                        {adminFilePreview ? (
+                          <img
+                            src={adminFilePreview}
+                            alt="preview"
+                            className="w-7 h-7 object-cover rounded border border-blue-200 shrink-0"
+                          />
+                        ) : (
+                          <FileText className="w-5 h-5 text-blue-600 shrink-0" />
+                        )}
+                        <span className="truncate font-medium text-gray-800">
+                          {adminSelectedFile.name}
+                        </span>
+                        <span className="text-[10px] text-gray-500 shrink-0">
+                          ({(adminSelectedFile.size / 1024).toFixed(0)} KB)
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleAdminClearFile}
+                        className="w-5 h-5 rounded-full flex items-center justify-center text-gray-400 hover:text-red-600 hover:bg-white"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  )}
+
                   {/* Reply Input Bar */}
                   <form onSubmit={handleSendAdminReply} className="p-3.5 bg-white border-t border-gray-200 flex items-center gap-2">
+                    <input
+                      type="file"
+                      ref={adminFileInputRef}
+                      onChange={handleAdminFileChange}
+                      accept="image/*,.pdf,.doc,.docx,.txt"
+                      className="hidden"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => adminFileInputRef.current?.click()}
+                      title="Attach image or file"
+                      className="h-10 w-10 rounded-xl border border-gray-200 hover:border-gray-300 text-gray-500 hover:text-[#1b5ebe] flex items-center justify-center transition-colors shrink-0"
+                    >
+                      <Paperclip className="w-4 h-4" />
+                    </button>
+
                     <input
                       type="text"
                       value={chatInput}
                       onChange={(e) => setChatInput(e.target.value)}
                       placeholder={`Reply to ${selectedCompany.name}...`}
+                      disabled={adminSubmitting}
                       className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-xs text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1b5ebe]"
                     />
                     <Button
                       type="submit"
-                      disabled={!chatInput.trim()}
-                      className="rounded-xl bg-[#1b5ebe] hover:bg-blue-700 text-white font-semibold h-10 px-4 text-xs gap-1.5"
+                      disabled={adminSubmitting || (!chatInput.trim() && !adminSelectedFile)}
+                      className="rounded-xl bg-[#1b5ebe] hover:bg-blue-700 text-white font-semibold h-10 px-4 text-xs gap-1.5 shrink-0"
                     >
-                      <Send className="w-3.5 h-3.5" />
-                      <span>Reply</span>
+                      {adminSubmitting ? (
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      ) : (
+                        <>
+                          <Send className="w-3.5 h-3.5" />
+                          <span>Reply</span>
+                        </>
+                      )}
                     </Button>
                   </form>
                 </>
@@ -1346,6 +1626,42 @@ export default function AdminDashboardPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* ─── Full-Size Attachment Image Modal ─── */}
+      <AnimatePresence>
+        {adminPreviewImage && (
+          <div
+            onClick={() => setAdminPreviewImage(null)}
+            className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 backdrop-blur-xs"
+          >
+            <div
+              onClick={(e) => e.stopPropagation()}
+              className="relative max-w-4xl max-h-[90vh] bg-transparent flex flex-col items-center"
+            >
+              <button
+                onClick={() => setAdminPreviewImage(null)}
+                className="absolute -top-10 right-0 text-white hover:text-gray-300 p-1"
+              >
+                <X className="w-6 h-6" />
+              </button>
+              <img
+                src={adminPreviewImage}
+                alt="Enlarged attachment"
+                className="max-h-[85vh] w-auto rounded-xl object-contain shadow-2xl"
+              />
+              <a
+                href={adminPreviewImage}
+                target="_blank"
+                rel="noreferrer"
+                className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/20 text-white text-xs hover:bg-white/30"
+              >
+                <ExternalLink className="w-3.5 h-3.5" />
+                Open original
+              </a>
+            </div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
