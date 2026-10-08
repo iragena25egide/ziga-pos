@@ -479,46 +479,22 @@ export default function LoginPage() {
   return (
     <div className="flex min-h-screen" style={{ backgroundColor: "#f5f7fa" }}>
 
-      {/* ─────── LEFT PANEL — App Preview ─────── */}
+      {/* ─────── LEFT PANEL — Consistent with Presentation Web Hero ─────── */}
       <div
-        className="hidden lg:flex w-[55%] flex-col justify-between p-12 relative overflow-hidden"
-        style={{ backgroundColor: "#0b1d3a" }}
+        className="hidden lg:flex w-[52%] flex-col justify-between p-12 relative overflow-hidden bg-[#e8e9ef] border-r border-slate-300/80"
       >
-        {/* Subtle grid pattern overlay */}
-        <div
-          className="absolute inset-0 opacity-[0.035]"
-          style={{
-            backgroundImage: `
-              linear-gradient(rgba(255,255,255,0.6) 1px, transparent 1px),
-              linear-gradient(90deg, rgba(255,255,255,0.6) 1px, transparent 1px)
-            `,
-            backgroundSize: "40px 40px",
-          }}
-        />
-
-        {/* Glow accents */}
-        <div
-          className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-10 blur-3xl pointer-events-none"
-          style={{ backgroundColor: "#1b5ebe", transform: "translate(30%, -30%)" }}
-        />
-        <div
-          className="absolute bottom-0 left-0 w-72 h-72 rounded-full opacity-8 blur-3xl pointer-events-none"
-          style={{ backgroundColor: "#1b5ebe", transform: "translate(-30%, 30%)" }}
-        />
-
         {/* Brand */}
         <div className="relative z-10 flex items-center gap-3">
-          <ZigaLogo size={34} showText={false} theme="dark" />
+          <ZigaLogo size={36} showText={false} theme="light" />
           <div>
-            <p className="text-white font-bold text-lg tracking-tight leading-none">ZIGA POS</p>
-            <p className="text-white/40 text-[10px] font-medium tracking-widest uppercase mt-0.5">
+            <p className="text-slate-950 font-bold text-lg tracking-tight leading-none">ZIGA POS</p>
+            <p className="text-slate-500 text-[10px] font-medium tracking-widest uppercase mt-0.5">
               {isDesktop ? "Desktop Platform" : "Cloud Business Platform"}
             </p>
           </div>
           {isDesktop && (
             <span
-              className="ml-auto text-[10px] font-bold px-2 py-0.5 rounded-full"
-              style={{ backgroundColor: "rgba(34,197,94,0.15)", color: "#4ade80" }}
+              className="ml-auto text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200"
             >
               Desktop Mode
             </span>
@@ -526,15 +502,17 @@ export default function LoginPage() {
         </div>
 
         {/* Headline + App preview */}
-        <div className="relative z-10 flex flex-col items-start gap-8 my-auto">
+        <div className="relative z-10 flex flex-col items-start gap-6 my-auto">
           <div>
-            <h2 className="text-3xl font-bold text-white leading-tight mb-3">
-              Manage Your Business<br />
-              <span style={{ color: "#60a5fa" }}>From Anywhere.</span>
+            <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-white border border-slate-300 text-slate-700 text-[11px] font-semibold uppercase tracking-wider mb-3 shadow-sm">
+              The Ziga Ecosystem • Retail Counter
+            </div>
+            <h2 className="text-3xl font-bold text-slate-950 leading-tight mb-2 tracking-tight">
+              Manage your store.<br />
+              <span className="text-[#1b5ebe]">Power your payments.</span>
             </h2>
-            <p className="text-white/55 text-sm leading-relaxed max-w-sm">
-              Offline-ready POS, live inventory, multi-branch sales, and loan tracking —
-              all in one clean, fast platform built for African retailers.
+            <p className="text-slate-600 text-sm leading-relaxed max-w-sm">
+              Unified operating system with fast cashier registers, barcode scanning, live stock tracking, and automated fiscal receipts.
             </p>
           </div>
 
@@ -544,16 +522,16 @@ export default function LoginPage() {
           </div>
         </div>
 
-        {/* Stats footer */}
-        <div className="relative z-10 flex items-center gap-8 pt-6 border-t" style={{ borderColor: "rgba(255,255,255,0.08)" }}>
+        {/* Trust Badges */}
+        <div className="relative z-10 flex items-center gap-8 pt-6 border-t border-slate-300/70 text-slate-700">
           {[
-            { value: "99.9%", label: "Offline Uptime" },
-            { value: "2,500+", label: "Active Stores" },
-            { value: "JWT", label: "Secure Auth" },
+            { value: "Offline-Ready", label: "ESC/POS Printing" },
+            { value: "RRA EBM", label: "Fiscal Invoices" },
+            { value: "MoMo Pay", label: "Instant QR Checkouts" },
           ].map((stat) => (
             <div key={stat.label}>
-              <p className="text-white font-bold text-lg leading-none">{stat.value}</p>
-              <p className="text-white/40 text-[10px] font-medium mt-0.5">{stat.label}</p>
+              <p className="text-slate-900 font-bold text-sm leading-none">{stat.value}</p>
+              <p className="text-slate-500 text-[10px] font-medium mt-1">{stat.label}</p>
             </div>
           ))}
         </div>
