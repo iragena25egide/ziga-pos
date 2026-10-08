@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import api from "@/lib/api";
@@ -208,6 +208,7 @@ function AppPreviewMockup() {
 ───────────────────────────────────────────────────────────────*/
 export default function LoginPage() {
   const router = useRouter();
+  const googleBtnContainerRef = useRef<HTMLDivElement>(null);
 
   const [isDesktop, setIsDesktop] = useState(false);
   const [mode, setMode] = useState<"login" | "register">("login");
@@ -263,6 +264,79 @@ export default function LoginPage() {
     }
   }, []);
 
+  // Initialize official Google Identity Services button
+  useEffect(() => {
+    if (mode !== "login" || isDesktop) return;
+
+    const clientId =
+      process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ||
+      "552229655849-afoehos06ti14mds4c4ucfne5n8p7l81.apps.googleusercontent.com";
+
+    const setupGoogle = () => {
+      if (!(window as any).google?.accounts?.id) return;
+
+      (window as any).google.accounts.id.initialize({
+        client_id: clientId,
+        callback: async (response: { credential: string }) => {
+          if (!response.credential) {
+            toast.error("Google Sign-In failed.");
+            return;
+          }
+          try {
+            toast.loading("Authenticating with Google…", { id: "google-auth" });
+            const res = await api.post("/auth/google/", { id_token: response.credential });
+            if (res.data?.pending) {
+              toast.dismiss("google-auth");
+              toast.success("Google account registered! Pending Super Admin approval.", { duration: 6000 });
+              return;
+            }
+            localStorage.setItem("access_token", res.data.access);
+            localStorage.setItem("refresh_token", res.data.refresh);
+            if (res.data.company_id) localStorage.setItem("company_id", String(res.data.company_id));
+            if (res.data.company_name) localStorage.setItem("company_name", res.data.company_name);
+            if (res.data.company_address) localStorage.setItem("company_address", res.data.company_address);
+            if (res.data.company_phone) localStorage.setItem("company_phone", res.data.company_phone);
+            if (res.data.company_tin) localStorage.setItem("company_tin", res.data.company_tin);
+            if (res.data.username) localStorage.setItem("username", res.data.username);
+            if (res.data.role) localStorage.setItem("role", res.data.role);
+            toast.dismiss("google-auth");
+            toast.success(`Welcome, ${res.data.username || res.data.email}!`);
+            router.push("/");
+          } catch (err: any) {
+            toast.dismiss("google-auth");
+            const msg = err.response?.data?.error || err.response?.data?.detail;
+            toast.error(msg || "Google authentication failed.");
+          }
+        },
+        auto_select: false,
+        cancel_on_tap_outside: true,
+      });
+
+      if (googleBtnContainerRef.current) {
+        (window as any).google.accounts.id.renderButton(googleBtnContainerRef.current, {
+          theme: "outline",
+          size: "large",
+          type: "standard",
+          shape: "rectangular",
+          text: "continue_with",
+          logo_alignment: "center",
+          width: 360,
+        });
+      }
+    };
+
+    if ((window as any).google?.accounts?.id) {
+      setupGoogle();
+    } else {
+      const script = document.createElement("script");
+      script.src = "https://accounts.google.com/gsi/client";
+      script.async = true;
+      script.defer = true;
+      script.onload = setupGoogle;
+      document.head.appendChild(script);
+    }
+  }, [mode, isDesktop, router]);
+
   useEffect(() => {
     let timer: NodeJS.Timeout;
     if (otpModalOpen && resendTimer > 0) {
@@ -300,58 +374,9 @@ export default function LoginPage() {
     }
   };
 
-  const handleGoogleSignIn = () => {
-    const clientId =
-      process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ||
-      "552229655849-afoehos06ti14mds4c4ucfne5n8p7l81.apps.googleusercontent.com";
-
-    const initGoogleSignIn = () => {
-      (window as any).google.accounts.id.initialize({
-        client_id: clientId,
-        callback: async (response: { credential: string }) => {
-          if (!response.credential) { toast.error("Google Sign-In failed."); return; }
-          try {
-            toast.loading("Authenticating with Google…", { id: "google-auth" });
-            const res = await api.post("/auth/google/", { id_token: response.credential });
-            if (res.data?.pending) {
-              toast.dismiss("google-auth");
-              toast.success("Google account registered! Pending Super Admin approval.", { duration: 6000 });
-              return;
-            }
-            localStorage.setItem("access_token", res.data.access);
-            localStorage.setItem("refresh_token", res.data.refresh);
-            if (res.data.company_id) localStorage.setItem("company_id", String(res.data.company_id));
-            if (res.data.company_name) localStorage.setItem("company_name", res.data.company_name);
-            if (res.data.company_address) localStorage.setItem("company_address", res.data.company_address);
-            if (res.data.company_phone) localStorage.setItem("company_phone", res.data.company_phone);
-            if (res.data.company_tin) localStorage.setItem("company_tin", res.data.company_tin);
-            if (res.data.username) localStorage.setItem("username", res.data.username);
-            if (res.data.role) localStorage.setItem("role", res.data.role);
-            toast.dismiss("google-auth");
-            toast.success(`Welcome, ${res.data.username || res.data.email}!`);
-            router.push("/");
-          } catch (err: any) {
-            toast.dismiss("google-auth");
-            const msg = err.response?.data?.error || err.response?.data?.detail;
-            toast.error(msg || "Google authentication failed.");
-          }
-        },
-        auto_select: false,
-        cancel_on_tap_outside: true,
-      });
-      (window as any).google.accounts.id.prompt();
-    };
-
+  const handleGooglePrompt = () => {
     if ((window as any).google?.accounts?.id) {
-      initGoogleSignIn();
-    } else {
-      const script = document.createElement("script");
-      script.src = "https://accounts.google.com/gsi/client";
-      script.async = true;
-      script.defer = true;
-      script.onload = initGoogleSignIn;
-      script.onerror = () => toast.error("Failed to load Google Sign-In.");
-      document.head.appendChild(script);
+      (window as any).google.accounts.id.prompt();
     }
   };
 
@@ -757,19 +782,21 @@ export default function LoginPage() {
                     <div className="flex-1 h-px bg-gray-200" />
                   </div>
 
-                  <button
-                    type="button"
-                    onClick={handleGoogleSignIn}
-                    className="w-full h-9 flex items-center justify-center gap-2 rounded-md border border-gray-300 text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors"
-                  >
-                    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24">
-                      <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
-                      <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
-                      <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
-                      <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
-                    </svg>
-                    Continue with Google
-                  </button>
+                  {/* Official Google Identity Button Mount */}
+                  <div className="w-full flex justify-center min-h-[40px]">
+                    <div ref={googleBtnContainerRef} className="w-full flex justify-center" />
+                  </div>
+
+                  {/* Fallback button if GIS script hasn't rendered yet */}
+                  <noscript>
+                    <button
+                      type="button"
+                      onClick={handleGooglePrompt}
+                      className="w-full h-9 flex items-center justify-center gap-2 rounded-md border border-gray-300 text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                    >
+                      Continue with Google
+                    </button>
+                  </noscript>
                 </form>
 
                 {!isDesktop && (
