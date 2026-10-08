@@ -204,7 +204,7 @@ export default function CompaniesPage() {
                 <TableCell colSpan={7} className="text-center py-12 text-muted-foreground">
                   <div className="flex flex-col items-center justify-center gap-2">
                     <Building2 className="w-8 h-8 text-gray-300" />
-                    <p className="text-sm font-medium text-gray-500">No companies found.</p>
+                    <p className="text-sm font-medium text-gray-500">No companies added yet.</p>
                   </div>
                 </TableCell>
               </TableRow>

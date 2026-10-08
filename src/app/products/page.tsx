@@ -89,10 +89,17 @@ export default function ProductsPage() {
         fetchWithCache("/products/", "nexus_cached_products"),
         fetchWithCache("/companies/", "nexus_cached_companies"),
       ]);
-      setProducts(productsData);
-      setCompanies(companiesData);
-    } catch (err) {
-      toast.error("Failed to load products");
+      const safeProducts = Array.isArray(productsData)
+        ? productsData
+        : productsData?.results || [];
+      const safeCompanies = Array.isArray(companiesData)
+        ? companiesData
+        : companiesData?.results || [];
+      setProducts(safeProducts);
+      setCompanies(safeCompanies);
+    } catch (err: any) {
+      const msg = err.response?.data?.detail || err.response?.data?.error || "Failed to load products";
+      toast.error(msg);
     } finally {
       setLoading(false);
     }
@@ -117,7 +124,7 @@ export default function ProductsPage() {
       : <ArrowDown className="w-3 h-3 inline ml-1 text-primary" />;
   };
 
-  const sortedProducts = [...products].sort((a, b) => {
+  const sortedProducts = (Array.isArray(products) ? products : []).sort((a, b) => {
     if (!sortConfig) return 0;
     const aValue = a[sortConfig.key];
     const bValue = b[sortConfig.key];
@@ -159,12 +166,15 @@ export default function ProductsPage() {
   const handleOpenModal = (product: any = null) => {
     if (product) {
       setEditingProduct(product);
+      const companyVal = product.company != null
+        ? (typeof product.company === "object" ? product.company.id?.toString() : product.company.toString())
+        : (companies.length > 0 ? companies[0].id?.toString() : "");
       setFormData({
-        name: product.name,
+        name: product.name || "",
         description: product.description || "",
-        price: product.price,
-        stock_quantity: product.stock_quantity,
-        company: product.company.toString(),
+        price: product.price?.toString() || "",
+        stock_quantity: product.stock_quantity?.toString() || "",
+        company: companyVal || "",
       });
     } else {
       setEditingProduct(null);
@@ -173,7 +183,7 @@ export default function ProductsPage() {
         description: "",
         price: "",
         stock_quantity: "",
-        company: "",
+        company: companies.length > 0 ? companies[0].id?.toString() || "" : "",
       });
     }
     setIsModalOpen(true);
@@ -183,7 +193,7 @@ export default function ProductsPage() {
     e.preventDefault();
     try {
       if (editingProduct) {
-        await api.put(`/products/${editingProduct.id}/`, formData);
+        await api.patch(`/products/${editingProduct.id}/`, formData);
         toast.success("Product updated successfully");
       } else {
         await api.post("/products/", formData);
@@ -191,8 +201,9 @@ export default function ProductsPage() {
       }
       setIsModalOpen(false);
       fetchData();
-    } catch (err) {
-      toast.error("Operation failed");
+    } catch (err: any) {
+      const msg = err.response?.data?.detail || err.response?.data?.error || (err.response?.data && typeof err.response.data === 'object' ? Object.entries(err.response.data).map(([k, v]) => `${k}: ${Array.isArray(v) ? v.join(', ') : v}`).join(' | ') : "Operation failed");
+      toast.error(msg);
     }
   };
 
@@ -203,8 +214,8 @@ export default function ProductsPage() {
       toast.success("Product moved to trash");
       setDeleteConfirmOpen(false);
       fetchData();
-    } catch (err) {
-      toast.error("Failed to delete product");
+    } catch (err: any) {
+      toast.error(err.response?.data?.error || err.response?.data?.detail || "Failed to delete product");
     }
   };
 
@@ -301,7 +312,7 @@ export default function ProductsPage() {
                     colSpan={5}
                     className="text-center py-8 text-muted-foreground"
                   >
-                    No products found.
+                    No products added yet.
                   </TableCell>
                 </TableRow>
               ) : (

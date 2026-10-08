@@ -667,9 +667,9 @@ export default function POSPage() {
                 <div className="bg-muted p-4 rounded-full">
                   <Search className="w-8 h-8 opacity-50" />
                 </div>
-                <p className="text-sm font-medium">No products found</p>
+                <p className="text-sm font-medium">No products added yet</p>
                 <p className="text-xs text-center max-w-[200px] text-slate-400">
-                  Try adjusting your search query.
+                  Try adjusting your search query or add products to your inventory.
                 </p>
               </div>
             ) : (
@@ -1112,7 +1112,7 @@ export default function POSPage() {
           </DialogHeader>
           <div className="py-4">
             {heldOrders.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center">No held orders found.</p>
+              <p className="text-sm text-muted-foreground text-center">No held orders yet.</p>
             ) : (
               <div className="space-y-3 max-h-[300px] overflow-y-auto pr-2">
                 {heldOrders.map(order => (

@@ -355,7 +355,7 @@ export default function PaymentsPage() {
             <TableBody>
               {paginatedPayments.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">No payments found.</TableCell>
+                  <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">No payments recorded yet.</TableCell>
                 </TableRow>
               ) : (
                 paginatedPayments.map((sale: any) => (

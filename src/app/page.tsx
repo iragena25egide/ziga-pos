@@ -190,7 +190,7 @@ export default function Dashboard() {
                 ) : (
                   <TableRow>
                     <TableCell colSpan={3} className="text-center py-10 text-gray-400 text-sm">
-                      No recent sales found.
+                      No sales recorded yet.
                     </TableCell>
                   </TableRow>
                 )}
@@ -240,7 +240,7 @@ export default function Dashboard() {
                 ) : (
                   <TableRow>
                     <TableCell colSpan={2} className="text-center py-10 text-gray-400 text-sm">
-                      No active loans.
+                      No active loans yet.
                     </TableCell>
                   </TableRow>
                 )}

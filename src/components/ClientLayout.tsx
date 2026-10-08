@@ -20,11 +20,27 @@ import {
   ChevronDown,
   Bell,
   Headphones,
+  CheckCircle2,
+  AlertCircle,
+  Clock,
+  ExternalLink,
 } from "lucide-react";
 import api from "@/lib/api";
 import { OfflineIndicator, OfflineSyncProvider } from "./OfflineSync";
 import LiveHelpChat from "./LiveHelpChat";
 import ZigaLogo from "./ZigaLogo";
+import { getSocket } from "@/lib/socket";
+import { toast } from "sonner";
+
+interface AppNotification {
+  id: string;
+  title: string;
+  description: string;
+  timestamp: Date;
+  read: boolean;
+  type: "message" | "approval" | "system";
+  actionHref?: string;
+}
 
 const navigation = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard },
@@ -54,6 +70,8 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [notifications, setNotifications] = useState<AppNotification[]>([]);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -88,6 +106,106 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
       window.removeEventListener("unauthorized_access", handleUnauthorized);
     };
   }, [isPublicPage, router]);
+
+  // Real-time notifications listener via Socket.IO
+  useEffect(() => {
+    if (isPublicPage || !user) return;
+    const socket = getSocket();
+    const isSuper = Boolean(user?.is_superuser || user?.role === "super_admin");
+    const userCompanyId = user?.company?.id ?? user?.company;
+
+    const handleConnect = () => {
+      if (isSuper) {
+        socket.emit("join_admin");
+        socket.emit("join_admin_hub");
+      }
+      if (userCompanyId) {
+        socket.emit("join_company", { company_id: userCompanyId });
+      }
+    };
+
+    const handleNewMessage = (msg: any) => {
+      // If admin and message is from customer, or if merchant and message is from admin
+      const isFromAdmin = Boolean(msg.is_admin);
+      const shouldNotify = isSuper ? !isFromAdmin : isFromAdmin;
+
+      if (shouldNotify) {
+        const text = msg.message || "Sent an attachment";
+        const sender = msg.sender_name || (isFromAdmin ? "Support Admin" : (msg.company_name || "Customer"));
+        
+        const newNotif: AppNotification = {
+          id: `msg-${Date.now()}-${Math.random()}`,
+          title: isSuper ? `Support message from ${sender}` : `New message from Support`,
+          description: text.length > 55 ? `${text.slice(0, 52)}...` : text,
+          timestamp: new Date(),
+          read: false,
+          type: "message",
+          actionHref: isSuper ? "/admin?tab=support" : undefined,
+        };
+
+        setNotifications((prev) => [newNotif, ...prev.slice(0, 19)]);
+        toast.info(`🔔 ${newNotif.title}: "${newNotif.description}"`, {
+          duration: 5000,
+        });
+      }
+    };
+
+    const handleCompanyRegistered = (data: any) => {
+      if (isSuper) {
+        const newNotif: AppNotification = {
+          id: `reg-${Date.now()}`,
+          title: "New Store Registration",
+          description: `"${data.company_name}" requested approval.`,
+          timestamp: new Date(),
+          read: false,
+          type: "system",
+          actionHref: "/admin?tab=approvals",
+        };
+        setNotifications((prev) => [newNotif, ...prev.slice(0, 19)]);
+        toast.info(`🔔 New store registration: "${data.company_name}". Pending approval.`);
+      }
+    };
+
+    const handleApprovalChanged = (data: any) => {
+      // When admin approves or toggles merchant's company
+      if (userCompanyId && String(data.company_id) === String(userCompanyId)) {
+        const isApproved = Boolean(data.is_approved);
+        const newNotif: AppNotification = {
+          id: `appr-${Date.now()}`,
+          title: isApproved ? "Account Approved & Activated! 🎉" : "Account Suspended",
+          description: isApproved
+            ? "Your store account has been reviewed and approved by Super Admin. You have full system access."
+            : "Your company access has been temporarily suspended by Super Admin.",
+          timestamp: new Date(),
+          read: false,
+          type: "approval",
+        };
+
+        setNotifications((prev) => [newNotif, ...prev.slice(0, 19)]);
+        if (isApproved) {
+          toast.success("🎉 Congratulations! Your store has been approved by Super Admin!");
+        } else {
+          toast.warning("Notice: Your store account status was updated by Super Admin.");
+        }
+        // Update local user state
+        setUser((prev: any) => prev ? { ...prev, is_approved: isApproved } : prev);
+      }
+    };
+
+    socket.on("connect", handleConnect);
+    socket.on("new_message", handleNewMessage);
+    socket.on("company_registered", handleCompanyRegistered);
+    socket.on("company_approval_changed", handleApprovalChanged);
+
+    if (socket.connected) handleConnect();
+
+    return () => {
+      socket.off("connect", handleConnect);
+      socket.off("new_message", handleNewMessage);
+      socket.off("company_registered", handleCompanyRegistered);
+      socket.off("company_approval_changed", handleApprovalChanged);
+    };
+  }, [user, isPublicPage]);
 
   const isSuperAdmin = Boolean(user?.is_superuser || user?.role === "super_admin");
 
@@ -305,10 +423,141 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
 
                   {/* Right actions */}
                   <div className="flex items-center gap-2">
-                    {/* Bell */}
-                    <button className="w-8 h-8 rounded-full border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-50 transition-colors">
-                      <Bell className="w-3.5 h-3.5" />
-                    </button>
+                    {/* Bell Notification Center */}
+                    <div className="relative">
+                      <button
+                        onClick={() => {
+                          setShowNotifications(!showNotifications);
+                          setShowProfileMenu(false);
+                        }}
+                        className="relative w-8 h-8 rounded-full border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-50 transition-colors"
+                        title="Notifications"
+                      >
+                        <Bell className="w-3.5 h-3.5" />
+                        {notifications.filter((n) => !n.read).length > 0 && (
+                          <span className="absolute -top-1 -right-1 bg-red-600 text-white text-[9px] font-extrabold rounded-full px-1 py-0.2 min-w-[17px] h-[17px] flex items-center justify-center border-2 border-white shadow-sm animate-pulse">
+                            {notifications.filter((n) => !n.read).length > 9
+                              ? "9+"
+                              : `+${notifications.filter((n) => !n.read).length}`}
+                          </span>
+                        )}
+                      </button>
+
+                      <AnimatePresence>
+                        {showNotifications && (
+                          <motion.div
+                            initial={{ opacity: 0, y: 8, scale: 0.97 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: 8, scale: 0.97 }}
+                            transition={{ duration: 0.15 }}
+                            className="absolute top-full right-0 mt-2 w-80 sm:w-96 bg-white border border-gray-200 rounded-xl shadow-2xl p-0 z-50 overflow-hidden"
+                          >
+                            <div className="px-4 py-3 bg-slate-50 border-b border-gray-200 flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                <Bell className="w-4 h-4 text-indigo-600" />
+                                <span className="text-xs font-bold text-gray-900 uppercase tracking-wider">
+                                  Notifications
+                                </span>
+                                {notifications.filter((n) => !n.read).length > 0 && (
+                                  <span className="bg-red-50 text-red-600 font-bold text-[10px] px-2 py-0.5 rounded-full border border-red-200">
+                                    {notifications.filter((n) => !n.read).length} new
+                                  </span>
+                                )}
+                              </div>
+                              {notifications.length > 0 && (
+                                <button
+                                  onClick={() =>
+                                    setNotifications((prev) =>
+                                      prev.map((n) => ({ ...n, read: true }))
+                                    )
+                                  }
+                                  className="text-[11px] font-medium text-indigo-600 hover:text-indigo-800 transition-colors"
+                                >
+                                  Mark all read
+                                </button>
+                              )}
+                            </div>
+
+                            <div className="max-h-80 overflow-y-auto divide-y divide-gray-100">
+                              {notifications.length === 0 ? (
+                                <div className="py-8 text-center text-gray-400">
+                                  <Bell className="w-7 h-7 mx-auto opacity-30 mb-2" />
+                                  <p className="text-xs font-medium text-gray-500">No notifications yet</p>
+                                  <p className="text-[11px] text-gray-400 mt-0.5">
+                                    You will be alerted instantly when events occur.
+                                  </p>
+                                </div>
+                              ) : (
+                                notifications.map((notif) => (
+                                  <div
+                                    key={notif.id}
+                                    onClick={() => {
+                                      setNotifications((prev) =>
+                                        prev.map((n) =>
+                                          n.id === notif.id ? { ...n, read: true } : n
+                                        )
+                                      );
+                                      if (notif.actionHref) {
+                                        router.push(notif.actionHref);
+                                        setShowNotifications(false);
+                                      }
+                                    }}
+                                    className={`p-3.5 transition-colors cursor-pointer flex items-start gap-3 ${
+                                      notif.read ? "bg-white hover:bg-gray-50" : "bg-indigo-50/40 hover:bg-indigo-50/70"
+                                    }`}
+                                  >
+                                    <div
+                                      className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${
+                                        notif.type === "approval"
+                                          ? "bg-emerald-100 text-emerald-600"
+                                          : notif.type === "system"
+                                          ? "bg-amber-100 text-amber-600"
+                                          : "bg-indigo-100 text-indigo-600"
+                                      }`}
+                                    >
+                                      {notif.type === "approval" ? (
+                                        <CheckCircle2 className="w-4 h-4" />
+                                      ) : notif.type === "system" ? (
+                                        <AlertCircle className="w-4 h-4" />
+                                      ) : (
+                                        <Headphones className="w-4 h-4" />
+                                      )}
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                      <div className="flex items-center justify-between gap-1">
+                                        <p className="text-xs font-semibold text-gray-900 truncate">
+                                          {notif.title}
+                                        </p>
+                                        {!notif.read && (
+                                          <span className="w-1.5 h-1.5 rounded-full bg-red-600 shrink-0" />
+                                        )}
+                                      </div>
+                                      <p className="text-[11px] text-gray-600 mt-0.5 line-clamp-2">
+                                        {notif.description}
+                                      </p>
+                                      <div className="flex items-center gap-2 mt-1.5 text-[10px] text-gray-400">
+                                        <Clock className="w-3 h-3" />
+                                        <span>
+                                          {new Date(notif.timestamp).toLocaleTimeString([], {
+                                            hour: "2-digit",
+                                            minute: "2-digit",
+                                          })}
+                                        </span>
+                                        {notif.actionHref && (
+                                          <span className="text-indigo-600 font-semibold flex items-center gap-0.5 hover:underline ml-auto">
+                                            View <ExternalLink className="w-2.5 h-2.5" />
+                                          </span>
+                                        )}
+                                      </div>
+                                    </div>
+                                  </div>
+                                ))
+                              )}
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
 
                     {/* Profile */}
                     <div className="relative">

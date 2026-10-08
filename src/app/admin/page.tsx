@@ -425,6 +425,16 @@ export default function AdminDashboardPage() {
         prev.map((u) => (u.company === company.id ? { ...u, is_approved: newStatus } : u))
       );
 
+      // Emit socket event so active user receives instant notification without refreshing
+      try {
+        const socket = getSocket();
+        socket.emit("company_approval_changed", {
+          company_id: company.id,
+          company_name: company.name,
+          is_approved: newStatus,
+        });
+      } catch (e) {}
+
       toast.success(`${company.name} is now ${newStatus ? "APPROVED & ACTIVATED" : "SUSPENDED"}`);
       fetchData();
     } catch (err) {
@@ -448,6 +458,16 @@ export default function AdminDashboardPage() {
       setUsers((prev) =>
         prev.map((u) => (u.company === companyToSuspend.id ? { ...u, is_approved: newStatus } : u))
       );
+
+      // Emit socket event so active user receives instant notification
+      try {
+        const socket = getSocket();
+        socket.emit("company_approval_changed", {
+          company_id: companyToSuspend.id,
+          company_name: companyToSuspend.name,
+          is_approved: newStatus,
+        });
+      } catch (e) {}
 
       toast.success(`${companyToSuspend.name} is now ${newStatus ? "APPROVED & ACTIVATED" : "SUSPENDED"}`);
       fetchData();

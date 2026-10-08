@@ -311,7 +311,7 @@ export default function CustomersPage() {
                     colSpan={5}
                     className="text-center py-8 text-muted-foreground"
                   >
-                    No customers found.
+                    No customers added yet.
                   </TableCell>
                 </TableRow>
               ) : (

@@ -305,7 +305,7 @@ export default function LoansPage() {
                   colSpan={4}
                   className="text-center py-8 text-muted-foreground"
                 >
-                  No outstanding loans found.
+                  No active loans yet.
                 </TableCell>
               </TableRow>
             ) : (
