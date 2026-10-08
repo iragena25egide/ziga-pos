@@ -1,8 +1,12 @@
 import axios from "axios";
 
+const rawBaseUrl =
+  process.env.NEXT_PUBLIC_API_URL || "https://194.164.72.181.nip.io/api";
+
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL,
+  baseURL: rawBaseUrl,
 });
+
 
 api.interceptors.request.use(
   (config) => {
