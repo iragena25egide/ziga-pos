@@ -315,46 +315,78 @@ export default function AdminDashboardPage() {
     }
   };
 
-  // Delete Company
-  const handleDeleteCompany = async (company: Company) => {
-    if (!confirm(`Are you sure you want to delete company "${company.name}"? This action cannot be undone.`)) return;
+  // Confirm Suspend Company
+  const handleConfirmSuspendCompany = async () => {
+    if (!companyToSuspend) return;
     try {
-      await api.delete(`/companies/${company.id}/`);
-      setCompanies((prev) => prev.filter((c) => c.id !== company.id));
-      toast.success(`Company "${company.name}" deleted.`);
+      setActionLoadingId(companyToSuspend.id);
+      const res = await api.post(`/companies/${companyToSuspend.id}/approve/`);
+      const newStatus = res.data.is_approved;
+
+      setCompanies((prev) =>
+        prev.map((c) => (c.id === companyToSuspend.id ? { ...c, is_approved: newStatus } : c))
+      );
+      setUsers((prev) =>
+        prev.map((u) => (u.company === companyToSuspend.id ? { ...u, is_approved: newStatus } : u))
+      );
+
+      toast.success(`${companyToSuspend.name} is now ${newStatus ? "APPROVED & ACTIVATED" : "SUSPENDED"}`);
+      fetchData();
+    } catch (err) {
+      toast.error("Failed to update company approval status.");
+    } finally {
+      setActionLoadingId(null);
+      setCompanyToSuspend(null);
+    }
+  };
+
+  // Confirm Delete Company
+  const handleConfirmDeleteCompany = async () => {
+    if (!companyToDelete) return;
+    try {
+      await api.delete(`/companies/${companyToDelete.id}/`);
+      setCompanies((prev) => prev.filter((c) => c.id !== companyToDelete.id));
+      toast.success(`Company "${companyToDelete.name}" deleted.`);
       fetchData();
     } catch (err: any) {
       toast.error(err.response?.data?.error || "Failed to delete company.");
+    } finally {
+      setCompanyToDelete(null);
     }
   };
 
-  // Toggle User Approval / Suspend
-  const handleToggleUserApproval = async (u: PlatformUser) => {
+  // Confirm Suspend User
+  const handleConfirmSuspendUser = async () => {
+    if (!userToSuspend) return;
     try {
-      const res = await api.post(`/users/${u.id}/approve/`);
+      const res = await api.post(`/users/${userToSuspend.id}/approve/`);
       const newStatus = res.data.is_approved;
 
       setUsers((prev) =>
-        prev.map((item) => (item.id === u.id ? { ...item, is_approved: newStatus } : item))
+        prev.map((item) => (item.id === userToSuspend.id ? { ...item, is_approved: newStatus } : item))
       );
 
-      toast.success(`${u.username} status toggled to: ${newStatus ? "Active" : "Suspended"}`);
+      toast.success(`${userToSuspend.username} status toggled to: ${newStatus ? "Active" : "Suspended"}`);
       fetchData();
     } catch (err) {
       toast.error("Failed to toggle user status.");
+    } finally {
+      setUserToSuspend(null);
     }
   };
 
-  // Delete User
-  const handleDeleteUser = async (u: PlatformUser) => {
-    if (!confirm(`Are you sure you want to permanently delete user "${u.username}"?`)) return;
+  // Confirm Delete User
+  const handleConfirmDeleteUser = async () => {
+    if (!userToDelete) return;
     try {
-      await api.delete(`/users/${u.id}/`);
-      setUsers((prev) => prev.filter((item) => item.id !== u.id));
-      toast.success(`User "${u.username}" deleted successfully.`);
+      await api.delete(`/users/${userToDelete.id}/`);
+      setUsers((prev) => prev.filter((item) => item.id !== userToDelete.id));
+      toast.success(`User "${userToDelete.username}" deleted successfully.`);
       fetchData();
     } catch (err: any) {
       toast.error(err.response?.data?.error || "Failed to delete user.");
+    } finally {
+      setUserToDelete(null);
     }
   };
 
@@ -868,7 +900,13 @@ export default function AdminDashboardPage() {
                               <Button
                                 size="sm"
                                 disabled={actionLoadingId === c.id}
-                                onClick={() => handleToggleCompanyApproval(c)}
+                                onClick={() => {
+                                  if (c.is_approved) {
+                                    setCompanyToSuspend(c);
+                                  } else {
+                                    handleToggleCompanyApproval(c);
+                                  }
+                                }}
                                 className={`rounded-xl text-xs font-semibold h-8 px-3 ${
                                   c.is_approved
                                     ? "bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-200"
@@ -887,7 +925,7 @@ export default function AdminDashboardPage() {
                               <Button
                                 size="sm"
                                 variant="ghost"
-                                onClick={() => handleDeleteCompany(c)}
+                                onClick={() => setCompanyToDelete(c)}
                                 className="h-8 w-8 p-0 rounded-xl text-red-600 hover:bg-red-50 hover:text-red-700"
                                 title="Delete Company"
                               >
@@ -975,7 +1013,13 @@ export default function AdminDashboardPage() {
                               <Button
                                 size="sm"
                                 variant="outline"
-                                onClick={() => handleToggleUserApproval(u)}
+                                onClick={() => {
+                                  if (u.is_approved) {
+                                    setUserToSuspend(u);
+                                  } else {
+                                    handleToggleUserApproval(u);
+                                  }
+                                }}
                                 className={`rounded-xl text-xs font-semibold h-7 px-3 ${
                                   u.is_approved
                                     ? "border-gray-200 bg-white hover:bg-gray-100 text-gray-700"
@@ -988,7 +1032,7 @@ export default function AdminDashboardPage() {
                               <Button
                                 size="sm"
                                 variant="ghost"
-                                onClick={() => handleDeleteUser(u)}
+                                onClick={() => setUserToDelete(u)}
                                 className="h-7 w-7 p-0 rounded-xl text-red-600 hover:bg-red-50 hover:text-red-700"
                                 title="Delete User"
                               >
