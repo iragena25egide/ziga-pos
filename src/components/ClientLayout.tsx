@@ -89,18 +89,52 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
     };
   }, [isPublicPage, router]);
 
+  const isSuperAdmin = Boolean(user?.is_superuser || user?.role === "super_admin");
+
+  // Automatically redirect Super Admin away from store-level pages to /admin
+  useEffect(() => {
+    if (!loading && user && isSuperAdmin && !isPublicPage) {
+      const storeOnlyRoutes = ["/", "/pos", "/customers", "/products", "/sales", "/loans", "/payments", "/balance", "/trash"];
+      if (storeOnlyRoutes.includes(pathname)) {
+        router.replace("/admin");
+      }
+    }
+  }, [loading, user, isSuperAdmin, pathname, isPublicPage, router]);
+
   const handleLogout = () => {
     localStorage.removeItem("access_token");
     localStorage.removeItem("refresh_token");
     router.push("/login");
   };
 
-  const currentPage = navigation.find((n) => n.href === pathname)?.name ?? "Dashboard";
+  const navItems = isSuperAdmin
+    ? [
+        { name: "Admin Hub", href: "/admin", icon: ShieldCheck },
+        { name: "Companies", href: "/companies", icon: Building2 },
+        { name: "Users", href: "/users", icon: Users },
+        { name: "System Reports", href: "/reports", icon: FileText },
+        { name: "My Profile", href: "/profile", icon: UserCircle },
+      ]
+    : [
+        { name: "Dashboard", href: "/", icon: LayoutDashboard },
+        { name: "Point of Sale", href: "/pos", icon: ShoppingCart },
+        { name: "Customers", href: "/customers", icon: Users },
+        { name: "Products", href: "/products", icon: Package },
+        { name: "Sales", href: "/sales", icon: FileText },
+        { name: "Loans", href: "/loans", icon: CreditCard },
+        { name: "Payments", href: "/payments", icon: Wallet },
+        { name: "Reports", href: "/reports", icon: FileText },
+        { name: "Balance", href: "/balance", icon: FileText },
+        { name: "My Profile", href: "/profile", icon: UserCircle },
+        { name: "Users", href: "/users", icon: Users },
+      ];
+
+  const currentPage = navItems.find((n) => n.href === pathname)?.name ?? (isSuperAdmin ? "Admin Hub" : "Dashboard");
   const userInitials = user
     ? (user.first_name?.[0] ?? user.username?.[0] ?? "U").toUpperCase()
     : "SA";
   const userDisplayName =
-    user ? `${user.first_name ?? ""} ${user.last_name ?? ""}`.trim() || user.username : "Super Admin";
+    user ? `${user.first_name ?? ""} ${user.last_name ?? ""}`.trim() || user.username : (isSuperAdmin ? "Super Admin" : "User");
 
   return (
     <OfflineSyncProvider>
@@ -170,16 +204,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
                   <p className="text-white/30 text-[9px] font-bold uppercase tracking-widest mb-3 px-2">
                     Navigation
                   </p>
-                  {navigation.map((item) => {
-                    const userRole = user?.role?.toLowerCase() ?? (user?.is_superuser ? "admin" : "admin");
-                    if (
-                      item.roles &&
-                      user &&
-                      !user.is_superuser &&
-                      !item.roles.map((r) => r.toLowerCase()).includes(userRole)
-                    )
-                      return null;
-
+                  {navItems.map((item) => {
                     const isActive = pathname === item.href;
                     return (
                       <Link
@@ -207,19 +232,21 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
                     );
                   })}
 
-                  <div className="pt-3 mt-3 border-t border-white/8">
-                    <Link
-                      href="/trash"
-                      className={`group flex items-center gap-2.5 rounded-md px-2.5 py-2 text-[13px] font-medium transition-all duration-150 ${
-                        pathname === "/trash"
-                          ? "bg-red-500/20 text-red-300"
-                          : "text-white/40 hover:bg-red-500/10 hover:text-red-300"
-                      }`}
-                    >
-                      <Trash2 className="h-4 w-4 flex-shrink-0" />
-                      <span>Recycle Bin</span>
-                    </Link>
-                  </div>
+                  {!isSuperAdmin && (
+                    <div className="pt-3 mt-3 border-t border-white/8">
+                      <Link
+                        href="/trash"
+                        className={`group flex items-center gap-2.5 rounded-md px-2.5 py-2 text-[13px] font-medium transition-all duration-150 ${
+                          pathname === "/trash"
+                            ? "bg-red-500/20 text-red-300"
+                            : "text-white/40 hover:bg-red-500/10 hover:text-red-300"
+                        }`}
+                      >
+                        <Trash2 className="h-4 w-4 flex-shrink-0" />
+                        <span>Recycle Bin</span>
+                      </Link>
+                    </div>
+                  )}
                 </nav>
 
                 {/* Offline status */}
@@ -238,7 +265,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
                   borderColor: "rgba(255,255,255,0.08)",
                 }}
               >
-                {navigation.slice(0, 6).map((item) => {
+                {navItems.slice(0, 5).map((item) => {
                   const isActive = pathname === item.href;
                   return (
                     <Link

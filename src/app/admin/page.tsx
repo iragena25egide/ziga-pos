@@ -27,6 +27,8 @@ import {
   FileText,
   BadgeAlert,
   Headphones,
+  UserCheck,
+  UserX,
 } from "lucide-react";
 import api from "@/lib/api";
 import { getSocket } from "@/lib/socket";
@@ -106,22 +108,22 @@ export default function AdminDashboardPage() {
   const [users, setUsers] = useState<PlatformUser[]>([]);
   const [userSearch, setUserSearch] = useState("");
 
-  // Live Support Desk state
+  // Live Help Chat state
   const [conversations, setConversations] = useState<ConversationItem[]>([]);
   const [selectedCompanyId, setSelectedCompanyId] = useState<number | null>(null);
   const [chatMessages, setChatMessages] = useState<SupportMessage[]>([]);
   const [chatInput, setChatInput] = useState("");
-  const [isSocketConnected, setIsSocketConnected] = useState(false);
   const [companyTyping, setCompanyTyping] = useState<string | null>(null);
+  const [isSocketConnected, setIsSocketConnected] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const typingTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Fetch all admin data
+  // Load all admin data
   const fetchData = async () => {
     try {
       setLoadingMetrics(true);
-      const [metricsRes, companiesRes, usersRes, convsRes] = await Promise.all([
+      const [metricsRes, compRes, usersRes, convRes] = await Promise.all([
         api.get("/admin/metrics/").catch(() => ({ data: null })),
         api.get("/companies/").catch(() => ({ data: [] })),
         api.get("/users/").catch(() => ({ data: [] })),
@@ -129,14 +131,21 @@ export default function AdminDashboardPage() {
       ]);
 
       if (metricsRes.data) setMetrics(metricsRes.data);
-      setCompanies(companiesRes.data?.results || companiesRes.data || []);
-      setUsers(usersRes.data?.results || usersRes.data || []);
-      setConversations(convsRes.data || []);
-    } catch (err: any) {
-      if (err.response?.status === 403) {
-        toast.error("Super Admin privileges required to view this dashboard.");
-        router.push("/");
+      if (compRes.data) {
+        const compList = Array.isArray(compRes.data) ? compRes.data : compRes.data?.results || [];
+        setCompanies(compList);
       }
+      if (usersRes.data) {
+        const userList = Array.isArray(usersRes.data) ? usersRes.data : usersRes.data?.results || [];
+        setUsers(userList);
+      }
+      if (convRes.data) {
+        const cList = Array.isArray(convRes.data) ? convRes.data : convRes.data?.results || [];
+        setConversations(cList);
+      }
+    } catch (err) {
+      console.error("Admin dashboard fetch error:", err);
+      toast.error("Failed to refresh admin metrics.");
     } finally {
       setLoadingMetrics(false);
     }
@@ -146,107 +155,111 @@ export default function AdminDashboardPage() {
     fetchData();
   }, []);
 
-  // Socket.IO Setup for Admin Support Desk
+  // Connect Admin Socket.IO room for instant live monitoring
   useEffect(() => {
     const socket = getSocket();
 
-    const handleConnect = () => {
+    const onConnect = () => {
       setIsSocketConnected(true);
-      socket.emit("join_admin", {});
+      socket.emit("join_admin_hub");
     };
 
-    const handleDisconnect = () => {
-      setIsSocketConnected(false);
-    };
+    const onDisconnect = () => setIsSocketConnected(false);
 
-    const handleNewMessage = (msg: SupportMessage) => {
-      // If message is for the currently selected company in the chat panel
-      if (selectedCompanyId && Number(msg.company_id) === Number(selectedCompanyId)) {
+    const onNewMessage = (newMsg: SupportMessage) => {
+      if (selectedCompanyId && String(newMsg.company_id) === String(selectedCompanyId)) {
         setChatMessages((prev) => {
-          if (msg.id && prev.some((m) => m.id === msg.id)) return prev;
-          return [...prev, msg];
+          if (newMsg.id && prev.some((m) => m.id === newMsg.id)) return prev;
+          return [...prev, newMsg];
         });
       }
 
-      // Update conversations list summary
       setConversations((prev) => {
-        const index = prev.findIndex((c) => Number(c.company_id) === Number(msg.company_id));
-        if (index !== -1) {
-          const updated = [...prev];
-          const curr = updated[index];
-          const isSelected = selectedCompanyId && Number(msg.company_id) === Number(selectedCompanyId);
-
-          updated[index] = {
-            ...curr,
-            last_message: msg.message,
-            last_message_at: msg.created_at,
-            last_message_is_admin: msg.is_admin,
-            unread_count: isSelected || msg.is_admin ? curr.unread_count : curr.unread_count + 1,
-          };
-          // Move to top
-          const item = updated.splice(index, 1)[0];
-          return [item, ...updated];
+        const exists = prev.some((c) => String(c.company_id) === String(newMsg.company_id));
+        if (!exists) {
+          return [
+            {
+              company_id: Number(newMsg.company_id),
+              company_name: newMsg.company_name || "Company",
+              is_approved: true,
+              unread_count: 1,
+              last_message: newMsg.message,
+              last_message_at: newMsg.created_at,
+              last_message_is_admin: newMsg.is_admin,
+            },
+            ...prev,
+          ];
         }
-        return prev;
-      });
-
-      if (!msg.is_admin) {
-        toast.info(`Support text from ${msg.company_name || msg.sender_name}`, {
-          description: msg.message.slice(0, 60),
+        return prev.map((c) => {
+          if (String(c.company_id) === String(newMsg.company_id)) {
+            return {
+              ...c,
+              last_message: newMsg.message,
+              last_message_at: newMsg.created_at,
+              last_message_is_admin: newMsg.is_admin,
+              unread_count: selectedCompanyId === c.company_id ? 0 : c.unread_count + 1,
+            };
+          }
+          return c;
         });
+      });
+    };
+
+    const onTyping = (data: { is_admin: boolean; name: string }) => {
+      if (!data.is_admin) {
+        setCompanyTyping(data.name || "User");
+        if (typingTimerRef.current) clearTimeout(typingTimerRef.current);
+        typingTimerRef.current = setTimeout(() => setCompanyTyping(null), 2500);
       }
     };
 
-    const handleUserTyping = (data: any) => {
-      if (!data.is_admin && selectedCompanyId && Number(data.company_id) === Number(selectedCompanyId)) {
-        setCompanyTyping(data.name || "Customer");
-        if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
-        typingTimeoutRef.current = setTimeout(() => {
-          setCompanyTyping(null);
-        }, 3000);
-      }
+    const onCompanyRegistered = (data: { company_id: number; company_name: string }) => {
+      toast.info(`🔔 New store registration: "${data.company_name}". Pending approval.`);
+      fetchData();
     };
 
-    socket.on("connect", handleConnect);
-    socket.on("disconnect", handleDisconnect);
-    socket.on("new_message", handleNewMessage);
-    socket.on("user_typing", handleUserTyping);
+    socket.on("connect", onConnect);
+    socket.on("disconnect", onDisconnect);
+    socket.on("new_message", onNewMessage);
+    socket.on("user_typing", onTyping);
+    socket.on("company_registered", onCompanyRegistered);
 
-    if (socket.connected) {
-      handleConnect();
-    }
+    if (socket.connected) onConnect();
 
     return () => {
-      socket.off("connect", handleConnect);
-      socket.off("disconnect", handleDisconnect);
-      socket.off("new_message", handleNewMessage);
-      socket.off("user_typing", handleUserTyping);
+      socket.off("connect", onConnect);
+      socket.off("disconnect", onDisconnect);
+      socket.off("new_message", onNewMessage);
+      socket.off("user_typing", onTyping);
+      socket.off("company_registered", onCompanyRegistered);
+      if (typingTimerRef.current) clearTimeout(typingTimerRef.current);
     };
   }, [selectedCompanyId]);
 
-  // Load chat messages when a company is selected in the Support Desk
+  // Load chat messages when a company is selected
   useEffect(() => {
-    if (!selectedCompanyId) return;
+    if (!selectedCompanyId) {
+      setChatMessages([]);
+      return;
+    }
 
-    const loadCompanyMessages = async () => {
+    const fetchCompanyChat = async () => {
       try {
         const res = await api.get(`/support-messages/?company_id=${selectedCompanyId}`);
-        setChatMessages(res.data?.results || res.data || []);
-        // Mark read
-        await api.post("/support-messages/mark_read/", { company_id: selectedCompanyId });
-        // Clear unread badge in list
+        const list = Array.isArray(res.data) ? res.data : res.data?.results || [];
+        setChatMessages(list);
+
         setConversations((prev) =>
           prev.map((c) => (c.company_id === selectedCompanyId ? { ...c, unread_count: 0 } : c))
         );
       } catch (err) {
-        toast.error("Failed to load chat history for this company.");
+        console.error("Failed to load company messages", err);
       }
     };
 
-    loadCompanyMessages();
+    fetchCompanyChat();
   }, [selectedCompanyId]);
 
-  // Auto-scroll chat
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chatMessages]);
@@ -262,14 +275,11 @@ export default function AdminDashboardPage() {
         prev.map((c) => (c.id === company.id ? { ...c, is_approved: newStatus } : c))
       );
 
-      // Also update matching users locally
       setUsers((prev) =>
         prev.map((u) => (u.company === company.id ? { ...u, is_approved: newStatus } : u))
       );
 
-      toast.success(
-        `${company.name} is now ${newStatus ? "APPROVED & ACTIVATED" : "SUSPENDED"}`
-      );
+      toast.success(`${company.name} is now ${newStatus ? "APPROVED & ACTIVATED" : "SUSPENDED"}`);
       fetchData();
     } catch (err) {
       toast.error("Failed to update company approval status.");
@@ -278,7 +288,20 @@ export default function AdminDashboardPage() {
     }
   };
 
-  // Toggle User Approval
+  // Delete Company
+  const handleDeleteCompany = async (company: Company) => {
+    if (!confirm(`Are you sure you want to delete company "${company.name}"? This action cannot be undone.`)) return;
+    try {
+      await api.delete(`/companies/${company.id}/`);
+      setCompanies((prev) => prev.filter((c) => c.id !== company.id));
+      toast.success(`Company "${company.name}" deleted.`);
+      fetchData();
+    } catch (err: any) {
+      toast.error(err.response?.data?.error || "Failed to delete company.");
+    }
+  };
+
+  // Toggle User Approval / Suspend
   const handleToggleUserApproval = async (u: PlatformUser) => {
     try {
       const res = await api.post(`/users/${u.id}/approve/`);
@@ -288,10 +311,23 @@ export default function AdminDashboardPage() {
         prev.map((item) => (item.id === u.id ? { ...item, is_approved: newStatus } : item))
       );
 
-      toast.success(`${u.username} approval status toggled to: ${newStatus ? "Active" : "Pending"}`);
+      toast.success(`${u.username} status toggled to: ${newStatus ? "Active" : "Suspended"}`);
       fetchData();
     } catch (err) {
-      toast.error("Failed to toggle user approval.");
+      toast.error("Failed to toggle user status.");
+    }
+  };
+
+  // Delete User
+  const handleDeleteUser = async (u: PlatformUser) => {
+    if (!confirm(`Are you sure you want to permanently delete user "${u.username}"?`)) return;
+    try {
+      await api.delete(`/users/${u.id}/`);
+      setUsers((prev) => prev.filter((item) => item.id !== u.id));
+      toast.success(`User "${u.username}" deleted successfully.`);
+      fetchData();
+    } catch (err: any) {
+      toast.error(err.response?.data?.error || "Failed to delete user.");
     }
   };
 
@@ -328,11 +364,11 @@ export default function AdminDashboardPage() {
     } else {
       try {
         await api.post("/support-messages/", {
-          company: selectedCompanyId,
+          company_id: selectedCompanyId,
           message: text,
         });
       } catch (err) {
-        toast.error("Failed to send reply. Please check connection.");
+        toast.error("Message delivery failed. Check network.");
       }
     }
   };
@@ -353,32 +389,32 @@ export default function AdminDashboardPage() {
   const selectedCompany = companies.find((c) => c.id === selectedCompanyId);
 
   return (
-    <div className="flex-1 flex flex-col h-screen overflow-hidden bg-zinc-950 text-zinc-100">
-      {/* Top Admin Header */}
-      <header className="px-6 py-4 bg-zinc-900/80 border-b border-zinc-800/80 backdrop-blur-md flex items-center justify-between shrink-0">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-zinc-800 border border-zinc-700 flex items-center justify-center text-emerald-400 shadow-inner">
+    <div className="space-y-6 pb-12 text-gray-900">
+      {/* Top Admin Header Card */}
+      <header className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex items-center gap-3.5">
+          <div className="w-11 h-11 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center text-[#1b5ebe] shrink-0">
             <ShieldCheck className="w-6 h-6" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-lg font-black tracking-wide uppercase text-white">Super Admin Command Center</h1>
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wider bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 uppercase">
-                Root Access
+              <h1 className="text-lg font-bold tracking-tight text-gray-900">Super Admin Command Center</h1>
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wide bg-blue-50 text-[#1b5ebe] border border-blue-200 uppercase">
+                Platform Root
               </span>
             </div>
-            <p className="text-xs text-zinc-400 font-medium">
-              Multi-tenant approvals, system monitoring, and real-time support desk
+            <p className="text-xs text-gray-500 mt-0.5">
+              Multi-tenant approvals, platform revenue monitoring, and real-time merchant support
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5">
           {/* Socket.IO status */}
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-zinc-900 border border-zinc-800 text-xs">
-            <span className={`w-2 h-2 rounded-full ${isSocketConnected ? "bg-emerald-400 animate-pulse" : "bg-amber-400"}`} />
-            <span className="text-[11px] font-medium text-zinc-300">
-              {isSocketConnected ? "Live Socket Active" : "Socket Reconnecting..."}
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-50 border border-gray-200 text-xs">
+            <span className={`w-2 h-2 rounded-full ${isSocketConnected ? "bg-emerald-500" : "bg-amber-500"}`} />
+            <span className="text-[11px] font-medium text-gray-600">
+              {isSocketConnected ? "Live Socket Active" : "Connecting..."}
             </span>
           </div>
 
@@ -387,40 +423,40 @@ export default function AdminDashboardPage() {
             variant="outline"
             onClick={fetchData}
             disabled={loadingMetrics}
-            className="rounded-xl border-zinc-800 bg-zinc-900 hover:bg-zinc-800 text-zinc-200 text-xs gap-1.5 h-9"
+            className="rounded-xl border-gray-200 bg-white hover:bg-gray-50 text-gray-700 text-xs gap-1.5 h-9"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${loadingMetrics ? "animate-spin" : ""}`} />
-            Refresh
+            Refresh Data
           </Button>
         </div>
       </header>
 
       {/* Admin Navigation Tabs */}
-      <div className="px-6 pt-3 border-b border-zinc-800/80 bg-zinc-900/40 shrink-0 flex gap-2 overflow-x-auto">
+      <div className="flex gap-2 border-b border-gray-200 pb-px overflow-x-auto">
         <button
           onClick={() => setActiveTab("overview")}
-          className={`px-4 py-2.5 text-xs font-bold rounded-t-xl transition-all flex items-center gap-2 ${
+          className={`px-4 py-2.5 text-xs font-semibold rounded-t-xl transition-all flex items-center gap-2 ${
             activeTab === "overview"
-              ? "bg-zinc-800 text-white border-t-2 border-emerald-400"
-              : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/60"
+              ? "bg-white text-gray-900 border-t-2 border-[#1b5ebe] border-x border-gray-200 shadow-sm"
+              : "text-gray-500 hover:text-gray-900 hover:bg-gray-100/60"
           }`}
         >
-          <TrendingUp className="w-4 h-4 text-emerald-400" />
-          <span>System Overview & Monitoring</span>
+          <TrendingUp className="w-4 h-4 text-[#1b5ebe]" />
+          <span>System Overview & Sales</span>
         </button>
 
         <button
           onClick={() => setActiveTab("approvals")}
-          className={`px-4 py-2.5 text-xs font-bold rounded-t-xl transition-all flex items-center gap-2 relative ${
+          className={`px-4 py-2.5 text-xs font-semibold rounded-t-xl transition-all flex items-center gap-2 relative ${
             activeTab === "approvals"
-              ? "bg-zinc-800 text-white border-t-2 border-emerald-400"
-              : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/60"
+              ? "bg-white text-gray-900 border-t-2 border-[#1b5ebe] border-x border-gray-200 shadow-sm"
+              : "text-gray-500 hover:text-gray-900 hover:bg-gray-100/60"
           }`}
         >
-          <Building2 className="w-4 h-4 text-indigo-400" />
+          <Building2 className="w-4 h-4 text-indigo-500" />
           <span>Company Approvals</span>
           {metrics?.pending_companies > 0 && (
-            <span className="bg-amber-500 text-zinc-950 font-black text-[10px] px-1.5 py-0.2 rounded-full">
+            <span className="bg-amber-500 text-white font-bold text-[10px] px-1.5 py-0.2 rounded-full">
               {metrics.pending_companies}
             </span>
           )}
@@ -428,28 +464,31 @@ export default function AdminDashboardPage() {
 
         <button
           onClick={() => setActiveTab("users")}
-          className={`px-4 py-2.5 text-xs font-bold rounded-t-xl transition-all flex items-center gap-2 ${
+          className={`px-4 py-2.5 text-xs font-semibold rounded-t-xl transition-all flex items-center gap-2 ${
             activeTab === "users"
-              ? "bg-zinc-800 text-white border-t-2 border-emerald-400"
-              : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/60"
+              ? "bg-white text-gray-900 border-t-2 border-[#1b5ebe] border-x border-gray-200 shadow-sm"
+              : "text-gray-500 hover:text-gray-900 hover:bg-gray-100/60"
           }`}
         >
-          <Users className="w-4 h-4 text-cyan-400" />
+          <Users className="w-4 h-4 text-cyan-600" />
           <span>User Accounts</span>
+          <span className="bg-gray-100 text-gray-600 font-semibold text-[10px] px-1.5 py-0.2 rounded-full">
+            {users.length}
+          </span>
         </button>
 
         <button
           onClick={() => setActiveTab("support")}
-          className={`px-4 py-2.5 text-xs font-bold rounded-t-xl transition-all flex items-center gap-2 relative ${
+          className={`px-4 py-2.5 text-xs font-semibold rounded-t-xl transition-all flex items-center gap-2 relative ${
             activeTab === "support"
-              ? "bg-zinc-800 text-white border-t-2 border-emerald-400"
-              : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/60"
+              ? "bg-white text-gray-900 border-t-2 border-[#1b5ebe] border-x border-gray-200 shadow-sm"
+              : "text-gray-500 hover:text-gray-900 hover:bg-gray-100/60"
           }`}
         >
-          <Headphones className="w-4 h-4 text-emerald-400" />
+          <Headphones className="w-4 h-4 text-emerald-600" />
           <span>Live Support Desk</span>
           {metrics?.unread_support > 0 && (
-            <span className="bg-emerald-500 text-zinc-950 font-black text-[10px] px-1.5 py-0.2 rounded-full animate-pulse">
+            <span className="bg-emerald-500 text-white font-bold text-[10px] px-1.5 py-0.2 rounded-full">
               {metrics.unread_support}
             </span>
           )}
@@ -457,115 +496,114 @@ export default function AdminDashboardPage() {
       </div>
 
       {/* Main Content Area */}
-      <div className="flex-1 overflow-y-auto p-6">
+      <div>
         {/* TAB 1: OVERVIEW & MONITORING */}
         {activeTab === "overview" && (
-          <div className="space-y-6 max-w-7xl mx-auto">
+          <div className="space-y-6">
             {/* KPI Metric Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-              <div className="p-5 rounded-3xl bg-zinc-900 border border-zinc-800/80 relative overflow-hidden">
+              <div className="p-5 rounded-2xl bg-white border border-gray-200 shadow-sm">
                 <div className="flex items-center justify-between mb-3">
-                  <span className="text-xs font-bold uppercase tracking-wider text-zinc-400">Total Companies</span>
-                  <div className="w-9 h-9 rounded-xl bg-indigo-500/10 text-indigo-400 flex items-center justify-center">
-                    <Building2 className="w-5 h-5" />
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-gray-500">Total Companies</span>
+                  <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                    <Building2 className="w-4 h-4" />
                   </div>
                 </div>
-                <div className="text-3xl font-black text-white">{metrics?.total_companies ?? "—"}</div>
-                <div className="mt-2 text-[11px] text-zinc-400 flex items-center gap-1.5">
-                  <span className="text-emerald-400 font-bold">{metrics?.approved_companies ?? 0} Approved</span>
+                <div className="text-2xl font-bold text-gray-900">{metrics?.total_companies ?? companies.length}</div>
+                <div className="mt-2 text-[11px] text-gray-500 flex items-center gap-1.5">
+                  <span className="text-emerald-600 font-semibold">{metrics?.approved_companies ?? 0} Approved</span>
                   <span>•</span>
-                  <span className="text-amber-400 font-bold">{metrics?.pending_companies ?? 0} Pending</span>
+                  <span className="text-amber-600 font-semibold">{metrics?.pending_companies ?? 0} Pending</span>
                 </div>
               </div>
 
-              <div className="p-5 rounded-3xl bg-zinc-900 border border-zinc-800/80 relative overflow-hidden">
+              <div className="p-5 rounded-2xl bg-white border border-gray-200 shadow-sm">
                 <div className="flex items-center justify-between mb-3">
-                  <span className="text-xs font-bold uppercase tracking-wider text-zinc-400">Company Users</span>
-                  <div className="w-9 h-9 rounded-xl bg-cyan-500/10 text-cyan-400 flex items-center justify-center">
-                    <Users className="w-5 h-5" />
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-gray-500">Platform Users</span>
+                  <div className="w-8 h-8 rounded-lg bg-cyan-50 text-cyan-600 flex items-center justify-center">
+                    <Users className="w-4 h-4" />
                   </div>
                 </div>
-                <div className="text-3xl font-black text-cyan-400">
-                  {metrics?.total_company_users ?? metrics?.total_users ?? "—"}
+                <div className="text-2xl font-bold text-gray-900">
+                  {metrics?.total_company_users ?? users.length}
                 </div>
-                <div className="mt-2 text-[11px] text-zinc-400">
-                  <span className="text-zinc-200 font-bold">{metrics?.company_admins_count ?? 0} Admins</span> •{" "}
-                  <span className="text-zinc-300 font-medium">{metrics?.cashiers_count ?? 0} Cashiers</span>
+                <div className="mt-2 text-[11px] text-gray-500">
+                  <span className="text-gray-700 font-medium">{users.filter((u) => u.is_approved).length} Active accounts</span>
                 </div>
               </div>
 
-              <div className="p-5 rounded-3xl bg-zinc-900 border border-zinc-800/80 relative overflow-hidden">
+              <div className="p-5 rounded-2xl bg-white border border-gray-200 shadow-sm">
                 <div className="flex items-center justify-between mb-3">
-                  <span className="text-xs font-bold uppercase tracking-wider text-zinc-400">Total Transactions</span>
-                  <div className="w-9 h-9 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center">
-                    <DollarSign className="w-5 h-5" />
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-gray-500">Platform Revenue</span>
+                  <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                    <DollarSign className="w-4 h-4" />
                   </div>
                 </div>
-                <div className="text-2xl font-black text-emerald-400 truncate">
-                  ${Number(metrics?.total_transaction_amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                <div className="text-2xl font-bold text-emerald-600 truncate">
+                  RWF {Number(metrics?.total_transaction_amount || metrics?.total_revenue || 0).toLocaleString()}
                 </div>
-                <div className="mt-2 text-[11px] text-zinc-400 truncate">
-                  <span className="text-emerald-400 font-bold">${Number(metrics?.total_payment_collected || 0).toLocaleString()}</span> collected ({metrics?.total_sales ?? 0} sales)
+                <div className="mt-2 text-[11px] text-gray-500 truncate">
+                  Across all registered stores
                 </div>
               </div>
 
-              <div className="p-5 rounded-3xl bg-zinc-900 border border-zinc-800/80 relative overflow-hidden">
+              <div className="p-5 rounded-2xl bg-white border border-gray-200 shadow-sm">
                 <div className="flex items-center justify-between mb-3">
-                  <span className="text-xs font-bold uppercase tracking-wider text-zinc-400">Pending Approvals</span>
-                  <div className="w-9 h-9 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center">
-                    <BadgeAlert className="w-5 h-5" />
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-gray-500">Pending Approvals</span>
+                  <div className="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center">
+                    <BadgeAlert className="w-4 h-4" />
                   </div>
                 </div>
-                <div className="text-3xl font-black text-amber-400">{metrics?.pending_companies ?? "0"}</div>
-                <div className="mt-2 text-[11px] text-zinc-400">
+                <div className="text-2xl font-bold text-amber-600">{metrics?.pending_companies ?? 0}</div>
+                <div className="mt-2 text-[11px] text-gray-500">
                   {metrics?.pending_companies > 0 ? (
                     <button
                       onClick={() => {
                         setActiveTab("approvals");
                         setCompanyFilter("pending");
                       }}
-                      className="text-amber-300 font-bold hover:underline flex items-center gap-1"
+                      className="text-amber-700 font-semibold hover:underline flex items-center gap-1"
                     >
                       Review requests <ArrowRight className="w-3 h-3" />
                     </button>
                   ) : (
-                    <span>All approved</span>
+                    <span className="text-emerald-600 font-medium">All companies reviewed</span>
                   )}
                 </div>
               </div>
 
-              <div className="p-5 rounded-3xl bg-zinc-900 border border-zinc-800/80 relative overflow-hidden">
+              <div className="p-5 rounded-2xl bg-white border border-gray-200 shadow-sm">
                 <div className="flex items-center justify-between mb-3">
-                  <span className="text-xs font-bold uppercase tracking-wider text-zinc-400">Open Inquiries</span>
-                  <div className="w-9 h-9 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center">
-                    <MessageSquare className="w-5 h-5" />
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-gray-500">Help Desk Inquiries</span>
+                  <div className="w-8 h-8 rounded-lg bg-blue-50 text-[#1b5ebe] flex items-center justify-center">
+                    <MessageSquare className="w-4 h-4" />
                   </div>
                 </div>
-                <div className="text-3xl font-black text-emerald-400">{metrics?.unread_support ?? "0"}</div>
-                <div className="mt-2 text-[11px] text-zinc-400">
+                <div className="text-2xl font-bold text-gray-900">{metrics?.unread_support ?? conversations.length}</div>
+                <div className="mt-2 text-[11px] text-gray-500">
                   <button
                     onClick={() => setActiveTab("support")}
-                    className="text-emerald-400 font-bold hover:underline flex items-center gap-1"
+                    className="text-[#1b5ebe] font-semibold hover:underline flex items-center gap-1"
                   >
-                    Live Help Desk <ArrowRight className="w-3 h-3" />
+                    Open Live Help <ArrowRight className="w-3 h-3" />
                   </button>
                 </div>
               </div>
             </div>
 
-            {/* Recent Registrations & Support Inquiries */}
+            {/* Recent Registrations & Quick Actions */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Recent Company Registrations */}
-              <div className="p-6 rounded-3xl bg-zinc-900 border border-zinc-800/80">
+              <div className="p-6 rounded-2xl bg-white border border-gray-200 shadow-sm">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-bold text-sm text-white flex items-center gap-2">
-                    <Building2 className="w-4 h-4 text-indigo-400" /> Recent Company Registrations
+                  <h3 className="font-bold text-sm text-gray-900 flex items-center gap-2">
+                    <Building2 className="w-4 h-4 text-indigo-600" /> Recent Company Registrations
                   </h3>
                   <button
                     onClick={() => setActiveTab("approvals")}
-                    className="text-xs text-emerald-400 hover:underline font-semibold"
+                    className="text-xs text-[#1b5ebe] hover:underline font-semibold"
                   >
-                    View All
+                    View All ({companies.length})
                   </button>
                 </div>
 
@@ -573,22 +611,22 @@ export default function AdminDashboardPage() {
                   {companies.slice(0, 5).map((comp) => (
                     <div
                       key={comp.id}
-                      className="p-3.5 rounded-2xl bg-zinc-950/60 border border-zinc-800/60 flex items-center justify-between"
+                      className="p-3.5 rounded-xl bg-gray-50 border border-gray-200/80 flex items-center justify-between"
                     >
                       <div>
-                        <div className="font-bold text-xs text-white flex items-center gap-2">
+                        <div className="font-semibold text-xs text-gray-900 flex items-center gap-2">
                           <span>{comp.name}</span>
                           <span
                             className={`text-[9px] px-2 py-0.5 rounded-full font-bold ${
                               comp.is_approved
-                                ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
-                                : "bg-amber-500/10 text-amber-400 border border-amber-500/20"
+                                ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                                : "bg-amber-50 text-amber-700 border border-amber-200"
                             }`}
                           >
                             {comp.is_approved ? "Approved" : "Pending"}
                           </span>
                         </div>
-                        <p className="text-[11px] text-zinc-400 mt-0.5">
+                        <p className="text-[11px] text-gray-500 mt-0.5">
                           {comp.ceo_founder || "Owner"} • TIN: {comp.tin_number || "—"}
                         </p>
                       </div>
@@ -596,60 +634,80 @@ export default function AdminDashboardPage() {
                       <Button
                         size="sm"
                         onClick={() => handleToggleCompanyApproval(comp)}
-                        className={`rounded-xl text-xs font-bold h-8 px-3 ${
+                        className={`rounded-xl text-xs font-semibold h-8 px-3 ${
                           comp.is_approved
-                            ? "bg-zinc-800 hover:bg-zinc-700 text-zinc-300"
-                            : "bg-emerald-600 hover:bg-emerald-500 text-white"
+                            ? "bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-200"
+                            : "bg-emerald-600 hover:bg-emerald-700 text-white"
                         }`}
                       >
                         {comp.is_approved ? "Suspend" : "Approve"}
                       </Button>
                     </div>
                   ))}
+                  {companies.length === 0 && (
+                    <p className="text-xs text-gray-400 py-6 text-center">No companies registered yet.</p>
+                  )}
                 </div>
               </div>
 
-              {/* Recent Support Chats */}
-              <div className="p-6 rounded-3xl bg-zinc-900 border border-zinc-800/80">
+              {/* Recent Users */}
+              <div className="p-6 rounded-2xl bg-white border border-gray-200 shadow-sm">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-bold text-sm text-white flex items-center gap-2">
-                    <Headphones className="w-4 h-4 text-emerald-400" /> Recent Inbound Messages
+                  <h3 className="font-bold text-sm text-gray-900 flex items-center gap-2">
+                    <Users className="w-4 h-4 text-cyan-600" /> Platform User Accounts
                   </h3>
                   <button
-                    onClick={() => setActiveTab("support")}
-                    className="text-xs text-emerald-400 hover:underline font-semibold"
+                    onClick={() => setActiveTab("users")}
+                    className="text-xs text-[#1b5ebe] hover:underline font-semibold"
                   >
-                    Open Live Desk
+                    View All ({users.length})
                   </button>
                 </div>
 
                 <div className="space-y-3">
-                  {conversations.slice(0, 5).map((conv) => (
+                  {users.slice(0, 5).map((u) => (
                     <div
-                      key={conv.company_id}
-                      onClick={() => {
-                        setSelectedCompanyId(conv.company_id);
-                        setActiveTab("support");
-                      }}
-                      className="p-3.5 rounded-2xl bg-zinc-950/60 border border-zinc-800/60 hover:border-zinc-700 cursor-pointer transition-all flex items-center justify-between"
+                      key={u.id}
+                      className="p-3.5 rounded-xl bg-gray-50 border border-gray-200/80 flex items-center justify-between"
                     >
-                      <div className="flex-1 mr-3">
-                        <div className="flex items-center gap-2">
-                          <span className="font-bold text-xs text-white">{conv.company_name}</span>
-                          {conv.unread_count > 0 && (
-                            <span className="bg-red-500 text-white text-[9px] font-black px-1.5 py-0.2 rounded-full">
-                              {conv.unread_count} new
+                      <div>
+                        <div className="font-semibold text-xs text-gray-900 flex items-center gap-2">
+                          <span>{u.username}</span>
+                          {u.is_superuser && (
+                            <span className="text-[9px] bg-blue-50 text-[#1b5ebe] px-1.5 py-0.2 rounded font-bold uppercase border border-blue-200">
+                              Admin
                             </span>
                           )}
+                          <span
+                            className={`text-[9px] px-2 py-0.5 rounded-full font-bold ${
+                              u.is_approved
+                                ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                                : "bg-amber-50 text-amber-700 border border-amber-200"
+                            }`}
+                          >
+                            {u.is_approved ? "Active" : "Pending"}
+                          </span>
                         </div>
-                        <p className="text-[11px] text-zinc-400 truncate mt-0.5 max-w-[260px]">
-                          {conv.last_message || "No messages yet"}
+                        <p className="text-[11px] text-gray-500 mt-0.5">
+                          {u.email} • {u.company_name || "Independent"}
                         </p>
                       </div>
 
-                      <ArrowRight className="w-4 h-4 text-zinc-600" />
+                      <div className="flex items-center gap-1.5">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleToggleUserApproval(u)}
+                          className="rounded-xl text-xs font-semibold h-8 px-2.5"
+                        >
+                          {u.is_approved ? "Suspend" : "Approve"}
+                        </Button>
+                      </div>
                     </div>
                   ))}
+                  {users.length === 0 && (
+                    <p className="text-xs text-gray-400 py-6 text-center">No users registered yet.</p>
+                  )}
                 </div>
               </div>
             </div>
@@ -658,40 +716,44 @@ export default function AdminDashboardPage() {
 
         {/* TAB 2: COMPANY APPROVALS */}
         {activeTab === "approvals" && (
-          <div className="space-y-5 max-w-7xl mx-auto">
-            {/* Filter & Search Bar */}
-            <div className="p-4 rounded-3xl bg-zinc-900 border border-zinc-800 flex flex-col sm:flex-row gap-3 items-center justify-between">
+          <div className="space-y-5">
+            {/* Search & Filters */}
+            <div className="p-4 rounded-2xl bg-white border border-gray-200 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-3">
               <div className="relative w-full sm:w-80">
-                <Search className="w-4 h-4 absolute left-3 top-3 text-zinc-400" />
+                <Search className="w-4 h-4 absolute left-3 top-3 text-gray-400" />
                 <Input
-                  placeholder="Search by name, CEO, TIN, or email..."
+                  placeholder="Search by company name, TIN, email..."
                   value={companySearch}
                   onChange={(e) => setCompanySearch(e.target.value)}
-                  className="pl-9 bg-zinc-950 border-zinc-800 text-xs rounded-xl h-10 text-white"
+                  className="pl-9 bg-gray-50 border-gray-200 text-xs rounded-xl h-10 text-gray-900"
                 />
               </div>
 
-              <div className="flex gap-2 w-full sm:w-auto">
+              <div className="flex items-center gap-1.5 self-end sm:self-auto">
                 <button
                   onClick={() => setCompanyFilter("all")}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
-                    companyFilter === "all" ? "bg-zinc-100 text-zinc-900" : "bg-zinc-800 text-zinc-400 hover:text-white"
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                    companyFilter === "all" ? "bg-gray-900 text-white" : "text-gray-600 hover:bg-gray-100"
                   }`}
                 >
                   All ({companies.length})
                 </button>
                 <button
                   onClick={() => setCompanyFilter("pending")}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
-                    companyFilter === "pending" ? "bg-amber-400 text-zinc-950" : "bg-zinc-800 text-zinc-400 hover:text-white"
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                    companyFilter === "pending"
+                      ? "bg-amber-600 text-white"
+                      : "text-amber-700 bg-amber-50 hover:bg-amber-100"
                   }`}
                 >
                   Pending ({companies.filter((c) => !c.is_approved).length})
                 </button>
                 <button
                   onClick={() => setCompanyFilter("approved")}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
-                    companyFilter === "approved" ? "bg-emerald-400 text-zinc-950" : "bg-zinc-800 text-zinc-400 hover:text-white"
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                    companyFilter === "approved"
+                      ? "bg-emerald-600 text-white"
+                      : "text-emerald-700 bg-emerald-50 hover:bg-emerald-100"
                   }`}
                 >
                   Approved ({companies.filter((c) => c.is_approved).length})
@@ -700,200 +762,245 @@ export default function AdminDashboardPage() {
             </div>
 
             {/* Companies Table */}
-            <div className="rounded-3xl bg-zinc-900 border border-zinc-800 overflow-hidden">
-              <table className="w-full text-left text-xs">
-                <thead className="bg-zinc-950/80 text-zinc-400 uppercase text-[10px] tracking-wider border-b border-zinc-800">
-                  <tr>
-                    <th className="px-5 py-3.5 font-bold">Company / Business</th>
-                    <th className="px-5 py-3.5 font-bold">Owner / CEO</th>
-                    <th className="px-5 py-3.5 font-bold">TIN Number</th>
-                    <th className="px-5 py-3.5 font-bold">Contact Info</th>
-                    <th className="px-5 py-3.5 font-bold text-center">Company Users</th>
-                    <th className="px-5 py-3.5 font-bold">Transactions</th>
-                    <th className="px-5 py-3.5 font-bold">Status</th>
-                    <th className="px-5 py-3.5 font-bold text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-zinc-800/60">
-                  {filteredCompanies.length === 0 ? (
+            <div className="rounded-2xl bg-white border border-gray-200 shadow-sm overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-gray-50 text-gray-600 uppercase text-[10px] tracking-wider border-b border-gray-200">
                     <tr>
-                      <td colSpan={8} className="px-5 py-12 text-center text-zinc-500">
-                        No companies match the selected filter.
-                      </td>
+                      <th className="px-5 py-3.5 font-bold">Company / Business</th>
+                      <th className="px-5 py-3.5 font-bold">Owner / CEO</th>
+                      <th className="px-5 py-3.5 font-bold">TIN Number</th>
+                      <th className="px-5 py-3.5 font-bold">Contact Info</th>
+                      <th className="px-5 py-3.5 font-bold text-center">Users</th>
+                      <th className="px-5 py-3.5 font-bold">Platform Volume</th>
+                      <th className="px-5 py-3.5 font-bold">Status</th>
+                      <th className="px-5 py-3.5 font-bold text-right">Actions</th>
                     </tr>
-                  ) : (
-                    filteredCompanies.map((c) => (
-                      <tr key={c.id} className="hover:bg-zinc-800/30 transition-colors">
-                        <td className="px-5 py-4 font-bold text-white">
-                          <div className="flex items-center gap-2">
-                            <Building2 className="w-4 h-4 text-zinc-500" />
-                            <span>{c.name}</span>
-                          </div>
-                          {c.address && <p className="text-[10px] text-zinc-500 mt-0.5">{c.address}</p>}
-                        </td>
-                        <td className="px-5 py-4 text-zinc-300 font-medium">
-                          {c.ceo_founder || "—"}
-                        </td>
-                        <td className="px-5 py-4 font-mono text-zinc-400">
-                          {c.tin_number ? (
-                            <span className="bg-zinc-800 px-2 py-0.5 rounded text-[11px] font-bold text-zinc-200">
-                              {c.tin_number}
-                            </span>
-                          ) : (
-                            "—"
-                          )}
-                        </td>
-                        <td className="px-5 py-4 text-zinc-400">
-                          <div>{c.contact_email || "—"}</div>
-                          <div className="text-[11px] text-zinc-500">{c.contact_phone || ""}</div>
-                        </td>
-                        <td className="px-5 py-4 text-center">
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
-                            <Users className="w-3 h-3" />
-                            {c.users_count || 0} {c.users_count === 1 ? "user" : "users"}
-                          </span>
-                        </td>
-                        <td className="px-5 py-4">
-                          <div className="font-bold text-emerald-400 text-xs">
-                            ${Number(c.total_transactions_amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                          </div>
-                          <div className="text-[10px] text-zinc-500">
-                            {c.total_sales_count || 0} sales recorded
-                          </div>
-                        </td>
-                        <td className="px-5 py-4">
-                          <span
-                            className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold tracking-wide uppercase ${
-                              c.is_approved
-                                ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/30"
-                                : "bg-amber-500/10 text-amber-400 border border-amber-500/30"
-                            }`}
-                          >
-                            {c.is_approved ? <CheckCircle2 className="w-3 h-3" /> : <Clock className="w-3 h-3" />}
-                            {c.is_approved ? "Approved" : "Pending Review"}
-                          </span>
-                        </td>
-                        <td className="px-5 py-4 text-right">
-                          <Button
-                            size="sm"
-                            disabled={actionLoadingId === c.id}
-                            onClick={() => handleToggleCompanyApproval(c)}
-                            className={`rounded-xl text-xs font-bold h-8 px-4 ${
-                              c.is_approved
-                                ? "bg-zinc-800 hover:bg-zinc-700 text-zinc-300"
-                                : "bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-900/20"
-                            }`}
-                          >
-                            {actionLoadingId === c.id ? (
-                              <RefreshCw className="w-3 h-3 animate-spin" />
-                            ) : c.is_approved ? (
-                              "Suspend"
-                            ) : (
-                              "Approve & Activate"
-                            )}
-                          </Button>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {filteredCompanies.length === 0 ? (
+                      <tr>
+                        <td colSpan={8} className="px-5 py-12 text-center text-gray-400">
+                          No companies match the filter.
                         </td>
                       </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
+                    ) : (
+                      filteredCompanies.map((c) => (
+                        <tr key={c.id} className="hover:bg-gray-50/70 transition-colors">
+                          <td className="px-5 py-4 font-semibold text-gray-900">
+                            <div className="flex items-center gap-2">
+                              <Building2 className="w-4 h-4 text-gray-400" />
+                              <span>{c.name}</span>
+                            </div>
+                            {c.address && <p className="text-[10px] text-gray-400 mt-0.5">{c.address}</p>}
+                          </td>
+                          <td className="px-5 py-4 text-gray-700 font-medium">
+                            {c.ceo_founder || "—"}
+                          </td>
+                          <td className="px-5 py-4 font-mono text-gray-600">
+                            {c.tin_number ? (
+                              <span className="bg-gray-100 px-2 py-0.5 rounded text-[11px] font-bold text-gray-800">
+                                {c.tin_number}
+                              </span>
+                            ) : (
+                              "—"
+                            )}
+                          </td>
+                          <td className="px-5 py-4 text-gray-600">
+                            <div>{c.contact_email || "—"}</div>
+                            <div className="text-[11px] text-gray-400">{c.contact_phone || ""}</div>
+                          </td>
+                          <td className="px-5 py-4 text-center">
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-cyan-50 text-cyan-700 border border-cyan-200">
+                              <Users className="w-3 h-3" />
+                              {c.users_count || 0}
+                            </span>
+                          </td>
+                          <td className="px-5 py-4">
+                            <div className="font-bold text-emerald-700 text-xs">
+                              RWF {Number(c.total_transactions_amount || 0).toLocaleString()}
+                            </div>
+                            <div className="text-[10px] text-gray-400">
+                              {c.total_sales_count || 0} sales
+                            </div>
+                          </td>
+                          <td className="px-5 py-4">
+                            <span
+                              className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold tracking-wide uppercase ${
+                                c.is_approved
+                                  ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                                  : "bg-amber-50 text-amber-700 border border-amber-200"
+                              }`}
+                            >
+                              {c.is_approved ? <CheckCircle2 className="w-3 h-3" /> : <Clock className="w-3 h-3" />}
+                              {c.is_approved ? "Approved" : "Pending"}
+                            </span>
+                          </td>
+                          <td className="px-5 py-4 text-right">
+                            <div className="flex items-center justify-end gap-1.5">
+                              <Button
+                                size="sm"
+                                disabled={actionLoadingId === c.id}
+                                onClick={() => handleToggleCompanyApproval(c)}
+                                className={`rounded-xl text-xs font-semibold h-8 px-3 ${
+                                  c.is_approved
+                                    ? "bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-200"
+                                    : "bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm"
+                                }`}
+                              >
+                                {actionLoadingId === c.id ? (
+                                  <RefreshCw className="w-3 h-3 animate-spin" />
+                                ) : c.is_approved ? (
+                                  "Suspend"
+                                ) : (
+                                  "Approve & Activate"
+                                )}
+                              </Button>
+
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => handleDeleteCompany(c)}
+                                className="h-8 w-8 p-0 rounded-xl text-red-600 hover:bg-red-50 hover:text-red-700"
+                                title="Delete Company"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </Button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         )}
 
         {/* TAB 3: USER ACCOUNTS */}
         {activeTab === "users" && (
-          <div className="space-y-5 max-w-7xl mx-auto">
+          <div className="space-y-5">
             {/* Search */}
-            <div className="p-4 rounded-3xl bg-zinc-900 border border-zinc-800 flex items-center justify-between">
+            <div className="p-4 rounded-2xl bg-white border border-gray-200 shadow-sm flex items-center justify-between">
               <div className="relative w-80">
-                <Search className="w-4 h-4 absolute left-3 top-3 text-zinc-400" />
+                <Search className="w-4 h-4 absolute left-3 top-3 text-gray-400" />
                 <Input
                   placeholder="Search user by username or email..."
                   value={userSearch}
                   onChange={(e) => setUserSearch(e.target.value)}
-                  className="pl-9 bg-zinc-950 border-zinc-800 text-xs rounded-xl h-10 text-white"
+                  className="pl-9 bg-gray-50 border-gray-200 text-xs rounded-xl h-10 text-gray-900"
                 />
               </div>
-              <span className="text-xs text-zinc-400">Total accounts: {users.length}</span>
+              <span className="text-xs text-gray-500 font-medium">Total accounts: {users.length}</span>
             </div>
 
             {/* Users Table */}
-            <div className="rounded-3xl bg-zinc-900 border border-zinc-800 overflow-hidden">
-              <table className="w-full text-left text-xs">
-                <thead className="bg-zinc-950/80 text-zinc-400 uppercase text-[10px] tracking-wider border-b border-zinc-800">
-                  <tr>
-                    <th className="px-5 py-3.5 font-bold">Username</th>
-                    <th className="px-5 py-3.5 font-bold">Email Address</th>
-                    <th className="px-5 py-3.5 font-bold">Assigned Company</th>
-                    <th className="px-5 py-3.5 font-bold">Role</th>
-                    <th className="px-5 py-3.5 font-bold">Status</th>
-                    <th className="px-5 py-3.5 font-bold text-right">Approval</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-zinc-800/60">
-                  {users
-                    .filter((u) => u.username.toLowerCase().includes(userSearch.toLowerCase()) || u.email.toLowerCase().includes(userSearch.toLowerCase()))
-                    .map((u) => (
-                      <tr key={u.id} className="hover:bg-zinc-800/30 transition-colors">
-                        <td className="px-5 py-3.5 font-bold text-white flex items-center gap-2">
-                          <Users className="w-4 h-4 text-zinc-500" />
-                          <span>{u.username}</span>
-                          {u.is_superuser && (
-                            <span className="text-[9px] bg-indigo-500/20 text-indigo-400 px-1.5 py-0.2 rounded font-bold uppercase">
-                              Superuser
+            <div className="rounded-2xl bg-white border border-gray-200 shadow-sm overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-gray-50 text-gray-600 uppercase text-[10px] tracking-wider border-b border-gray-200">
+                    <tr>
+                      <th className="px-5 py-3.5 font-bold">Username</th>
+                      <th className="px-5 py-3.5 font-bold">Email Address</th>
+                      <th className="px-5 py-3.5 font-bold">Assigned Company</th>
+                      <th className="px-5 py-3.5 font-bold">Role</th>
+                      <th className="px-5 py-3.5 font-bold">Status</th>
+                      <th className="px-5 py-3.5 font-bold text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {users
+                      .filter(
+                        (u) =>
+                          u.username.toLowerCase().includes(userSearch.toLowerCase()) ||
+                          u.email.toLowerCase().includes(userSearch.toLowerCase())
+                      )
+                      .map((u) => (
+                        <tr key={u.id} className="hover:bg-gray-50/70 transition-colors">
+                          <td className="px-5 py-3.5 font-semibold text-gray-900 flex items-center gap-2">
+                            <Users className="w-4 h-4 text-gray-400" />
+                            <span>{u.username}</span>
+                            {u.is_superuser && (
+                              <span className="text-[9px] bg-blue-50 text-[#1b5ebe] px-1.5 py-0.2 rounded font-bold uppercase border border-blue-200">
+                                Superuser
+                              </span>
+                            )}
+                          </td>
+                          <td className="px-5 py-3.5 text-gray-600 font-mono text-[11px]">{u.email}</td>
+                          <td className="px-5 py-3.5 text-gray-600">{u.company_name || "—"}</td>
+                          <td className="px-5 py-3.5 font-semibold capitalize text-gray-700">
+                            {u.role ? u.role.replace("_", " ") : "User"}
+                          </td>
+                          <td className="px-5 py-3.5">
+                            <span
+                              className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
+                                u.is_approved
+                                  ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                                  : "bg-amber-50 text-amber-700 border border-amber-200"
+                              }`}
+                            >
+                              {u.is_approved ? "Active" : "Pending Approval"}
                             </span>
-                          )}
-                        </td>
-                        <td className="px-5 py-3.5 text-zinc-300 font-mono text-[11px]">{u.email}</td>
-                        <td className="px-5 py-3.5 text-zinc-400">{u.company_name || "—"}</td>
-                        <td className="px-5 py-3.5 font-bold capitalize text-zinc-300">{u.role.replace("_", " ")}</td>
-                        <td className="px-5 py-3.5">
-                          <span
-                            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                              u.is_approved
-                                ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
-                                : "bg-amber-500/10 text-amber-400 border border-amber-500/20"
-                            }`}
-                          >
-                            {u.is_approved ? "Approved" : "Pending"}
-                          </span>
-                        </td>
-                        <td className="px-5 py-3.5 text-right">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleToggleUserApproval(u)}
-                            className="rounded-xl text-xs h-7 px-3 border-zinc-700 bg-zinc-800 hover:bg-zinc-700 text-zinc-200"
-                          >
-                            {u.is_approved ? "Suspend" : "Approve"}
-                          </Button>
+                          </td>
+                          <td className="px-5 py-3.5 text-right">
+                            <div className="flex items-center justify-end gap-1.5">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleToggleUserApproval(u)}
+                                className={`rounded-xl text-xs font-semibold h-7 px-3 ${
+                                  u.is_approved
+                                    ? "border-gray-200 bg-white hover:bg-gray-100 text-gray-700"
+                                    : "border-emerald-200 bg-emerald-50 hover:bg-emerald-100 text-emerald-700"
+                                }`}
+                              >
+                                {u.is_approved ? "Suspend" : "Approve"}
+                              </Button>
+
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => handleDeleteUser(u)}
+                                className="h-7 w-7 p-0 rounded-xl text-red-600 hover:bg-red-50 hover:text-red-700"
+                                title="Delete User"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </Button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    {users.length === 0 && (
+                      <tr>
+                        <td colSpan={6} className="px-5 py-8 text-center text-gray-400">
+                          No users registered.
                         </td>
                       </tr>
-                    ))}
-                </tbody>
-              </table>
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         )}
 
         {/* TAB 4: LIVE SUPPORT DESK */}
         {activeTab === "support" && (
-          <div className="h-full flex gap-4 max-w-7xl mx-auto rounded-3xl overflow-hidden border border-zinc-800 bg-zinc-900/60 min-h-[620px]">
+          <div className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden flex flex-col md:flex-row min-h-[600px]">
             {/* Left Conversations List */}
-            <div className="w-80 border-r border-zinc-800 flex flex-col bg-zinc-900">
-              <div className="p-4 border-b border-zinc-800">
-                <h3 className="font-bold text-sm text-white flex items-center gap-2">
-                  <Headphones className="w-4 h-4 text-emerald-400" />
+            <div className="w-full md:w-80 border-r border-gray-200 flex flex-col bg-gray-50/50">
+              <div className="p-4 border-b border-gray-200 bg-white">
+                <h3 className="font-bold text-sm text-gray-900 flex items-center gap-2">
+                  <Headphones className="w-4 h-4 text-[#1b5ebe]" />
                   <span>Support Inbox</span>
                 </h3>
-                <p className="text-[11px] text-zinc-400 mt-0.5">Companies awaiting support</p>
+                <p className="text-[11px] text-gray-500 mt-0.5">Companies awaiting support</p>
               </div>
 
-              <div className="flex-1 overflow-y-auto divide-y divide-zinc-800/60">
+              <div className="flex-1 overflow-y-auto divide-y divide-gray-100">
                 {conversations.length === 0 ? (
-                  <div className="p-6 text-center text-xs text-zinc-500">
+                  <div className="p-6 text-center text-xs text-gray-400">
                     No active support messages yet.
                   </div>
                 ) : (
@@ -904,23 +1011,23 @@ export default function AdminDashboardPage() {
                         key={c.company_id}
                         onClick={() => setSelectedCompanyId(c.company_id)}
                         className={`p-4 cursor-pointer transition-all ${
-                          isSelected ? "bg-zinc-800 border-l-4 border-emerald-400" : "hover:bg-zinc-800/40"
+                          isSelected ? "bg-white border-l-4 border-[#1b5ebe] shadow-xs" : "hover:bg-gray-100/60"
                         }`}
                       >
                         <div className="flex items-center justify-between mb-1">
-                          <span className="font-bold text-xs text-white truncate max-w-[170px]">
+                          <span className="font-semibold text-xs text-gray-900 truncate max-w-[170px]">
                             {c.company_name}
                           </span>
                           {c.unread_count > 0 && (
-                            <span className="bg-red-500 text-white text-[9px] font-black px-1.5 py-0.2 rounded-full">
+                            <span className="bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.2 rounded-full">
                               {c.unread_count}
                             </span>
                           )}
                         </div>
-                        <p className="text-[11px] text-zinc-400 truncate">
+                        <p className="text-[11px] text-gray-500 truncate">
                           {c.last_message || "Started chat"}
                         </p>
-                        <div className="mt-1 flex items-center justify-between text-[10px] text-zinc-500">
+                        <div className="mt-1 flex items-center justify-between text-[10px] text-gray-400">
                           <span>{c.ceo_founder || "Store Owner"}</span>
                           {c.last_message_at && (
                             <span>{new Date(c.last_message_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
@@ -934,46 +1041,47 @@ export default function AdminDashboardPage() {
             </div>
 
             {/* Right Chat Conversation View */}
-            <div className="flex-1 flex flex-col bg-zinc-950">
+            <div className="flex-1 flex flex-col bg-white">
               {selectedCompany ? (
                 <>
                   {/* Chat Top Header */}
-                  <div className="p-4 bg-zinc-900 border-b border-zinc-800 flex items-center justify-between">
+                  <div className="p-4 border-b border-gray-200 flex items-center justify-between bg-white">
                     <div>
                       <div className="flex items-center gap-2">
-                        <h4 className="font-bold text-sm text-white">{selectedCompany.name}</h4>
+                        <h4 className="font-bold text-sm text-gray-900">{selectedCompany.name}</h4>
                         <span
                           className={`text-[9px] px-2 py-0.5 rounded-full font-bold ${
                             selectedCompany.is_approved
-                              ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
-                              : "bg-amber-500/10 text-amber-400 border border-amber-500/20"
+                              ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                              : "bg-amber-50 text-amber-700 border border-amber-200"
                           }`}
                         >
                           {selectedCompany.is_approved ? "Approved" : "Pending"}
                         </span>
                       </div>
-                      <p className="text-[11px] text-zinc-400 mt-0.5">
-                        CEO: {selectedCompany.ceo_founder || "—"} • TIN: {selectedCompany.tin_number || "—"} • Email:{" "}
+                      <p className="text-[11px] text-gray-500 mt-0.5">
+                        Owner: {selectedCompany.ceo_founder || "—"} • TIN: {selectedCompany.tin_number || "—"} • Email:{" "}
                         {selectedCompany.contact_email || "—"}
                       </p>
                     </div>
 
                     <Button
                       size="sm"
+                      variant="outline"
                       onClick={() => handleToggleCompanyApproval(selectedCompany)}
-                      className="rounded-xl text-xs font-bold h-8"
+                      className="rounded-xl text-xs font-semibold h-8"
                     >
                       {selectedCompany.is_approved ? "Suspend Account" : "Approve Company"}
                     </Button>
                   </div>
 
                   {/* Messages Bubble Area */}
-                  <div className="flex-1 overflow-y-auto p-5 space-y-3.5">
+                  <div className="flex-1 overflow-y-auto p-5 space-y-3.5 bg-gray-50/30">
                     {chatMessages.length === 0 ? (
-                      <div className="h-full flex flex-col items-center justify-center text-center text-zinc-500">
-                        <MessageSquare className="w-8 h-8 mb-2 text-zinc-600" />
-                        <p className="font-semibold text-xs">No message history with {selectedCompany.name}.</p>
-                        <p className="text-[11px] mt-1 text-zinc-600">Send a greeting below to initiate live help.</p>
+                      <div className="h-full flex flex-col items-center justify-center text-center text-gray-400 py-12">
+                        <MessageSquare className="w-8 h-8 mb-2 text-gray-300" />
+                        <p className="font-semibold text-xs text-gray-600">No message history with {selectedCompany.name}.</p>
+                        <p className="text-[11px] mt-1 text-gray-400">Send a greeting below to initiate live help.</p>
                       </div>
                     ) : (
                       chatMessages.map((m, idx) => {
@@ -984,8 +1092,8 @@ export default function AdminDashboardPage() {
 
                         return (
                           <div key={m.id || idx} className={`flex flex-col ${isMe ? "items-end" : "items-start"}`}>
-                            <div className="flex items-center gap-1.5 mb-1 text-[10px] text-zinc-400">
-                              <span className="font-bold text-zinc-300">
+                            <div className="flex items-center gap-1.5 mb-1 text-[10px] text-gray-400">
+                              <span className="font-semibold text-gray-600">
                                 {isMe ? "Super Admin (You)" : m.sender_name || selectedCompany.name}
                               </span>
                               <span>•</span>
@@ -993,10 +1101,10 @@ export default function AdminDashboardPage() {
                             </div>
 
                             <div
-                              className={`max-w-[75%] rounded-2xl px-4 py-2.5 text-xs shadow-md leading-relaxed ${
+                              className={`max-w-[75%] rounded-2xl px-4 py-2.5 text-xs shadow-xs leading-relaxed ${
                                 isMe
-                                  ? "bg-emerald-600 text-white rounded-br-xs font-medium"
-                                  : "bg-zinc-800 text-zinc-100 border border-zinc-700/80 rounded-bl-xs"
+                                  ? "bg-[#1b5ebe] text-white rounded-br-xs font-medium"
+                                  : "bg-white text-gray-900 border border-gray-200 rounded-bl-xs"
                               }`}
                             >
                               {m.message}
@@ -1007,8 +1115,8 @@ export default function AdminDashboardPage() {
                     )}
 
                     {companyTyping && (
-                      <div className="flex items-center gap-2 text-[11px] text-zinc-400 italic">
-                        <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+                      <div className="flex items-center gap-2 text-[11px] text-gray-500 italic">
+                        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
                         <span>{companyTyping} is typing a message...</span>
                       </div>
                     )}
@@ -1017,18 +1125,18 @@ export default function AdminDashboardPage() {
                   </div>
 
                   {/* Reply Input Bar */}
-                  <form onSubmit={handleSendAdminReply} className="p-3.5 bg-zinc-900 border-t border-zinc-800 flex items-center gap-2">
+                  <form onSubmit={handleSendAdminReply} className="p-3.5 bg-white border-t border-gray-200 flex items-center gap-2">
                     <input
                       type="text"
                       value={chatInput}
                       onChange={(e) => setChatInput(e.target.value)}
                       placeholder={`Reply to ${selectedCompany.name}...`}
-                      className="flex-1 bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                      className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-xs text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1b5ebe]"
                     />
                     <Button
                       type="submit"
                       disabled={!chatInput.trim()}
-                      className="rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold h-10 px-4 text-xs gap-1.5"
+                      className="rounded-xl bg-[#1b5ebe] hover:bg-blue-700 text-white font-semibold h-10 px-4 text-xs gap-1.5"
                     >
                       <Send className="w-3.5 h-3.5" />
                       <span>Reply</span>
@@ -1036,11 +1144,11 @@ export default function AdminDashboardPage() {
                   </form>
                 </>
               ) : (
-                <div className="h-full flex flex-col items-center justify-center text-center p-8 text-zinc-500">
-                  <Headphones className="w-10 h-10 mb-3 text-zinc-700" />
-                  <p className="font-bold text-sm text-zinc-300">Select a company from the left panel</p>
-                  <p className="text-xs text-zinc-500 mt-1 max-w-sm">
-                    View real-time messages and chat live with store owners to assist them with account setup or POS issues.
+                <div className="h-full flex flex-col items-center justify-center text-center p-8 text-gray-400">
+                  <Headphones className="w-10 h-10 mb-3 text-gray-300" />
+                  <p className="font-semibold text-sm text-gray-700">Select a company from the left panel</p>
+                  <p className="text-xs text-gray-400 mt-1 max-w-sm">
+                    View real-time messages and chat live with store owners to assist them with account setup or POS inquiries.
                   </p>
                 </div>
               )}
