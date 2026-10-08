@@ -57,7 +57,7 @@ function AppPreviewMockup() {
             style={{ backgroundColor: "rgba(255,255,255,0.06)" }}
           >
             <Globe className="w-2.5 h-2.5" />
-            zigapos.io/dashboard
+            pos.zigga.io/dashboard
           </div>
         </div>
 

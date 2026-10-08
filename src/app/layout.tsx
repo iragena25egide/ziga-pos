@@ -15,7 +15,11 @@ export const metadata: Metadata = {
   description: "Professional sales, inventory, loans, and business dashboard.",
   manifest: "/site.webmanifest",
   icons: {
-    icon: "/favicon.png",
+    icon: [
+      { url: "/favicon.png", sizes: "512x512", type: "image/png" },
+      { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
+    ],
+    apple: "/favicon.png",
   },
 };
 
