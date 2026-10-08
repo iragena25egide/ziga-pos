@@ -158,6 +158,7 @@ export default function AdminDashboardPage() {
 
   const [users, setUsers] = useState<PlatformUser[]>([]);
   const [userSearch, setUserSearch] = useState("");
+  const [userFilter, setUserFilter] = useState<"all" | "pending" | "approved">("all");
 
   // Live Help Chat state
   const [conversations, setConversations] = useState<ConversationItem[]>([]);
@@ -524,6 +525,23 @@ export default function AdminDashboardPage() {
       toast.error(err.response?.data?.error || "Failed to update company details.");
     } finally {
       setSavingCompanyEdit(false);
+    }
+  };
+
+  // Toggle User Approval directly (or suspend)
+  const handleToggleUserApproval = async (user: PlatformUser) => {
+    try {
+      const res = await api.post(`/users/${user.id}/approve/`);
+      const newStatus = res.data.is_approved;
+
+      setUsers((prev) =>
+        prev.map((item) => (item.id === user.id ? { ...item, is_approved: newStatus } : item))
+      );
+
+      toast.success(`${user.username} is now ${newStatus ? "Active & Approved" : "Suspended"}`);
+      fetchData();
+    } catch (err) {
+      toast.error("Failed to update user approval status.");
     }
   };
 
@@ -1017,8 +1035,18 @@ export default function AdminDashboardPage() {
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => handleToggleUserApproval(u)}
-                          className="rounded-xl text-xs font-semibold h-8 px-2.5"
+                          onClick={() => {
+                            if (u.is_approved) {
+                              setUserToSuspend(u);
+                            } else {
+                              handleToggleUserApproval(u);
+                            }
+                          }}
+                          className={`rounded-xl text-xs font-semibold h-8 px-3 ${
+                            u.is_approved
+                              ? "border-gray-200 bg-white hover:bg-gray-100 text-gray-700"
+                              : "border-emerald-200 bg-emerald-50 hover:bg-emerald-100 text-emerald-700"
+                          }`}
                         >
                           {u.is_approved ? "Suspend" : "Approve"}
                         </Button>
@@ -1217,18 +1245,48 @@ export default function AdminDashboardPage() {
         {/* TAB 3: USER ACCOUNTS */}
         {activeTab === "users" && (
           <div className="space-y-5">
-            {/* Search */}
-            <div className="p-4 rounded-2xl bg-white border border-gray-200 shadow-sm flex items-center justify-between">
-              <div className="relative w-80">
+            {/* Search & Filters */}
+            <div className="p-4 rounded-2xl bg-white border border-gray-200 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-3">
+              <div className="relative w-full sm:w-80">
                 <Search className="w-4 h-4 absolute left-3 top-3 text-gray-400" />
                 <Input
-                  placeholder="Search user by username or email..."
+                  placeholder="Search user by username, email, company..."
                   value={userSearch}
                   onChange={(e) => setUserSearch(e.target.value)}
                   className="pl-9 bg-gray-50 border-gray-200 text-xs rounded-xl h-10 text-gray-900"
                 />
               </div>
-              <span className="text-xs text-gray-500 font-medium">Total accounts: {users.length}</span>
+
+              <div className="flex items-center gap-1.5 self-end sm:self-auto">
+                <button
+                  onClick={() => setUserFilter("all")}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                    userFilter === "all" ? "bg-gray-900 text-white" : "text-gray-600 hover:bg-gray-100"
+                  }`}
+                >
+                  All ({users.length})
+                </button>
+                <button
+                  onClick={() => setUserFilter("pending")}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                    userFilter === "pending"
+                      ? "bg-amber-600 text-white"
+                      : "text-amber-700 bg-amber-50 hover:bg-amber-100"
+                  }`}
+                >
+                  Pending ({users.filter((u) => !u.is_approved).length})
+                </button>
+                <button
+                  onClick={() => setUserFilter("approved")}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                    userFilter === "approved"
+                      ? "bg-emerald-600 text-white"
+                      : "text-emerald-700 bg-emerald-50 hover:bg-emerald-100"
+                  }`}
+                >
+                  Active ({users.filter((u) => u.is_approved).length})
+                </button>
+              </div>
             </div>
 
             {/* Users Table */}
@@ -1247,11 +1305,19 @@ export default function AdminDashboardPage() {
                   </thead>
                   <tbody className="divide-y divide-gray-100">
                     {users
-                      .filter(
-                        (u) =>
-                          u.username.toLowerCase().includes(userSearch.toLowerCase()) ||
-                          u.email.toLowerCase().includes(userSearch.toLowerCase())
-                      )
+                      .filter((u) => {
+                        const term = userSearch.toLowerCase().trim();
+                        const matchesSearch =
+                          !term ||
+                          u.username.toLowerCase().includes(term) ||
+                          u.email.toLowerCase().includes(term) ||
+                          (u.company_name && u.company_name.toLowerCase().includes(term));
+                        if (!matchesSearch) return false;
+
+                        if (userFilter === "pending") return !u.is_approved;
+                        if (userFilter === "approved") return u.is_approved;
+                        return true;
+                      })
                       .map((u) => (
                         <tr key={u.id} className="hover:bg-gray-50/70 transition-colors">
                           <td className="px-5 py-3.5 font-semibold text-gray-900 flex items-center gap-2">
