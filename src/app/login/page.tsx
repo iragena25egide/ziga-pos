@@ -247,6 +247,9 @@ export default function LoginPage() {
   const [forgotEmail, setForgotEmail] = useState("");
   const [forgotOtp, setForgotOtp] = useState("");
   const [forgotNewPassword, setForgotNewPassword] = useState("");
+  const [forgotConfirmPassword, setForgotConfirmPassword] = useState("");
+  const [forgotLoading, setForgotLoading] = useState(false);
+  const [showForgotPass, setShowForgotPass] = useState(false);
   // Google first-time store onboarding modal
   const [googleOnboardingOpen, setGoogleOnboardingOpen] = useState(false);
   const [googleIdToken, setGoogleIdToken] = useState("");
