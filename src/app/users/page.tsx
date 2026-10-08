@@ -26,17 +26,34 @@ import {
   Plus,
   Trash2,
   Lock,
+  UserCheck,
+  UserX,
+  AlertTriangle,
 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { usePagination } from "@/hooks/use-pagination";
 import { PaginationControls } from "@/components/ui/pagination-controls";
 
-export default function SuperAdminUsersPage() {
+export default function UsersPage() {
   const [usersList, setUsersList] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState<"all" | "pending" | "approved">("all");
   const [processingId, setProcessingId] = useState<number | null>(null);
+
+  // Modal states
+  const [userToSuspend, setUserToSuspend] = useState<any | null>(null);
+  const [userToDelete, setUserToDelete] = useState<any | null>(null);
 
   useEffect(() => {
     fetchUsers();
@@ -46,45 +63,9 @@ export default function SuperAdminUsersPage() {
     setLoading(true);
     try {
       const res = await api.get("/users/");
-      setUsersList(Array.isArray(res.data) ? res.data : res.data.results || []);
+      setUsersList(Array.isArray(res.data) ? res.data : res.data?.results || []);
     } catch (err) {
-      // Fallback demo dataset if backend requires authentication
-      toast.info("Loaded system user directory.");
-      setUsersList([
-        {
-          id: 1,
-          username: "admin",
-          email: "superadmin@ziga.pos",
-          first_name: "System",
-          last_name: "Superadmin",
-          role: "super_admin",
-          company_name: "Ziga Platform Core",
-          is_approved: true,
-          is_superuser: true,
-        },
-        {
-          id: 2,
-          username: "kigali_store",
-          email: "owner@kigalisales.rw",
-          first_name: "Jean Paul",
-          last_name: "Nshimyumuremyi",
-          role: "company_admin",
-          company_name: "Kigali Retail Mart",
-          is_approved: false,
-          is_superuser: false,
-        },
-        {
-          id: 3,
-          username: "rubavu_express",
-          email: "contact@rubavustore.rw",
-          first_name: "Marie",
-          last_name: "Uwase",
-          role: "company_admin",
-          company_name: "Rubavu Express Ltd",
-          is_approved: true,
-          is_superuser: false,
-        },
-      ]);
+      toast.error("Failed to load user accounts.");
     } finally {
       setLoading(false);
     }
@@ -99,33 +80,37 @@ export default function SuperAdminUsersPage() {
       } catch (e) {
         await api.patch(`/users/${user.id}/`, { is_approved: newStatus });
       }
-
       setUsersList((prev) =>
         prev.map((u) => (u.id === user.id ? { ...u, is_approved: newStatus } : u))
       );
-
       toast.success(
-        newStatus
-          ? `Account & Company for ${user.company_name || user.username} APPROVED!`
-          : `Account for ${user.username} SUSPENDED.`
+        `${user.username} is now ${newStatus ? "Approved & Active" : "Suspended"}.`
       );
     } catch (err) {
-      // Update locally for immediate responsiveness
-      setUsersList((prev) =>
-        prev.map((u) => (u.id === user.id ? { ...u, is_approved: newStatus } : u))
-      );
-      toast.success(
-        newStatus
-          ? `Account for ${user.username} marked as APPROVED.`
-          : `Account for ${user.username} SUSPENDED.`
-      );
+      toast.error("Failed to update user status.");
     } finally {
       setProcessingId(null);
+      setUserToSuspend(null);
+    }
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!userToDelete) return;
+    setProcessingId(userToDelete.id);
+    try {
+      await api.delete(`/users/${userToDelete.id}/`);
+      setUsersList((prev) => prev.filter((u) => u.id !== userToDelete.id));
+      toast.success(`User "${userToDelete.username}" has been deleted.`);
+    } catch (err: any) {
+      toast.error(err.response?.data?.error || "Failed to delete user.");
+    } finally {
+      setProcessingId(null);
+      setUserToDelete(null);
     }
   };
 
   const filteredUsers = usersList.filter((u) => {
-    const term = searchTerm.trim().toLowerCase();
+    const term = searchTerm.toLowerCase();
     const matchesSearch =
       (u.username && u.username.toLowerCase().includes(term)) ||
       (u.email && u.email.toLowerCase().includes(term)) ||
@@ -150,197 +135,318 @@ export default function SuperAdminUsersPage() {
   const pendingCount = usersList.filter((u) => !u.is_approved).length;
 
   return (
-    <div className="space-y-6 bg-zinc-950 text-zinc-100 min-h-screen p-6 rounded-3xl border border-zinc-800/80 shadow-2xl font-mono selection:bg-white selection:text-zinc-950">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 pb-6 border-b border-zinc-800">
-        <div>
-          <div className="flex items-center gap-3 mb-1">
-            <div className="w-10 h-10 bg-zinc-900 border border-zinc-700 rounded-xl flex items-center justify-center text-white">
-              <ShieldCheck className="w-5 h-5 text-white" />
-            </div>
-            <h1 className="text-2xl font-black tracking-widest uppercase text-white">
-              SYSTEM USER APPROVALS
-            </h1>
+    <div className="space-y-6 pb-12 text-gray-900">
+      {/* Header Card */}
+      <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div className="flex items-center gap-3.5">
+          <div className="w-11 h-11 bg-blue-50 border border-blue-100 rounded-xl flex items-center justify-center text-[#1b5ebe] shrink-0">
+            <ShieldCheck className="w-6 h-6" />
           </div>
-          <p className="text-xs text-zinc-400">
-            Super Admin directory for reviewing, approving, and provisioning company accounts.
-          </p>
+          <div>
+            <div className="flex items-center gap-2">
+              <h1 className="text-lg font-bold tracking-tight text-gray-900">
+                User Account Management
+              </h1>
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wide bg-blue-50 text-[#1b5ebe] border border-blue-200 uppercase">
+                Admin Directory
+              </span>
+            </div>
+            <p className="text-xs text-gray-500 mt-0.5">
+              Review, approve, suspend, and manage all company user accounts across the platform.
+            </p>
+          </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5">
           <Button
             onClick={fetchUsers}
             variant="outline"
-            className="h-10 px-4 border-zinc-800 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 rounded-xl text-xs font-bold gap-2"
+            disabled={loading}
+            className="h-9 px-3.5 border-gray-200 bg-white hover:bg-gray-50 text-gray-700 rounded-xl text-xs font-semibold gap-1.5"
           >
-            <RefreshCw className="w-3.5 h-3.5" /> Refresh List
+            <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} /> Refresh
           </Button>
         </div>
       </div>
 
       {/* Filter Tabs & Search */}
       <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-        {/* Sleek Monochrome Tabs */}
-        <div className="flex bg-zinc-900 p-1 rounded-2xl border border-zinc-800 w-full md:w-auto">
+        <div className="flex bg-gray-100/80 p-1 rounded-xl border border-gray-200 w-full md:w-auto">
           <button
             onClick={() => setActiveTab("all")}
-            className={`px-4 py-2 text-xs font-bold rounded-xl transition-all ${
+            className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all ${
               activeTab === "all"
-                ? "bg-zinc-100 text-zinc-950 shadow-sm"
-                : "text-zinc-400 hover:text-white"
+                ? "bg-white text-gray-900 shadow-sm"
+                : "text-gray-500 hover:text-gray-900"
             }`}
           >
             All Accounts ({usersList.length})
           </button>
           <button
             onClick={() => setActiveTab("pending")}
-            className={`px-4 py-2 text-xs font-bold rounded-xl transition-all flex items-center gap-2 ${
+            className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all flex items-center gap-1.5 ${
               activeTab === "pending"
-                ? "bg-zinc-100 text-zinc-950 shadow-sm"
-                : "text-zinc-400 hover:text-white"
+                ? "bg-amber-600 text-white shadow-sm"
+                : "text-amber-700 hover:bg-amber-50"
             }`}
           >
-            <span>Pending Approval</span>
+            <span>Pending Review</span>
             {pendingCount > 0 && (
-              <span className="w-4 h-4 rounded-full bg-zinc-800 text-white text-[10px] flex items-center justify-center font-mono">
+              <span className="bg-amber-500 text-white text-[10px] px-1.5 py-0.2 rounded-full font-bold">
                 {pendingCount}
               </span>
             )}
           </button>
           <button
             onClick={() => setActiveTab("approved")}
-            className={`px-4 py-2 text-xs font-bold rounded-xl transition-all ${
+            className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all ${
               activeTab === "approved"
-                ? "bg-zinc-100 text-zinc-950 shadow-sm"
-                : "text-zinc-400 hover:text-white"
+                ? "bg-emerald-600 text-white shadow-sm"
+                : "text-emerald-700 hover:bg-emerald-50"
             }`}
           >
-            Approved Active
+            Active & Approved ({usersList.filter((u) => u.is_approved).length})
           </button>
         </div>
 
-        {/* Search */}
-        <div className="relative w-full md:w-72">
-          <Search className="w-4 h-4 text-zinc-500 absolute left-3 top-3 pointer-events-none" />
+        <div className="relative w-full md:w-80">
+          <Search className="w-4 h-4 absolute left-3 top-2.5 text-gray-400" />
           <Input
-            placeholder="Search company or email..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-9 h-10 bg-zinc-900 border-zinc-800 text-zinc-100 text-xs rounded-xl focus:border-zinc-500 placeholder:text-zinc-600"
+            placeholder="Search by name, email, company..."
+            className="pl-9 h-10 text-xs bg-white border-gray-200 text-gray-900 rounded-xl"
           />
         </div>
       </div>
 
-      {/* Main Table */}
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="rounded-2xl border border-zinc-800 bg-zinc-900/50 overflow-hidden shadow-2xl"
-      >
-        <Table>
-          <TableHeader>
-            <TableRow className="border-zinc-800 hover:bg-transparent text-xs text-zinc-400 font-bold uppercase tracking-wider">
-              <TableHead className="text-zinc-400">Company & User</TableHead>
-              <TableHead className="text-zinc-400">Email Contact</TableHead>
-              <TableHead className="text-zinc-400">Role</TableHead>
-              <TableHead className="text-zinc-400">Status</TableHead>
-              <TableHead className="text-right text-zinc-400">Super Admin Approval Action</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody className="divide-y divide-zinc-800/60">
-            {loading ? (
-              <TableRow>
-                <TableCell colSpan={5} className="text-center py-12 text-zinc-500 text-xs">
-                  <div className="flex justify-center items-center gap-2">
-                    <RefreshCw className="w-4 h-4 animate-spin text-zinc-400" />
-                    <span>Loading system account registry...</span>
-                  </div>
-                </TableCell>
+      {/* Users Table Card */}
+      <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader className="bg-gray-50/80 border-b border-gray-200">
+              <TableRow className="hover:bg-transparent">
+                <TableHead className="py-3.5 px-5 text-gray-600 text-[10px] font-bold uppercase tracking-wider">
+                  User Details
+                </TableHead>
+                <TableHead className="py-3.5 px-5 text-gray-600 text-[10px] font-bold uppercase tracking-wider">
+                  Email Contact
+                </TableHead>
+                <TableHead className="py-3.5 px-5 text-gray-600 text-[10px] font-bold uppercase tracking-wider">
+                  Assigned Company
+                </TableHead>
+                <TableHead className="py-3.5 px-5 text-gray-600 text-[10px] font-bold uppercase tracking-wider">
+                  Role
+                </TableHead>
+                <TableHead className="py-3.5 px-5 text-gray-600 text-[10px] font-bold uppercase tracking-wider">
+                  Status
+                </TableHead>
+                <TableHead className="py-3.5 px-5 text-right text-gray-600 text-[10px] font-bold uppercase tracking-wider">
+                  Actions
+                </TableHead>
               </TableRow>
-            ) : filteredUsers.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={5} className="text-center py-12 text-zinc-500 text-xs">
-                  No registered accounts match your filter criteria.
-                </TableCell>
-              </TableRow>
-            ) : (
-              paginatedUsers.map((user) => (
-                <TableRow key={user.id} className="border-zinc-800/60 hover:bg-zinc-900/80 transition-colors">
-                  <TableCell className="py-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-xl bg-zinc-800 border border-zinc-700 flex items-center justify-center text-white shrink-0">
-                        {user.company_name ? <Building2 className="w-4 h-4 text-zinc-300" /> : <User className="w-4 h-4 text-zinc-300" />}
-                      </div>
-                      <div>
-                        <p className="text-sm font-bold text-white tracking-wide">
-                          {user.company_name || user.username}
-                        </p>
-                        <p className="text-[11px] text-zinc-400">
-                          {user.first_name ? `${user.first_name} ${user.last_name || ""}` : user.username}
-                        </p>
-                      </div>
+            </TableHeader>
+            <TableBody className="divide-y divide-gray-100 text-xs">
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="py-12 text-center text-gray-400">
+                    <div className="flex items-center justify-center gap-2">
+                      <RefreshCw className="w-4 h-4 animate-spin text-[#1b5ebe]" />
+                      <span>Loading accounts directory...</span>
                     </div>
                   </TableCell>
-
-                  <TableCell className="text-xs text-zinc-300">
-                    {user.email}
-                  </TableCell>
-
-                  <TableCell>
-                    <span className="inline-block px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider bg-zinc-800 text-zinc-300 border border-zinc-700">
-                      {user.role === "super_admin" ? "Super Admin" : user.role === "company_admin" ? "Company Owner" : "Cashier"}
-                    </span>
-                  </TableCell>
-
-                  <TableCell>
-                    {user.is_approved ? (
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-white text-zinc-950 border border-zinc-200">
-                        <CheckCircle2 className="w-3.5 h-3.5 text-zinc-950" /> Approved
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-zinc-900 text-zinc-300 border border-zinc-700 animate-pulse">
-                        <Clock className="w-3.5 h-3.5 text-zinc-400" /> Pending Approval
-                      </span>
-                    )}
-                  </TableCell>
-
-                  <TableCell className="text-right">
-                    {user.is_superuser ? (
-                      <span className="text-xs text-zinc-500 font-semibold px-2">Super Admin (System Core)</span>
-                    ) : (
-                      <Button
-                        size="sm"
-                        onClick={() => handleToggleApproval(user)}
-                        disabled={processingId === user.id}
-                        className={`h-9 px-4 rounded-xl text-xs font-bold transition-all ${
-                          user.is_approved
-                            ? "bg-zinc-900 border border-zinc-700 text-zinc-300 hover:bg-zinc-800"
-                            : "bg-white text-zinc-950 hover:bg-zinc-200 shadow-lg"
-                        }`}
-                      >
-                        {processingId === user.id ? (
-                          <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                        ) : user.is_approved ? (
-                          <>Suspend Access</>
-                        ) : (
-                          <>Approve & Activate</>
-                        )}
-                      </Button>
-                    )}
+                </TableRow>
+              ) : paginatedUsers.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="py-12 text-center text-gray-400">
+                    No accounts found matching the filter.
                   </TableCell>
                 </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
+              ) : (
+                paginatedUsers.map((u) => {
+                  const isProcessing = processingId === u.id;
+                  const isSuper = u.is_superuser;
 
-        <PaginationControls
-          currentPage={currentPage}
-          totalPages={totalPages}
-          onNext={nextPage}
-          onPrev={prevPage}
-        />
-      </motion.div>
+                  return (
+                    <TableRow
+                      key={u.id}
+                      className="hover:bg-gray-50/70 transition-colors"
+                    >
+                      <TableCell className="py-4 px-5 font-semibold text-gray-900">
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-7 h-7 rounded-lg bg-gray-100 flex items-center justify-center text-gray-500 font-bold text-xs shrink-0">
+                            {(u.first_name?.[0] || u.username?.[0] || "U").toUpperCase()}
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-1.5">
+                              <span>{u.username}</span>
+                              {isSuper && (
+                                <span className="bg-blue-50 text-[#1b5ebe] border border-blue-200 text-[9px] px-1.5 py-0.2 rounded font-bold uppercase">
+                                  Super Admin
+                                </span>
+                              )}
+                            </div>
+                            {(u.first_name || u.last_name) && (
+                              <p className="text-[11px] text-gray-400 font-normal">
+                                {`${u.first_name || ""} ${u.last_name || ""}`.trim()}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </TableCell>
+
+                      <TableCell className="py-4 px-5 font-mono text-[11px] text-gray-600">
+                        {u.email}
+                      </TableCell>
+
+                      <TableCell className="py-4 px-5 text-gray-600">
+                        <div className="flex items-center gap-1.5">
+                          <Building2 className="w-3.5 h-3.5 text-gray-400" />
+                          <span className="font-medium">{u.company_name || "Platform Core"}</span>
+                        </div>
+                      </TableCell>
+
+                      <TableCell className="py-4 px-5">
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-gray-100 text-gray-700">
+                          {u.role ? u.role.replace("_", " ") : "User"}
+                        </span>
+                      </TableCell>
+
+                      <TableCell className="py-4 px-5">
+                        {u.is_approved ? (
+                          <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                            <CheckCircle2 className="w-3 h-3" />
+                            Active
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
+                            <Clock className="w-3 h-3" />
+                            Pending
+                          </span>
+                        )}
+                      </TableCell>
+
+                      <TableCell className="py-4 px-5 text-right">
+                        {isSuper ? (
+                          <span className="text-[11px] text-gray-400 italic">System Protected</span>
+                        ) : (
+                          <div className="flex items-center justify-end gap-1.5">
+                            {u.is_approved ? (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                disabled={isProcessing}
+                                onClick={() => setUserToSuspend(u)}
+                                className="rounded-xl text-xs font-semibold h-8 px-3 border-gray-200 hover:bg-amber-50 hover:text-amber-700 text-gray-700"
+                              >
+                                Suspend
+                              </Button>
+                            ) : (
+                              <Button
+                                size="sm"
+                                disabled={isProcessing}
+                                onClick={() => handleToggleApproval(u)}
+                                className="rounded-xl text-xs font-semibold h-8 px-3.5 bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm"
+                              >
+                                {isProcessing ? (
+                                  <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                                ) : (
+                                  "Approve"
+                                )}
+                              </Button>
+                            )}
+
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              disabled={isProcessing}
+                              onClick={() => setUserToDelete(u)}
+                              className="h-8 w-8 p-0 rounded-xl text-red-600 hover:bg-red-50 hover:text-red-700"
+                              title="Delete Account"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </Button>
+                          </div>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
+              )}
+            </TableBody>
+          </Table>
+        </div>
+
+        <div className="p-4 border-t border-gray-200 flex items-center justify-between">
+          <p className="text-xs text-gray-500 font-medium">
+            Showing {paginatedUsers.length} of {filteredUsers.length} accounts
+          </p>
+          <PaginationControls
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={(page) => {
+              if (page > currentPage) nextPage();
+              else prevPage();
+            }}
+          />
+        </div>
+      </div>
+
+      {/* ─── Suspend Confirmation Modal ─── */}
+      <AlertDialog open={!!userToSuspend} onOpenChange={(open) => !open && setUserToSuspend(null)}>
+        <AlertDialogContent className="bg-white rounded-2xl max-w-md">
+          <AlertDialogHeader>
+            <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center mb-2">
+              <AlertTriangle className="w-5 h-5" />
+            </div>
+            <AlertDialogTitle className="text-base font-bold text-gray-900">
+              Suspend Account: {userToSuspend?.username}?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-xs text-gray-500 leading-relaxed">
+              Are you sure you want to suspend this account ({userToSuspend?.email})? This user will be immediately blocked from signing in until re-approved by Super Admin.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="gap-2 mt-4">
+            <AlertDialogCancel className="rounded-xl text-xs font-semibold">
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => handleToggleApproval(userToSuspend)}
+              className="rounded-xl text-xs font-semibold bg-amber-600 hover:bg-amber-700 text-white"
+            >
+              Confirm Suspend
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* ─── Delete Confirmation Modal ─── */}
+      <AlertDialog open={!!userToDelete} onOpenChange={(open) => !open && setUserToDelete(null)}>
+        <AlertDialogContent className="bg-white rounded-2xl max-w-md">
+          <AlertDialogHeader>
+            <div className="w-10 h-10 rounded-xl bg-red-50 text-red-600 flex items-center justify-center mb-2">
+              <Trash2 className="w-5 h-5" />
+            </div>
+            <AlertDialogTitle className="text-base font-bold text-gray-900">
+              Delete User Account?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-xs text-gray-500 leading-relaxed">
+              Are you sure you want to permanently delete user <span className="font-bold text-gray-800">"{userToDelete?.username}"</span> ({userToDelete?.email})? This action cannot be reversed.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="gap-2 mt-4">
+            <AlertDialogCancel className="rounded-xl text-xs font-semibold">
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmDelete}
+              className="rounded-xl text-xs font-semibold bg-red-600 hover:bg-red-700 text-white"
+            >
+              Delete User
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

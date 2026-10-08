@@ -19,6 +19,7 @@ import {
   Trash2,
   ChevronDown,
   Bell,
+  Headphones,
 } from "lucide-react";
 import api from "@/lib/api";
 import { OfflineIndicator, OfflineSyncProvider } from "./OfflineSync";
@@ -110,6 +111,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
   const navItems = isSuperAdmin
     ? [
         { name: "Admin Hub", href: "/admin", icon: ShieldCheck },
+        { name: "Live Support", href: "/admin?tab=support", icon: Headphones },
         { name: "Companies", href: "/companies", icon: Building2 },
         { name: "Users", href: "/users", icon: Users },
         { name: "System Reports", href: "/reports", icon: FileText },

@@ -1,7 +1,18 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { AlertTriangle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ShieldCheck,
@@ -105,6 +116,22 @@ export default function AdminDashboardPage() {
   const [actionLoadingId, setActionLoadingId] = useState<number | null>(null);
 
   // Users state
+  const searchParams = useSearchParams();
+  const tabQuery = searchParams.get("tab");
+
+  useEffect(() => {
+    if (tabQuery === "support") setActiveTab("support");
+    else if (tabQuery === "approvals") setActiveTab("approvals");
+    else if (tabQuery === "users") setActiveTab("users");
+    else if (tabQuery === "overview") setActiveTab("overview");
+  }, [tabQuery]);
+
+  // Modal states
+  const [companyToSuspend, setCompanyToSuspend] = useState<Company | null>(null);
+  const [companyToDelete, setCompanyToDelete] = useState<Company | null>(null);
+  const [userToSuspend, setUserToSuspend] = useState<PlatformUser | null>(null);
+  const [userToDelete, setUserToDelete] = useState<PlatformUser | null>(null);
+
   const [users, setUsers] = useState<PlatformUser[]>([]);
   const [userSearch, setUserSearch] = useState("");
 
@@ -1156,6 +1183,98 @@ export default function AdminDashboardPage() {
           </div>
         )}
       </div>
+
+      {/* ─── Company Suspend Modal ─── */}
+      <AlertDialog open={!!companyToSuspend} onOpenChange={(open) => !open && setCompanyToSuspend(null)}>
+        <AlertDialogContent className="bg-white rounded-2xl max-w-md">
+          <AlertDialogHeader>
+            <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center mb-2">
+              <AlertTriangle className="w-5 h-5" />
+            </div>
+            <AlertDialogTitle className="text-base font-bold text-gray-900">
+              Suspend Company: {companyToSuspend?.name}?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-xs text-gray-500 leading-relaxed">
+              Are you sure you want to suspend this company? All users belonging to this business will be temporarily blocked from signing into Ziga POS.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="gap-2 mt-4">
+            <AlertDialogCancel className="rounded-xl text-xs font-semibold">Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmSuspendCompany} className="rounded-xl text-xs font-semibold bg-amber-600 hover:bg-amber-700 text-white">
+              Confirm Suspend
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* ─── Company Delete Modal ─── */}
+      <AlertDialog open={!!companyToDelete} onOpenChange={(open) => !open && setCompanyToDelete(null)}>
+        <AlertDialogContent className="bg-white rounded-2xl max-w-md">
+          <AlertDialogHeader>
+            <div className="w-10 h-10 rounded-xl bg-red-50 text-red-600 flex items-center justify-center mb-2">
+              <Trash2 className="w-5 h-5" />
+            </div>
+            <AlertDialogTitle className="text-base font-bold text-gray-900">
+              Delete Company: {companyToDelete?.name}?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-xs text-gray-500 leading-relaxed">
+              Are you sure you want to permanently delete this business? This action cannot be reversed.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="gap-2 mt-4">
+            <AlertDialogCancel className="rounded-xl text-xs font-semibold">Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmDeleteCompany} className="rounded-xl text-xs font-semibold bg-red-600 hover:bg-red-700 text-white">
+              Delete Company
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* ─── User Suspend Modal ─── */}
+      <AlertDialog open={!!userToSuspend} onOpenChange={(open) => !open && setUserToSuspend(null)}>
+        <AlertDialogContent className="bg-white rounded-2xl max-w-md">
+          <AlertDialogHeader>
+            <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center mb-2">
+              <AlertTriangle className="w-5 h-5" />
+            </div>
+            <AlertDialogTitle className="text-base font-bold text-gray-900">
+              Suspend User: {userToSuspend?.username}?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-xs text-gray-500 leading-relaxed">
+              Are you sure you want to suspend user "{userToSuspend?.username}" ({userToSuspend?.email})? They will be blocked from accessing the system.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="gap-2 mt-4">
+            <AlertDialogCancel className="rounded-xl text-xs font-semibold">Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmSuspendUser} className="rounded-xl text-xs font-semibold bg-amber-600 hover:bg-amber-700 text-white">
+              Confirm Suspend
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* ─── User Delete Modal ─── */}
+      <AlertDialog open={!!userToDelete} onOpenChange={(open) => !open && setUserToDelete(null)}>
+        <AlertDialogContent className="bg-white rounded-2xl max-w-md">
+          <AlertDialogHeader>
+            <div className="w-10 h-10 rounded-xl bg-red-50 text-red-600 flex items-center justify-center mb-2">
+              <Trash2 className="w-5 h-5" />
+            </div>
+            <AlertDialogTitle className="text-base font-bold text-gray-900">
+              Delete User: {userToDelete?.username}?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-xs text-gray-500 leading-relaxed">
+              Are you sure you want to permanently delete user "{userToDelete?.username}" ({userToDelete?.email})? This action cannot be reversed.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="gap-2 mt-4">
+            <AlertDialogCancel className="rounded-xl text-xs font-semibold">Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmDeleteUser} className="rounded-xl text-xs font-semibold bg-red-600 hover:bg-red-700 text-white">
+              Delete User
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
