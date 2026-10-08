@@ -1,0 +1,274 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-inter);
+  --font-mono: var(--font-geist-mono);
+  --font-heading: var(--font-inter);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) * 0.625);
+  --radius-md: calc(var(--radius) * 0.875);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.25);
+  --radius-2xl: calc(var(--radius) * 1.5);
+}
+
+:root {
+  /* ─── Ziga POS Design System (Cisco Academy Style) ─── */
+
+  /* App backgrounds */
+  --background: #f5f7fa;           /* App shell — very light neutral */
+  --foreground: #111827;           /* Near-black text */
+
+  /* Card surfaces */
+  --card: #ffffff;
+  --card-foreground: #111827;
+
+  /* Popover / dropdowns */
+  --popover: #ffffff;
+  --popover-foreground: #111827;
+
+  /* Primary action — corporate blue */
+  --primary: #1b5ebe;
+  --primary-foreground: #ffffff;
+
+  /* Secondary (muted surfaces) */
+  --secondary: #f3f4f6;
+  --secondary-foreground: #111827;
+
+  /* Muted backgrounds and text */
+  --muted: #f3f4f6;
+  --muted-foreground: #6b7280;
+
+  /* Accent (hover states etc.) */
+  --accent: #eff6ff;
+  --accent-foreground: #1b5ebe;
+
+  /* Destructive (errors, delete) */
+  --destructive: #dc2626;
+
+  /* Borders and inputs */
+  --border: #e5e7eb;
+  --input: #e5e7eb;
+
+  /* Focus ring */
+  --ring: #1b5ebe;
+
+  /* Charts */
+  --chart-1: #1b5ebe;
+  --chart-2: #0e9f8a;
+  --chart-3: #f59e0b;
+  --chart-4: #ef4444;
+  --chart-5: #8b5cf6;
+
+  /* Border radius — slightly less rounded than before */
+  --radius: 0.5rem;
+
+  /* Sidebar — deep navy */
+  --sidebar: #0b1d3a;
+  --sidebar-foreground: #e5e7eb;
+  --sidebar-primary: #ffffff;
+  --sidebar-primary-foreground: #0b1d3a;
+  --sidebar-accent: rgba(255, 255, 255, 0.08);
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: rgba(255, 255, 255, 0.08);
+  --sidebar-ring: #1b5ebe;
+}
+
+/* No dark mode — clean light-only design */
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "cv11", "ss01";
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  html {
+    @apply font-sans;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    font-feature-settings: "cv11", "ss01";
+    letter-spacing: -0.015em;
+  }
+}
+
+@layer utilities {
+  /* Clean card — white with subtle border */
+  .ziga-card {
+    @apply bg-white border border-border rounded-lg shadow-[0_1px_4px_rgba(0,0,0,0.06)];
+  }
+
+  /* Navy panel utility */
+  .ziga-navy {
+    background-color: #0b1d3a;
+    color: #ffffff;
+  }
+
+  /* Modal Utilities */
+  .admin-modal-content {
+    @apply p-0 overflow-hidden rounded-lg bg-white border border-border shadow-xl sm:max-w-md;
+  }
+  .admin-modal-header {
+    @apply bg-[#0b1d3a] text-white p-6 pb-5;
+  }
+  .admin-modal-title {
+    @apply text-base font-semibold tracking-tight text-white;
+  }
+  .admin-modal-body {
+    @apply p-6 space-y-4 bg-white;
+  }
+  .admin-modal-footer {
+    @apply px-6 py-4 bg-gray-50 border-t border-border flex justify-end gap-2;
+  }
+  .admin-input-label {
+    @apply text-xs font-medium text-gray-700;
+  }
+  .admin-input {
+    @apply bg-white border-border rounded-md shadow-none focus:border-primary focus:ring-primary;
+  }
+
+  /* Hide number input arrows */
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  input[type="number"] {
+    -moz-appearance: textfield;
+  }
+}
+
+/* ─── Scrollbar ─── */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: #d1d5db;
+  border-radius: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: #9ca3af;
+}
+
+/* Sidebar scrollbar — subtle on dark bg */
+.sidebar-scroll::-webkit-scrollbar {
+  width: 4px;
+}
+.sidebar-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.sidebar-scroll::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.15);
+  border-radius: 4px;
+}
+.sidebar-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(255,255,255,0.3);
+}
+
+/* Cart scroll area */
+.cart-scroll-area {
+  overflow-y: scroll;
+  scrollbar-width: thin;
+  scrollbar-color: #d1d5db #f3f4f6;
+}
+.cart-scroll-area::-webkit-scrollbar {
+  width: 6px;
+  background: #f3f4f6;
+}
+.cart-scroll-area::-webkit-scrollbar-track {
+  background: #f3f4f6;
+  border-radius: 3px;
+}
+.cart-scroll-area::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 3px;
+  min-height: 40px;
+}
+.cart-scroll-area::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+
+/* ─── Print ─── */
+@media print {
+  body * { visibility: hidden; }
+  .printable-receipt, .printable-receipt * { visibility: visible; }
+  .printable-receipt {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    margin: 0;
+    padding: 20px;
+    background-color: white !important;
+    color: black !important;
+  }
+  .printable-receipt .receipt-text-muted { color: #666 !important; }
+  .printable-receipt .receipt-text-strong { color: #000 !important; font-weight: bold !important; }
+  .printable-receipt .receipt-text-red { color: #000 !important; }
+  .printable-receipt .receipt-border { border-color: #ccc !important; }
+  .printable-receipt .receipt-divide > * + * { border-top-color: #eee !important; }
+}
+
+/* Receipt html2canvas safe styles */
+.receipt-wrapper { background-color: #0f172a; color: #e2e8f0; }
+.receipt-border { border-color: #1e293b; }
+.receipt-text-muted { color: #94a3b8; }
+.receipt-text-strong { color: #ffffff; }
+.receipt-text-red { color: #f87171; }
+.receipt-divide > * + * { border-top-color: #1e293b; }
