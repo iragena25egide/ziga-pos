@@ -57,6 +57,7 @@ import { fetchWithCache } from "@/lib/offlineCache";
 export default function ProductsPage() {
   const [products, setProducts] = useState<any[]>([]);
   const [companies, setCompanies] = useState<any[]>([]);
+  const [currentUser, setCurrentUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   const [searchTerm, setSearchTerm] = useState("");
@@ -85,9 +86,10 @@ export default function ProductsPage() {
 
   const fetchData = async () => {
     try {
-      const [productsData, companiesData] = await Promise.all([
+      const [productsData, companiesData, userRes] = await Promise.all([
         fetchWithCache("/products/", "nexus_cached_products"),
         fetchWithCache("/companies/", "nexus_cached_companies"),
+        api.get("/users/me/").catch(() => ({ data: null })),
       ]);
       const safeProducts = Array.isArray(productsData)
         ? productsData
@@ -97,6 +99,9 @@ export default function ProductsPage() {
         : companiesData?.results || [];
       setProducts(safeProducts);
       setCompanies(safeCompanies);
+      if (userRes.data) {
+        setCurrentUser(userRes.data);
+      }
     } catch (err: any) {
       const msg = err.response?.data?.detail || err.response?.data?.error || "Failed to load products";
       toast.error(msg);
@@ -164,11 +169,21 @@ export default function ProductsPage() {
   } = usePagination(filteredProducts);
 
   const handleOpenModal = (product: any = null) => {
+    const userCompanyId =
+      currentUser?.company?.id != null
+        ? currentUser.company.id.toString()
+        : currentUser?.company != null
+        ? currentUser.company.toString()
+        : "";
+
     if (product) {
       setEditingProduct(product);
-      const companyVal = product.company != null
-        ? (typeof product.company === "object" ? product.company.id?.toString() : product.company.toString())
-        : (companies.length > 0 ? companies[0].id?.toString() : "");
+      const companyVal =
+        product.company != null
+          ? typeof product.company === "object"
+            ? product.company.id?.toString()
+            : product.company.toString()
+          : userCompanyId || (companies.length > 0 ? companies[0].id?.toString() : "");
       setFormData({
         name: product.name || "",
         description: product.description || "",
@@ -183,7 +198,7 @@ export default function ProductsPage() {
         description: "",
         price: "",
         stock_quantity: "",
-        company: companies.length > 0 ? companies[0].id?.toString() || "" : "",
+        company: userCompanyId || (companies.length > 0 ? companies[0].id?.toString() || "" : ""),
       });
     }
     setIsModalOpen(true);
@@ -192,17 +207,39 @@ export default function ProductsPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      // Build clean payload without empty string company
+      const payload: any = {
+        name: formData.name.trim(),
+        description: formData.description.trim(),
+        price: formData.price,
+        stock_quantity: formData.stock_quantity,
+      };
+
+      if (formData.company && formData.company !== "none") {
+        payload.company = formData.company;
+      } else if (currentUser?.company) {
+        payload.company = typeof currentUser.company === "object" ? currentUser.company.id : currentUser.company;
+      }
+
       if (editingProduct) {
-        await api.patch(`/products/${editingProduct.id}/`, formData);
+        await api.patch(`/products/${editingProduct.id}/`, payload);
         toast.success("Product updated successfully");
       } else {
-        await api.post("/products/", formData);
+        await api.post("/products/", payload);
         toast.success("Product created successfully");
       }
       setIsModalOpen(false);
       fetchData();
     } catch (err: any) {
-      const msg = err.response?.data?.detail || err.response?.data?.error || (err.response?.data && typeof err.response.data === 'object' ? Object.entries(err.response.data).map(([k, v]) => `${k}: ${Array.isArray(v) ? v.join(', ') : v}`).join(' | ') : "Operation failed");
+      const msg =
+        err.response?.data?.detail ||
+        err.response?.data?.error ||
+        err.response?.data?.message ||
+        (err.response?.data && typeof err.response.data === "object"
+          ? Object.entries(err.response.data)
+              .map(([k, v]) => `${k}: ${Array.isArray(v) ? v.join(", ") : v}`)
+              .join(" | ")
+          : "Operation failed");
       toast.error(msg);
     }
   };
@@ -378,36 +415,44 @@ export default function ProductsPage() {
               </DialogTitle>
             </DialogHeader>
             <div className="admin-modal-body">
-              <div className="space-y-1.5">
-                <Label htmlFor="company" className="admin-input-label">
-                  Assign Company *
-                </Label>
-                <Select
-                  value={formData.company}
-                  onValueChange={(v) =>
-                    setFormData({ ...formData, company: v || "" })
-                  }
-                  required
-                >
-                  <SelectTrigger className="admin-input text-slate-800">
-                    <SelectValue placeholder="Select a Company *">
-                      {formData.company
-                        ? companies.find(
-                            (c) =>
-                              c.id.toString() === formData.company.toString(),
-                          )?.name || formData.company
-                        : "Select a Company *"}
-                    </SelectValue>
-                  </SelectTrigger>
-                  <SelectContent>
-                    {companies.map((c) => (
-                      <SelectItem key={c.id} value={c.id.toString()}>
-                        {c.name}
+              {/* Company Selection - Optional / Auto-assigned */}
+              {companies.length > 0 && (
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="company" className="admin-input-label">
+                      Store / Business
+                    </Label>
+                    <span className="text-[10px] text-slate-400 font-medium">Optional</span>
+                  </div>
+                  <Select
+                    value={formData.company || "none"}
+                    onValueChange={(v) =>
+                      setFormData({ ...formData, company: v === "none" ? "" : v })
+                    }
+                  >
+                    <SelectTrigger className="admin-input text-slate-800">
+                      <SelectValue placeholder="My Business (Default)">
+                        {formData.company && formData.company !== "none"
+                          ? companies.find(
+                              (c) =>
+                                c.id.toString() === formData.company.toString(),
+                            )?.name || formData.company
+                          : currentUser?.company_name || "My Business (Default)"}
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">
+                        {currentUser?.company_name || "My Business (Default)"}
                       </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+                      {companies.map((c) => (
+                        <SelectItem key={c.id} value={c.id.toString()}>
+                          {c.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
               <div className="space-y-1.5">
                 <Label htmlFor="name" className="admin-input-label">
                   Product Name *

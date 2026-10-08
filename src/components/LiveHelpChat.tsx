@@ -63,7 +63,12 @@ export default function LiveHelpChat({ currentUser }: { currentUser?: any }) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const companyId = currentUser?.company || null;
+  const companyId =
+    currentUser?.company?.id != null
+      ? currentUser.company.id
+      : currentUser?.company != null
+      ? currentUser.company
+      : null;
   const isAdmin = currentUser?.is_superuser || currentUser?.role === "super_admin";
 
   const isOpenRef = useRef(isOpen);
@@ -330,7 +335,16 @@ export default function LiveHelpChat({ currentUser }: { currentUser?: any }) {
         );
       }
     } catch (err: any) {
-      toast.error("Failed to send support message. Check network.");
+      const errorMsg =
+        err.response?.data?.message ||
+        err.response?.data?.error ||
+        err.response?.data?.detail ||
+        (err.response?.data && typeof err.response.data === "object"
+          ? Object.entries(err.response.data)
+              .map(([k, v]) => `${k}: ${Array.isArray(v) ? v.join(", ") : v}`)
+              .join(" | ")
+          : null);
+      toast.error(errorMsg || "Failed to send support message. Check network.");
       setMessages((prev) => prev.filter((m) => m.client_id !== clientId));
     } finally {
       setIsSubmitting(false);
