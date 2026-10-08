@@ -53,6 +53,8 @@ import { getSocket } from "@/lib/socket";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 
 interface Company {
   id: number;
@@ -141,6 +143,16 @@ export default function AdminDashboardPage() {
   // Modal states
   const [companyToSuspend, setCompanyToSuspend] = useState<Company | null>(null);
   const [companyToDelete, setCompanyToDelete] = useState<Company | null>(null);
+  const [companyToEdit, setCompanyToEdit] = useState<Company | null>(null);
+  const [companyEditForm, setCompanyEditForm] = useState({
+    name: "",
+    ceo_founder: "",
+    tin_number: "",
+    address: "",
+    contact_email: "",
+    contact_phone: "",
+  });
+  const [savingCompanyEdit, setSavingCompanyEdit] = useState(false);
   const [userToSuspend, setUserToSuspend] = useState<PlatformUser | null>(null);
   const [userToDelete, setUserToDelete] = useState<PlatformUser | null>(null);
 
@@ -459,6 +471,39 @@ export default function AdminDashboardPage() {
       toast.error(err.response?.data?.error || "Failed to delete company.");
     } finally {
       setCompanyToDelete(null);
+    }
+  };
+
+  // Open Edit Company Modal
+  const handleOpenEditCompany = (company: Company) => {
+    setCompanyToEdit(company);
+    setCompanyEditForm({
+      name: company.name || "",
+      ceo_founder: company.ceo_founder || "",
+      tin_number: company.tin_number || "",
+      address: company.address || "",
+      contact_email: company.contact_email || "",
+      contact_phone: company.contact_phone || "",
+    });
+  };
+
+  // Save Edit Company
+  const handleSaveCompanyEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!companyToEdit) return;
+    setSavingCompanyEdit(true);
+    try {
+      const res = await api.patch(`/companies/${companyToEdit.id}/`, companyEditForm);
+      setCompanies((prev) =>
+        prev.map((c) => (c.id === companyToEdit.id ? { ...c, ...res.data } : c))
+      );
+      toast.success(`Company "${companyEditForm.name}" updated successfully.`);
+      setCompanyToEdit(null);
+      fetchData();
+    } catch (err: any) {
+      toast.error(err.response?.data?.error || "Failed to update company details.");
+    } finally {
+      setSavingCompanyEdit(false);
     }
   };
 
@@ -1095,6 +1140,16 @@ export default function AdminDashboardPage() {
                             <div className="flex items-center justify-end gap-1.5">
                               <Button
                                 size="sm"
+                                variant="ghost"
+                                onClick={() => handleOpenEditCompany(c)}
+                                className="h-8 w-8 p-0 rounded-xl text-blue-600 hover:bg-blue-50 hover:text-blue-700"
+                                title="Edit Company Details"
+                              >
+                                <Pencil className="w-3.5 h-3.5" />
+                              </Button>
+
+                              <Button
+                                size="sm"
                                 disabled={actionLoadingId === c.id}
                                 onClick={() => {
                                   if (c.is_approved) {
@@ -1621,6 +1676,138 @@ export default function AdminDashboardPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* ─── Company Edit Modal ─── */}
+      <Dialog open={!!companyToEdit} onOpenChange={(open) => !open && setCompanyToEdit(null)}>
+        <DialogContent className="bg-white rounded-2xl max-w-lg">
+          <form onSubmit={handleSaveCompanyEdit}>
+            <DialogHeader className="border-b border-gray-100 pb-3">
+              <DialogTitle className="flex items-center gap-2 text-base font-bold text-gray-900">
+                <Building2 className="w-5 h-5 text-indigo-600" />
+                Edit Company: {companyToEdit?.name}
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-4 text-xs">
+              <div className="space-y-1.5">
+                <Label htmlFor="admin_company_name" className="font-semibold text-gray-700">
+                  Company / Store Name *
+                </Label>
+                <Input
+                  id="admin_company_name"
+                  value={companyEditForm.name}
+                  onChange={(e) =>
+                    setCompanyEditForm({ ...companyEditForm, name: e.target.value })
+                  }
+                  required
+                  className="rounded-xl border-gray-200 text-xs h-10"
+                  placeholder="e.g. Acme Supermarket"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label htmlFor="admin_ceo_founder" className="font-semibold text-gray-700">
+                    Owner / CEO
+                  </Label>
+                  <Input
+                    id="admin_ceo_founder"
+                    value={companyEditForm.ceo_founder}
+                    onChange={(e) =>
+                      setCompanyEditForm({ ...companyEditForm, ceo_founder: e.target.value })
+                    }
+                    className="rounded-xl border-gray-200 text-xs h-10"
+                    placeholder="Owner name"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="admin_tin_number" className="font-semibold text-gray-700">
+                    TIN / Tax Number
+                  </Label>
+                  <Input
+                    id="admin_tin_number"
+                    value={companyEditForm.tin_number}
+                    onChange={(e) =>
+                      setCompanyEditForm({ ...companyEditForm, tin_number: e.target.value })
+                    }
+                    className="rounded-xl border-gray-200 text-xs h-10"
+                    placeholder="e.g. 109283746"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="admin_address" className="font-semibold text-gray-700">
+                  Business Address / Location
+                </Label>
+                <Input
+                  id="admin_address"
+                  value={companyEditForm.address}
+                  onChange={(e) =>
+                    setCompanyEditForm({ ...companyEditForm, address: e.target.value })
+                  }
+                  className="rounded-xl border-gray-200 text-xs h-10"
+                  placeholder="e.g. Downtown Kigali, Rwanda"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label htmlFor="admin_email" className="font-semibold text-gray-700">
+                    Contact Email
+                  </Label>
+                  <Input
+                    id="admin_email"
+                    type="email"
+                    value={companyEditForm.contact_email}
+                    onChange={(e) =>
+                      setCompanyEditForm({ ...companyEditForm, contact_email: e.target.value })
+                    }
+                    className="rounded-xl border-gray-200 text-xs h-10"
+                    placeholder="contact@company.com"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="admin_phone" className="font-semibold text-gray-700">
+                    Contact Phone
+                  </Label>
+                  <Input
+                    id="admin_phone"
+                    value={companyEditForm.contact_phone}
+                    onChange={(e) =>
+                      setCompanyEditForm({ ...companyEditForm, contact_phone: e.target.value })
+                    }
+                    className="rounded-xl border-gray-200 text-xs h-10"
+                    placeholder="e.g. +250 788 123 456"
+                  />
+                </div>
+              </div>
+            </div>
+            <DialogFooter className="border-t border-gray-100 pt-3 gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                className="rounded-xl text-xs font-semibold"
+                onClick={() => setCompanyToEdit(null)}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                disabled={savingCompanyEdit}
+                className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl px-5 text-xs font-semibold shadow-sm"
+              >
+                {savingCompanyEdit ? (
+                  <>
+                    <RefreshCw className="w-3.5 h-3.5 mr-1.5 animate-spin" /> Saving...
+                  </>
+                ) : (
+                  "Save Changes"
+                )}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       {/* ─── User Suspend Modal ─── */}
       <AlertDialog open={!!userToSuspend} onOpenChange={(open) => !open && setUserToSuspend(null)}>

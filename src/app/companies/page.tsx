@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Building2, Plus, Edit, Trash2, Search, ArrowUpDown, ArrowUp, ArrowDown, AlertTriangle } from "lucide-react";
+import { Building2, Plus, Edit, Trash2, Search, ArrowUpDown, ArrowUp, ArrowDown, AlertTriangle, CheckCircle2, Clock } from "lucide-react";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel,
   AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
@@ -28,7 +28,14 @@ export default function CompaniesPage() {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCompany, setEditingCompany] = useState<any>(null);
-  const [formData, setFormData] = useState({ name: "", ceo_founder: "", address: "", contact_email: "" });
+  const [formData, setFormData] = useState({
+    name: "",
+    ceo_founder: "",
+    tin_number: "",
+    address: "",
+    contact_email: "",
+    contact_phone: "",
+  });
   
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [companyToDelete, setCompanyToDelete] = useState<number | null>(null);
@@ -39,7 +46,11 @@ export default function CompaniesPage() {
 
   const fetchCompanies = async () => {
     try {
-      const data = await fetchWithCache("/companies/", "nexus_cached_companies");
+      const res = await api.get("/companies/").catch(async () => {
+        const cached = await fetchWithCache("/companies/", "nexus_cached_companies");
+        return { data: cached };
+      });
+      const data = Array.isArray(res.data) ? res.data : res.data?.results || [];
       setCompanies(data);
     } catch (err) {
       toast.error("Failed to load companies");
@@ -76,8 +87,11 @@ export default function CompaniesPage() {
     const term = searchTerm.trim().toLowerCase();
     return (
       (c.name && c.name.toLowerCase().includes(term)) || 
+      (c.ceo_founder && c.ceo_founder.toLowerCase().includes(term)) ||
+      (c.tin_number && c.tin_number.toLowerCase().includes(term)) ||
       (c.address && c.address.toLowerCase().includes(term)) ||
-      (c.contact_email && c.contact_email.toLowerCase().includes(term))
+      (c.contact_email && c.contact_email.toLowerCase().includes(term)) ||
+      (c.contact_phone && c.contact_phone.toLowerCase().includes(term))
     );
   });
 
@@ -86,10 +100,24 @@ export default function CompaniesPage() {
   const handleOpenModal = (company: any = null) => {
     if (company) {
       setEditingCompany(company);
-      setFormData({ name: company.name, ceo_founder: company.ceo_founder || "", address: company.address || "", contact_email: company.contact_email || "" });
+      setFormData({
+        name: company.name || "",
+        ceo_founder: company.ceo_founder || "",
+        tin_number: company.tin_number || "",
+        address: company.address || "",
+        contact_email: company.contact_email || "",
+        contact_phone: company.contact_phone || "",
+      });
     } else {
       setEditingCompany(null);
-      setFormData({ name: "", ceo_founder: "", address: "", contact_email: "" });
+      setFormData({
+        name: "",
+        ceo_founder: "",
+        tin_number: "",
+        address: "",
+        contact_email: "",
+        contact_phone: "",
+      });
     }
     setIsModalOpen(true);
   };
@@ -98,7 +126,7 @@ export default function CompaniesPage() {
     e.preventDefault();
     try {
       if (editingCompany) {
-        await api.put(`/companies/${editingCompany.id}/`, formData);
+        await api.patch(`/companies/${editingCompany.id}/`, formData);
         toast.success("Company updated successfully");
       } else {
         await api.post("/companies/", formData);
@@ -106,8 +134,8 @@ export default function CompaniesPage() {
       }
       setIsModalOpen(false);
       fetchCompanies();
-    } catch (err) {
-      toast.error("Operation failed");
+    } catch (err: any) {
+      toast.error(err.response?.data?.error || "Operation failed");
     }
   };
 
@@ -159,34 +187,95 @@ export default function CompaniesPage() {
         <Table>
           <TableHeader className="bg-slate-50/95 sticky top-0 z-20 backdrop-blur-sm border-b border-slate-200">
             <TableRow className="border-border/50 hover:bg-transparent">
-              <TableHead className="py-3 h-auto font-bold uppercase tracking-wider text-slate-500 cursor-pointer hover:text-primary transition-colors group" onClick={() => handleSort('name')}>
-                Name <SortIcon column="name" />
+              <TableHead className="py-3.5 h-auto font-bold uppercase tracking-wider text-slate-500 cursor-pointer hover:text-primary transition-colors group" onClick={() => handleSort('name')}>
+                Company Name <SortIcon column="name" />
               </TableHead>
-              <TableHead className="py-3 h-auto font-bold uppercase tracking-wider text-slate-500">CEO/Founder</TableHead>
-              <TableHead className="py-3 h-auto font-bold uppercase tracking-wider text-slate-500">Address</TableHead>
-              <TableHead className="py-3 h-auto font-bold uppercase tracking-wider text-slate-500">Contact Email</TableHead>
-              <TableHead className="py-3 h-auto font-bold uppercase tracking-wider text-slate-500 text-right">Actions</TableHead>
+              <TableHead className="py-3.5 h-auto font-bold uppercase tracking-wider text-slate-500">CEO / Founder</TableHead>
+              <TableHead className="py-3.5 h-auto font-bold uppercase tracking-wider text-slate-500">TIN Number</TableHead>
+              <TableHead className="py-3.5 h-auto font-bold uppercase tracking-wider text-slate-500">Contact</TableHead>
+              <TableHead className="py-3.5 h-auto font-bold uppercase tracking-wider text-slate-500">Address</TableHead>
+              <TableHead className="py-3.5 h-auto font-bold uppercase tracking-wider text-slate-500">Status</TableHead>
+              <TableHead className="py-3.5 h-auto font-bold uppercase tracking-wider text-slate-500 text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filteredCompanies.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">No companies found.</TableCell>
+                <TableCell colSpan={7} className="text-center py-12 text-muted-foreground">
+                  <div className="flex flex-col items-center justify-center gap-2">
+                    <Building2 className="w-8 h-8 text-gray-300" />
+                    <p className="text-sm font-medium text-gray-500">No companies found.</p>
+                  </div>
+                </TableCell>
               </TableRow>
             ) : (
               paginatedCompanies.map((company) => (
-                <TableRow key={company.id} className="border-border/30 hover:bg-accent/50">
-                  <TableCell className="font-medium">{company.name}</TableCell>
-                  <TableCell>{company.ceo_founder || "-"}</TableCell>
-                  <TableCell>{company.address || "-"}</TableCell>
-                  <TableCell>{company.contact_email || "-"}</TableCell>
+                <TableRow key={company.id} className="border-border/30 hover:bg-accent/50 transition-colors">
+                  <TableCell className="font-semibold text-gray-900">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold text-xs uppercase shrink-0">
+                        {company.name?.[0] || "C"}
+                      </div>
+                      <span>{company.name}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-gray-700 font-medium">
+                    {company.ceo_founder || "—"}
+                  </TableCell>
+                  <TableCell className="font-mono text-gray-600">
+                    {company.tin_number ? (
+                      <span className="bg-gray-100 px-2 py-0.5 rounded text-[11px] font-bold text-gray-800">
+                        {company.tin_number}
+                      </span>
+                    ) : (
+                      "—"
+                    )}
+                  </TableCell>
+                  <TableCell className="text-gray-600">
+                    <div className="text-xs font-medium">{company.contact_email || "—"}</div>
+                    {company.contact_phone && (
+                      <div className="text-[11px] text-gray-400 mt-0.5">{company.contact_phone}</div>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-gray-600 text-xs">
+                    {company.address || "—"}
+                  </TableCell>
+                  <TableCell>
+                    <span
+                      className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wide uppercase ${
+                        company.is_approved
+                          ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                          : "bg-amber-50 text-amber-700 border border-amber-200"
+                      }`}
+                    >
+                      {company.is_approved ? <CheckCircle2 className="w-3 h-3" /> : <Clock className="w-3 h-3" />}
+                      {company.is_approved ? "Active" : "Pending"}
+                    </span>
+                  </TableCell>
                   <TableCell className="text-right">
-                    <Button variant="ghost" size="icon" onClick={() => handleOpenModal(company)} className="text-blue-400 hover:text-blue-300 hover:bg-blue-400/10">
-                      <Edit className="w-4 h-4" />
-                    </Button>
-                    <Button variant="ghost" size="icon" onClick={() => { setCompanyToDelete(company.id); setDeleteConfirmOpen(true); }} className="text-red-400 hover:text-red-300 hover:bg-red-400/10">
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
+                    <div className="flex items-center justify-end gap-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleOpenModal(company)}
+                        className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg h-8 w-8"
+                        title="Edit Company Info"
+                      >
+                        <Edit className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => {
+                          setCompanyToDelete(company.id);
+                          setDeleteConfirmOpen(true);
+                        }}
+                        className="text-red-500 hover:text-red-600 hover:bg-red-50 rounded-lg h-8 w-8"
+                        title="Delete Company"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))
@@ -203,18 +292,18 @@ export default function CompaniesPage() {
 
       {/* Add/Edit Modal */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="admin-modal-content">
+        <DialogContent className="admin-modal-content max-w-lg">
           <form onSubmit={handleSubmit}>
-            <DialogHeader className="admin-modal-header border-b border-white/10">
-              <DialogTitle className="admin-modal-title flex items-center gap-2">
-                <Plus className="w-5 h-5 text-indigo-400" />{" "}
-                {editingCompany ? "Edit Company" : "Add New Company"}
+            <DialogHeader className="admin-modal-header border-b border-gray-100 pb-3">
+              <DialogTitle className="admin-modal-title flex items-center gap-2 text-base font-bold text-gray-900">
+                <Building2 className="w-5 h-5 text-indigo-600" />
+                {editingCompany ? "Edit Company Information" : "Add New Company"}
               </DialogTitle>
             </DialogHeader>
-            <div className="admin-modal-body">
+            <div className="space-y-4 py-4 text-xs">
               <div className="space-y-1.5">
-                <Label htmlFor="name" className="admin-input-label">
-                  Name *
+                <Label htmlFor="name" className="font-semibold text-gray-700">
+                  Company / Store Name *
                 </Label>
                 <Input
                   id="name"
@@ -223,27 +312,45 @@ export default function CompaniesPage() {
                     setFormData({ ...formData, name: e.target.value })
                   }
                   required
-                  className="admin-input"
-                  placeholder="e.g. Acme Corp"
+                  className="rounded-xl border-gray-200 text-xs h-10"
+                  placeholder="e.g. Kigali Fresh Supplies Ltd"
                 />
               </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="ceo_founder" className="admin-input-label">
-                  CEO/Founder
-                </Label>
-                <Input
-                  id="ceo_founder"
-                  value={formData.ceo_founder}
-                  onChange={(e) =>
-                    setFormData({ ...formData, ceo_founder: e.target.value })
-                  }
-                  className="admin-input"
-                  placeholder="e.g. Jane Doe"
-                />
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label htmlFor="ceo_founder" className="font-semibold text-gray-700">
+                    Owner / CEO Name
+                  </Label>
+                  <Input
+                    id="ceo_founder"
+                    value={formData.ceo_founder}
+                    onChange={(e) =>
+                      setFormData({ ...formData, ceo_founder: e.target.value })
+                    }
+                    className="rounded-xl border-gray-200 text-xs h-10"
+                    placeholder="e.g. John Doe"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="tin_number" className="font-semibold text-gray-700">
+                    TIN / Tax Number
+                  </Label>
+                  <Input
+                    id="tin_number"
+                    value={formData.tin_number}
+                    onChange={(e) =>
+                      setFormData({ ...formData, tin_number: e.target.value })
+                    }
+                    className="rounded-xl border-gray-200 text-xs h-10"
+                    placeholder="e.g. 109283746"
+                  />
+                </div>
               </div>
+
               <div className="space-y-1.5">
-                <Label htmlFor="address" className="admin-input-label">
-                  Address
+                <Label htmlFor="address" className="font-semibold text-gray-700">
+                  Business Address / Location
                 </Label>
                 <Input
                   id="address"
@@ -251,38 +358,55 @@ export default function CompaniesPage() {
                   onChange={(e) =>
                     setFormData({ ...formData, address: e.target.value })
                   }
-                  className="admin-input"
-                  placeholder="e.g. Kigali, Rwanda"
+                  className="rounded-xl border-gray-200 text-xs h-10"
+                  placeholder="e.g. KG 123 St, Downtown Kigali, Rwanda"
                 />
               </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="email" className="admin-input-label">
-                  Contact Email
-                </Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={formData.contact_email}
-                  onChange={(e) =>
-                    setFormData({ ...formData, contact_email: e.target.value })
-                  }
-                  className="admin-input"
-                  placeholder="contact@example.com"
-                />
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label htmlFor="email" className="font-semibold text-gray-700">
+                    Contact Email
+                  </Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={formData.contact_email}
+                    onChange={(e) =>
+                      setFormData({ ...formData, contact_email: e.target.value })
+                    }
+                    className="rounded-xl border-gray-200 text-xs h-10"
+                    placeholder="contact@example.com"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="phone" className="font-semibold text-gray-700">
+                    Contact Phone
+                  </Label>
+                  <Input
+                    id="phone"
+                    value={formData.contact_phone}
+                    onChange={(e) =>
+                      setFormData({ ...formData, contact_phone: e.target.value })
+                    }
+                    className="rounded-xl border-gray-200 text-xs h-10"
+                    placeholder="e.g. +250 788 123 456"
+                  />
+                </div>
               </div>
             </div>
-            <DialogFooter className="admin-modal-footer">
+            <DialogFooter className="border-t border-gray-100 pt-3 gap-2">
               <Button
                 type="button"
-                variant="ghost"
-                className="text-slate-500 hover:text-slate-800"
+                variant="outline"
+                className="rounded-xl text-xs font-semibold"
                 onClick={() => setIsModalOpen(false)}
               >
                 Cancel
               </Button>
               <Button
                 type="submit"
-                className="bg-indigo-500 hover:bg-indigo-600 text-white rounded-lg px-6 shadow-sm"
+                className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl px-5 text-xs font-semibold shadow-sm"
               >
                 {editingCompany ? "Save Changes" : "Add Company"}
               </Button>

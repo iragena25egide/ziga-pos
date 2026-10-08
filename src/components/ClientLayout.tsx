@@ -39,7 +39,6 @@ const navigation = [
   { name: "Reports", href: "/reports", icon: FileText },
   { name: "Balance", href: "/balance", icon: FileText },
   { name: "My Profile", href: "/profile", icon: UserCircle },
-  { name: "Users", href: "/users", icon: Users },
 ];
 
 export default function ClientLayout({ children }: { children: React.ReactNode }) {
@@ -113,7 +112,6 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
         { name: "Admin Hub", href: "/admin", icon: ShieldCheck },
         { name: "Live Support", href: "/admin?tab=support", icon: Headphones },
         { name: "Companies", href: "/companies", icon: Building2 },
-        { name: "Users", href: "/users", icon: Users },
         { name: "System Reports", href: "/reports", icon: FileText },
         { name: "My Profile", href: "/profile", icon: UserCircle },
       ]
