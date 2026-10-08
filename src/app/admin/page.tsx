@@ -1556,34 +1556,62 @@ export default function AdminDashboardPage() {
                                 >
                                   {/* Attached Image */}
                                   {hasImage && m.attachment_url && (
-                                    <div className="mb-2 overflow-hidden rounded-lg border border-black/10">
+                                    <div className="mb-2 relative group/img overflow-hidden rounded-lg border border-black/10">
                                       <img
                                         src={m.attachment_url}
                                         alt="Attachment"
                                         onClick={() => setAdminPreviewImage(m.attachment_url!)}
-                                        className="max-h-48 w-full object-cover rounded cursor-pointer hover:opacity-90 transition-opacity"
+                                        className="max-h-48 w-full object-cover rounded cursor-pointer hover:opacity-95 transition-opacity"
                                       />
+                                      <div className="absolute top-1.5 right-1.5 flex items-center gap-1 opacity-0 group-hover/img:opacity-100 transition-opacity bg-black/60 backdrop-blur-xs rounded-md p-1">
+                                        <a
+                                          href={m.attachment_url}
+                                          download
+                                          target="_blank"
+                                          rel="noreferrer"
+                                          title="Download image"
+                                          onClick={(e) => e.stopPropagation()}
+                                          className="text-white hover:text-blue-300 p-0.5"
+                                        >
+                                          <Download className="w-3.5 h-3.5" />
+                                        </a>
+                                      </div>
                                     </div>
                                   )}
 
                                   {/* Attached Document File */}
                                   {hasFile && m.attachment_url && (
-                                    <a
-                                      href={m.attachment_url}
-                                      target="_blank"
-                                      rel="noreferrer"
+                                    <div
                                       className={`flex items-center gap-2 p-2 rounded-lg mb-2 text-[11px] font-medium border ${
                                         isMe
-                                          ? "bg-white/10 hover:bg-white/20 text-white border-white/20"
-                                          : "bg-gray-100 hover:bg-gray-200 text-gray-800 border-gray-200"
+                                          ? "bg-white/10 text-white border-white/20"
+                                          : "bg-gray-100 text-gray-800 border-gray-200"
                                       }`}
                                     >
                                       <FileText className="w-4 h-4 shrink-0" />
-                                      <span className="truncate flex-1">
+                                      <a
+                                        href={m.attachment_url}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="truncate flex-1 hover:underline"
+                                      >
                                         {m.attachment_url.split("/").pop()}
-                                      </span>
-                                      <Download className="w-3.5 h-3.5 shrink-0" />
-                                    </a>
+                                      </a>
+                                      <a
+                                        href={m.attachment_url}
+                                        download
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        title="Download file"
+                                        className={`p-1 rounded transition-colors ${
+                                          isMe
+                                            ? "hover:bg-white/20 text-white"
+                                            : "hover:bg-gray-200 text-gray-600"
+                                        }`}
+                                      >
+                                        <Download className="w-3.5 h-3.5" />
+                                      </a>
+                                    </div>
                                   )}
 
                                   {m.message && <p className="whitespace-pre-wrap">{m.message}</p>}
@@ -1963,15 +1991,27 @@ export default function AdminDashboardPage() {
                 alt="Enlarged attachment"
                 className="max-h-[85vh] w-auto rounded-xl object-contain shadow-2xl"
               />
-              <a
-                href={adminPreviewImage}
-                target="_blank"
-                rel="noreferrer"
-                className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/20 text-white text-xs hover:bg-white/30"
-              >
-                <ExternalLink className="w-3.5 h-3.5" />
-                Open original
-              </a>
+              <div className="mt-3 flex items-center gap-2">
+                <a
+                  href={adminPreviewImage}
+                  download
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#1b5ebe] text-white text-xs font-semibold hover:bg-blue-600 transition-colors shadow-sm"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  Download Image
+                </a>
+                <a
+                  href={adminPreviewImage}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/20 text-white text-xs hover:bg-white/30 transition-colors"
+                >
+                  <ExternalLink className="w-3.5 h-3.5" />
+                  Open original
+                </a>
+              </div>
             </div>
           </div>
         )}
