@@ -415,44 +415,7 @@ export default function ProductsPage() {
               </DialogTitle>
             </DialogHeader>
             <div className="admin-modal-body">
-              {/* Company Selection - Optional / Auto-assigned */}
-              {companies.length > 0 && (
-                <div className="space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="company" className="admin-input-label">
-                      Store / Business
-                    </Label>
-                    <span className="text-[10px] text-slate-400 font-medium">Optional</span>
-                  </div>
-                  <Select
-                    value={formData.company || "none"}
-                    onValueChange={(v) =>
-                      setFormData({ ...formData, company: v === "none" ? "" : v })
-                    }
-                  >
-                    <SelectTrigger className="admin-input text-slate-800">
-                      <SelectValue placeholder="My Business (Default)">
-                        {formData.company && formData.company !== "none"
-                          ? companies.find(
-                              (c) =>
-                                c.id.toString() === formData.company.toString(),
-                            )?.name || formData.company
-                          : currentUser?.company_name || "My Business (Default)"}
-                      </SelectValue>
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">
-                        {currentUser?.company_name || "My Business (Default)"}
-                      </SelectItem>
-                      {companies.map((c) => (
-                        <SelectItem key={c.id} value={c.id.toString()}>
-                          {c.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
+              {/* Product details form fields (company is automatically assigned from logged in store account) */}
               <div className="space-y-1.5">
                 <Label htmlFor="name" className="admin-input-label">
                   Product Name *
