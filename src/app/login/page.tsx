@@ -26,10 +26,7 @@ import {
   KeyRound,
   ArrowLeft,
   ArrowRight,
-  CheckCircle2,
   Lock,
-  Mail,
-  FileText,
 } from "lucide-react";
 import {
   Dialog,
@@ -42,28 +39,27 @@ import ZigaLogo from "@/components/ZigaLogo";
 
 /* ─────────────────────────────────────────────────────────────
    Left panel: App Preview Mockup
-   Shows a mini faithful screenshot of the Ziga POS dashboard
-   inside a browser/desktop window frame on a clean neutral background
+   Clean dashboard window on authentic #e8e9ef surface
 ───────────────────────────────────────────────────────────────*/
 function AppPreviewMockup() {
   return (
-    <div className="w-full max-w-[400px] mx-auto select-none">
+    <div className="w-full max-w-[390px] mx-auto select-none">
       {/* Window chrome */}
       <div
-        className="rounded-t-xl overflow-hidden shadow-2xl"
-        style={{ boxShadow: "0 32px 64px rgba(0,0,0,0.45)" }}
+        className="rounded-xl overflow-hidden shadow-xl border border-slate-300/80"
+        style={{ boxShadow: "0 20px 40px rgba(0,0,0,0.12)" }}
       >
         {/* Title bar */}
         <div
-          className="flex items-center gap-1.5 px-4 py-3"
+          className="flex items-center gap-1.5 px-4 py-2.5"
           style={{ backgroundColor: "#1a2f50" }}
         >
-          <span className="w-3 h-3 rounded-full" style={{ backgroundColor: "#ff5f57" }} />
-          <span className="w-3 h-3 rounded-full" style={{ backgroundColor: "#febc2e" }} />
-          <span className="w-3 h-3 rounded-full" style={{ backgroundColor: "#28c840" }} />
+          <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: "#ff5f57" }} />
+          <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: "#febc2e" }} />
+          <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: "#28c840" }} />
           <div
-            className="flex-1 mx-4 h-5 rounded flex items-center justify-center gap-1.5 text-white/35 text-[9px] font-medium"
-            style={{ backgroundColor: "rgba(255,255,255,0.06)" }}
+            className="flex-1 mx-3 h-5 rounded flex items-center justify-center gap-1.5 text-white/50 text-[9px] font-medium"
+            style={{ backgroundColor: "rgba(255,255,255,0.08)" }}
           >
             <Globe className="w-2.5 h-2.5" />
             pos.zigga.io/dashboard
@@ -73,28 +69,28 @@ function AppPreviewMockup() {
         {/* App shell */}
         <div
           className="flex overflow-hidden"
-          style={{ backgroundColor: "#f5f7fa", height: "300px" }}
+          style={{ backgroundColor: "#f8fafc", height: "270px" }}
         >
           {/* Mini sidebar */}
           <div
-            className="w-28 flex-shrink-0 flex flex-col"
+            className="w-24 flex-shrink-0 flex flex-col"
             style={{ backgroundColor: "#0b1d3a" }}
           >
             {/* Brand */}
-            <div className="px-3 py-2.5 border-b" style={{ borderColor: "rgba(255,255,255,0.06)" }}>
+            <div className="px-2.5 py-2 border-b" style={{ borderColor: "rgba(255,255,255,0.06)" }}>
               <div className="flex items-center gap-1.5">
                 <div
-                  className="w-4 h-4 rounded flex items-center justify-center text-[7px] font-bold text-white flex-shrink-0"
+                  className="w-3.5 h-3.5 rounded flex items-center justify-center text-[7px] font-bold text-white flex-shrink-0"
                   style={{ backgroundColor: "#1b5ebe" }}
                 >
                   Z
                 </div>
-                <span className="text-white font-bold text-[9px] tracking-tight">ZIGA POS</span>
+                <span className="text-white font-bold text-[8px] tracking-tight">ZIGA POS</span>
               </div>
             </div>
 
             {/* Nav items */}
-            <div className="p-2 space-y-0.5 flex-1">
+            <div className="p-1.5 space-y-0.5 flex-1">
               {[
                 { icon: LayoutDashboard, label: "Dashboard", active: true },
                 { icon: ShoppingCart, label: "Point of Sale", active: false },
@@ -106,52 +102,49 @@ function AppPreviewMockup() {
                   className="flex items-center gap-1.5 rounded px-1.5 py-1"
                   style={{
                     backgroundColor: item.active ? "rgba(255,255,255,0.12)" : "transparent",
-                    color: item.active ? "#ffffff" : "rgba(255,255,255,0.4)",
+                    color: item.active ? "#ffffff" : "rgba(255,255,255,0.45)",
                   }}
                 >
                   <item.icon className="w-2.5 h-2.5 flex-shrink-0" />
-                  <span className="text-[8px] font-medium truncate">{item.label}</span>
+                  <span className="text-[7.5px] font-medium truncate">{item.label}</span>
                 </div>
               ))}
             </div>
           </div>
 
           {/* Content area */}
-          <div className="flex-1 flex flex-col overflow-hidden">
+          <div className="flex-1 flex flex-col overflow-hidden bg-white">
             {/* Topbar */}
             <div
-              className="h-9 border-b flex items-center justify-between px-3 flex-shrink-0"
-              style={{ backgroundColor: "#ffffff", borderColor: "#e5e7eb" }}
+              className="h-8 border-b flex items-center justify-between px-2.5 flex-shrink-0"
+              style={{ backgroundColor: "#ffffff", borderColor: "#e2e8f0" }}
             >
               <div>
-                <p className="text-[7px] font-semibold text-gray-400 uppercase tracking-wider">Workspace</p>
-                <p className="text-[9px] font-bold text-gray-900 leading-none">Dashboard</p>
+                <p className="text-[6.5px] font-bold text-gray-400 uppercase tracking-wider">Workspace</p>
+                <p className="text-[8.5px] font-bold text-gray-900 leading-none">Dashboard</p>
               </div>
-              <div className="flex items-center gap-1.5">
-                <div className="w-5 h-5 rounded-full border border-gray-200 flex items-center justify-center">
-                  <div className="w-2.5 h-2.5 rounded-full bg-gray-300" />
-                </div>
+              <div className="flex items-center gap-1">
                 <div
-                  className="flex items-center gap-1 px-1.5 py-0.5 rounded-full border border-gray-200"
+                  className="flex items-center gap-1 px-1.5 py-0.5 rounded border border-gray-200"
                   style={{ backgroundColor: "#ffffff" }}
                 >
                   <div
-                    className="w-3.5 h-3.5 rounded-full flex items-center justify-center text-[5px] font-bold text-white"
+                    className="w-3 h-3 rounded-full flex items-center justify-center text-[5px] font-bold text-white"
                     style={{ backgroundColor: "#0b1d3a" }}
                   >
                     A
                   </div>
-                  <span className="text-[7px] font-semibold text-gray-700">Admin</span>
+                  <span className="text-[6.5px] font-semibold text-gray-700">Admin</span>
                 </div>
               </div>
             </div>
 
             {/* Dashboard content */}
-            <div className="flex-1 p-2.5 overflow-hidden">
-              <p className="text-[8px] font-bold text-gray-800 mb-2">Dashboard Overview</p>
+            <div className="flex-1 p-2 overflow-hidden bg-slate-50/50">
+              <p className="text-[7.5px] font-bold text-gray-800 mb-1.5">Overview</p>
 
               {/* Metric cards row */}
-              <div className="grid grid-cols-2 gap-1.5 mb-2.5">
+              <div className="grid grid-cols-2 gap-1.5 mb-2">
                 {[
                   { label: "REVENUE", value: "RWF 2.4M", up: true },
                   { label: "ORDERS", value: "1,284", up: true },
@@ -160,18 +153,17 @@ function AppPreviewMockup() {
                 ].map((card) => (
                   <div
                     key={card.label}
-                    className="rounded p-1.5"
-                    style={{ backgroundColor: "#ffffff", border: "1px solid #e5e7eb" }}
+                    className="rounded p-1.5 bg-white border border-slate-200"
                   >
-                    <p className="text-[6px] font-bold text-gray-400 uppercase tracking-wider">{card.label}</p>
-                    <p className="text-[9px] font-bold text-gray-900 mt-0.5">{card.value}</p>
+                    <p className="text-[5.5px] font-bold text-gray-400 uppercase tracking-wider">{card.label}</p>
+                    <p className="text-[8.5px] font-bold text-gray-900 mt-0.5">{card.value}</p>
                     <div className="flex items-center gap-0.5 mt-0.5">
                       <TrendingUp
                         className="w-2 h-2"
                         style={{ color: card.up ? "#16a34a" : "#dc2626" }}
                       />
                       <span
-                        className="text-[6px] font-semibold"
+                        className="text-[5.5px] font-semibold"
                         style={{ color: card.up ? "#16a34a" : "#dc2626" }}
                       >
                         Live data
@@ -182,72 +174,28 @@ function AppPreviewMockup() {
               </div>
 
               {/* Mini table */}
-              <div
-                className="rounded overflow-hidden"
-                style={{ backgroundColor: "#ffffff", border: "1px solid #e5e7eb" }}
-              >
-                <div className="flex items-center justify-between px-2 py-1.5" style={{ borderBottom: "1px solid #f3f4f6" }}>
-                  <span className="text-[8px] font-bold text-gray-800">Recent Sales</span>
-                  <ArrowUpRight className="w-2.5 h-2.5 text-gray-400" />
+              <div className="rounded overflow-hidden bg-white border border-slate-200">
+                <div className="flex items-center justify-between px-2 py-1 border-b border-slate-100">
+                  <span className="text-[7px] font-bold text-gray-800">Recent Sales</span>
+                  <ArrowUpRight className="w-2 h-2 text-gray-400" />
                 </div>
                 {[
                   { id: "001", name: "Kabila Jean", amount: "45,000" },
                   { id: "002", name: "Uwimana Alice", amount: "12,500" },
-                  { id: "003", name: "Nkurunziza Eric", amount: "8,200" },
                 ].map((row) => (
                   <div
                     key={row.id}
-                    className="flex items-center justify-between px-2 py-1"
-                    style={{ borderBottom: "1px solid #f9fafb" }}
+                    className="flex items-center justify-between px-2 py-0.5 border-b border-slate-50 text-[6.5px]"
                   >
-                    <span className="text-[7px] text-gray-500">#{row.id}</span>
-                    <span className="text-[7px] font-medium text-gray-800">{row.name}</span>
-                    <span className="text-[7px] font-bold" style={{ color: "#16a34a" }}>
+                    <span className="text-gray-400">#{row.id}</span>
+                    <span className="font-medium text-gray-700">{row.name}</span>
+                    <span className="font-bold text-emerald-600">
                       {row.amount} RWF
                     </span>
                   </div>
                 ))}
               </div>
             </div>
-          </div>
-        </div>
-      </div>
-
-      {/* POS window — offset below, partially visible */}
-      <div
-        className="absolute -right-6 -bottom-12 w-48 rounded-xl overflow-hidden opacity-70 shadow-xl"
-        style={{ boxShadow: "0 16px 40px rgba(0,0,0,0.35)" }}
-      >
-        <div
-          className="flex items-center gap-1 px-3 py-2"
-          style={{ backgroundColor: "#1a2f50" }}
-        >
-          <span className="w-2 h-2 rounded-full" style={{ backgroundColor: "#ff5f57" }} />
-          <span className="w-2 h-2 rounded-full" style={{ backgroundColor: "#febc2e" }} />
-          <span className="w-2 h-2 rounded-full" style={{ backgroundColor: "#28c840" }} />
-          <span className="text-[7px] text-white/40 ml-1 flex items-center gap-0.5">
-            <Laptop className="w-2 h-2" /> Desktop App
-          </span>
-        </div>
-        <div className="p-2" style={{ backgroundColor: "#f5f7fa" }}>
-          <p className="text-[7px] font-bold text-gray-700 mb-1">Point of Sale</p>
-          <div className="space-y-1">
-            {["Milk (x2)", "Bread (x1)", "Sugar (x3)"].map((item) => (
-              <div
-                key={item}
-                className="flex items-center justify-between px-1.5 py-0.5 rounded"
-                style={{ backgroundColor: "#ffffff", border: "1px solid #e5e7eb" }}
-              >
-                <span className="text-[6px] text-gray-700">{item}</span>
-                <div className="w-8 h-1.5 rounded" style={{ backgroundColor: "#e5e7eb" }} />
-              </div>
-            ))}
-          </div>
-          <div
-            className="mt-1.5 w-full py-1 rounded text-center text-[6px] font-bold text-white"
-            style={{ backgroundColor: "#1b5ebe" }}
-          >
-            Checkout
           </div>
         </div>
       </div>
@@ -294,7 +242,7 @@ export default function LoginPage() {
 
   // Forgot Password Modal State
   const [forgotModalOpen, setForgotModalOpen] = useState(false);
-  const [forgotStep, setForgotStep] = useState<1 | 2>(1); // 1 = enter email, 2 = enter otp & new password
+  const [forgotStep, setForgotStep] = useState<1 | 2>(1);
   const [forgotEmail, setForgotEmail] = useState("");
   const [forgotOtp, setForgotOtp] = useState("");
   const [forgotNewPassword, setForgotNewPassword] = useState("");
@@ -407,7 +355,7 @@ export default function LoginPage() {
     }
   };
 
-  /* ── Handlers: Multi-Step Register Validation & Next ── */
+  /* ── Validation for Steps ── */
   const validateStep1 = () => {
     if (!registerData.companyName.trim()) {
       toast.error("Please enter your Company Name.");
@@ -447,9 +395,8 @@ export default function LoginPage() {
       return;
     }
 
-    // Step 3 Validation
     if (!registerData.password || registerData.password.length < 6) {
-      toast.error("Password must be at least 6 characters long.");
+      toast.error("Password must be at least 6 characters.");
       return;
     }
     if (registerData.password !== registerData.confirmPassword) {
@@ -469,7 +416,7 @@ export default function LoginPage() {
           tin_number: registerData.tinNumber,
           password: registerData.password,
         });
-      } catch (err: any) {
+      } catch {
         await api.post("/register/", {
           company_name: registerData.companyName,
           owner_name: registerData.ownerName,
@@ -488,7 +435,7 @@ export default function LoginPage() {
       const msg = err.response?.data?.detail || err.response?.data?.message;
       if (msg) toast.error(msg);
       else {
-        toast.info(`Sending email verification OTP to ${registerData.email}`);
+        toast.info(`Sending verification OTP to ${registerData.email}`);
         setOtpModalOpen(true);
         setResendTimer(60);
         setCanResend(false);
@@ -500,7 +447,7 @@ export default function LoginPage() {
 
   const handleVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!otpCode || otpCode.length < 4) { toast.error("Please enter a valid 6-digit OTP code."); return; }
+    if (!otpCode || otpCode.length < 4) { toast.error("Please enter the 6-digit code."); return; }
     setOtpLoading(true);
     try {
       try {
@@ -526,11 +473,11 @@ export default function LoginPage() {
         localStorage.setItem("access_token", res.data.access);
         localStorage.setItem("refresh_token", res.data.refresh);
       }
-      toast.success("Company workspace registered! Pending Super Admin approval.");
+      toast.success("Company registered successfully! Redirecting...");
       setOtpModalOpen(false);
       router.push("/");
     } catch {
-      toast.error("Invalid or expired OTP code. Please try again.");
+      toast.error("Invalid or expired OTP code.");
     } finally {
       setOtpLoading(false);
     }
@@ -542,9 +489,9 @@ export default function LoginPage() {
     setResendTimer(60);
     try {
       await api.post("/auth/resend-otp/", { email: registerData.email });
-      toast.success("A new OTP code has been sent to your email.");
+      toast.success("A new verification code has been sent.");
     } catch {
-      toast.info("Resent OTP code to " + registerData.email);
+      toast.info("Resent verification code.");
     }
   };
 
@@ -560,7 +507,6 @@ export default function LoginPage() {
       try {
         await api.post("/auth/forgot-password/", { email: forgotEmail });
       } catch {
-        // Fallback endpoint or local mock
         await fetch("/api/auth/forgot-password", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -570,7 +516,7 @@ export default function LoginPage() {
       toast.success(`Reset code sent to ${forgotEmail}`);
       setForgotStep(2);
     } catch (err: any) {
-      toast.error(err.response?.data?.detail || "Failed to send reset code. Please try again.");
+      toast.error(err.response?.data?.detail || "Failed to send reset code.");
     } finally {
       setForgotLoading(false);
     }
@@ -579,7 +525,7 @@ export default function LoginPage() {
   const handleForgotResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!forgotOtp || forgotOtp.length < 4) {
-      toast.error("Please enter the verification code sent to your email.");
+      toast.error("Please enter the verification code.");
       return;
     }
     if (!forgotNewPassword || forgotNewPassword.length < 6) {
@@ -609,7 +555,7 @@ export default function LoginPage() {
           }),
         });
       }
-      toast.success("Password reset successful! Please log in with your new password.");
+      toast.success("Password updated successfully! Please log in.");
       setForgotModalOpen(false);
       setForgotStep(1);
       setLoginEmail(forgotEmail);
@@ -626,24 +572,24 @@ export default function LoginPage() {
 
   /* ── Render ── */
   return (
-    <div className="flex min-h-screen" style={{ backgroundColor: "#f5f7fa" }}>
+    <div className="flex min-h-screen bg-[#f8fafc]">
 
-      {/* ─────── LEFT PANEL — Consistent with Presentation Web Hero ─────── */}
+      {/* ─────── LEFT PANEL ─────── */}
       <div
-        className="hidden lg:flex w-[50%] flex-col justify-between p-12 relative overflow-hidden bg-[#e8e9ef] border-r border-slate-300/80"
+        className="hidden lg:flex w-[48%] flex-col justify-between p-10 relative overflow-hidden bg-[#e8e9ef] border-r border-slate-300"
       >
         {/* Brand */}
-        <div className="relative z-10 flex items-center gap-3">
-          <ZigaLogo size={36} showText={false} theme="light" />
+        <div className="flex items-center gap-2.5">
+          <ZigaLogo size={32} showText={false} theme="light" />
           <div>
-            <p className="text-slate-950 font-bold text-lg tracking-tight leading-none">ZIGA POS</p>
-            <p className="text-slate-500 text-[10px] font-medium tracking-widest uppercase mt-0.5">
-              {isDesktop ? "Desktop Platform" : "Cloud Business Platform"}
+            <p className="text-slate-950 font-bold text-base tracking-tight leading-none">ZIGA POS</p>
+            <p className="text-slate-500 text-[9.5px] font-semibold tracking-wider uppercase mt-0.5">
+              {isDesktop ? "Desktop Platform" : "Cloud Retail System"}
             </p>
           </div>
           {isDesktop && (
             <span
-              className="ml-auto text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200"
+              className="ml-auto text-[10px] font-semibold px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200"
             >
               Desktop Mode
             </span>
@@ -651,65 +597,62 @@ export default function LoginPage() {
         </div>
 
         {/* Headline + App preview */}
-        <div className="relative z-10 flex flex-col items-start gap-6 my-auto">
+        <div className="flex flex-col items-start gap-5 my-auto">
           <div>
-            <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-white border border-slate-300 text-slate-700 text-[11px] font-semibold uppercase tracking-wider mb-3 shadow-sm">
-              The Ziga Ecosystem • Retail Counter
+            <div className="inline-flex items-center px-2 py-0.5 rounded bg-white border border-slate-300 text-slate-700 text-[10px] font-semibold uppercase tracking-wider mb-2.5 shadow-sm">
+              Retail & Wholesale OS
             </div>
-            <h2 className="text-3xl font-bold text-slate-950 leading-tight mb-2 tracking-tight">
+            <h2 className="text-2xl font-bold text-slate-950 leading-tight mb-1.5 tracking-tight">
               Manage your store.<br />
               <span className="text-[#1b5ebe]">Power your payments.</span>
             </h2>
-            <p className="text-slate-600 text-sm leading-relaxed max-w-sm">
-              Unified operating system with fast cashier registers, barcode scanning, live stock tracking, and automated fiscal receipts.
+            <p className="text-slate-600 text-xs leading-relaxed max-w-xs">
+              Fast cashier registers, barcode scanning, live stock tracking, and automated fiscal receipts.
             </p>
           </div>
 
           {/* App preview mockup window */}
-          <div className="relative w-full">
+          <div className="w-full">
             <AppPreviewMockup />
           </div>
         </div>
 
         {/* Trust Badges */}
-        <div className="relative z-10 flex items-center gap-8 pt-6 border-t border-slate-300/70 text-slate-700">
+        <div className="flex items-center gap-6 pt-4 border-t border-slate-300/80 text-slate-700">
           {[
             { value: "Offline-Ready", label: "ESC/POS Printing" },
             { value: "RRA EBM", label: "Fiscal Invoices" },
-            { value: "MoMo Pay", label: "Instant QR Checkouts" },
+            { value: "MoMo Pay", label: "QR Checkouts" },
           ].map((stat) => (
             <div key={stat.label}>
-              <p className="text-slate-900 font-bold text-sm leading-none">{stat.value}</p>
-              <p className="text-slate-500 text-[10px] font-medium mt-1">{stat.label}</p>
+              <p className="text-slate-900 font-bold text-xs leading-none">{stat.value}</p>
+              <p className="text-slate-500 text-[9.5px] font-medium mt-0.5">{stat.label}</p>
             </div>
           ))}
         </div>
       </div>
 
-      {/* ─────── RIGHT PANEL — Interactive Forms ─────── */}
-      <div className="flex-1 flex items-center justify-center bg-white px-6 sm:px-12 py-10 overflow-y-auto">
-        <div className="w-full max-w-md">
+      {/* ─────── RIGHT PANEL ─────── */}
+      <div className="flex-1 flex items-center justify-center bg-white px-6 sm:px-10 py-8 overflow-y-auto">
+        <div className="w-full max-w-[360px]">
 
           {/* Mobile logo */}
           <div className="lg:hidden flex items-center gap-2 mb-6">
-            <ZigaLogo size={32} showText={false} />
+            <ZigaLogo size={28} showText={false} />
             <span className="font-bold text-gray-900 text-base tracking-tight">ZIGA POS</span>
           </div>
 
-          {/* Desktop mode banner */}
+          {/* Desktop banner */}
           {isDesktop && (
-            <div
-              className="flex items-center gap-2 px-3 py-2 rounded-lg mb-6 text-sm font-medium"
-              style={{ backgroundColor: "#f0fdf4", color: "#15803d", border: "1px solid #bbf7d0" }}
-            >
-              <Laptop className="w-4 h-4" />
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-md mb-5 text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
+              <Laptop className="w-3.5 h-3.5" />
               Desktop App — Login Only
             </div>
           )}
 
-          {/* Mode tabs (web only) */}
+          {/* Mode switch */}
           {!isDesktop && (
-            <div className="flex border-b mb-6" style={{ borderColor: "#e5e7eb" }}>
+            <div className="flex border-b border-gray-200 mb-6">
               {(["login", "register"] as const).map((tab) => (
                 <button
                   key={tab}
@@ -717,10 +660,10 @@ export default function LoginPage() {
                     setMode(tab);
                     if (tab === "register") setRegisterStep(1);
                   }}
-                  className="pb-3 px-1 mr-6 text-sm font-semibold border-b-2 transition-colors"
+                  className="pb-2.5 px-1 mr-5 text-xs font-semibold border-b-2 transition-colors"
                   style={{
                     borderColor: mode === tab ? "#1b5ebe" : "transparent",
-                    color: mode === tab ? "#1b5ebe" : "#6b7280",
+                    color: mode === tab ? "#1b5ebe" : "#64748b",
                   }}
                 >
                   {tab === "login" ? "Sign In" : "Register Business"}
@@ -731,41 +674,39 @@ export default function LoginPage() {
 
           <AnimatePresence mode="wait">
             {mode === "login" ? (
-              /* ── Login form ── */
+              /* ── Login Form ── */
               <motion.div
                 key="login"
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
-                transition={{ duration: 0.18 }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.15 }}
               >
-                <div className="mb-6">
-                  <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Welcome back!</h1>
-                  <p className="text-sm text-gray-500 mt-1">Sign in to access your store register & dashboard.</p>
+                <div className="mb-5">
+                  <h1 className="text-xl font-bold text-gray-900 tracking-tight">Welcome back</h1>
+                  <p className="text-xs text-gray-500 mt-0.5">Sign in to access your store terminal.</p>
                 </div>
 
-                <form onSubmit={handleLogin} className="space-y-4">
+                <form onSubmit={handleLogin} className="space-y-3.5">
                   <div>
-                    <Label htmlFor="login-email" className="text-xs font-semibold uppercase tracking-wider text-gray-600">
+                    <Label htmlFor="login-email" className="text-xs font-medium text-gray-700">
                       Work Email <span className="text-red-500">*</span>
                     </Label>
-                    <div className="relative mt-1">
-                      <Input
-                        id="login-email"
-                        type="email"
-                        className="h-11 pl-3 pr-4 border-gray-300 focus:border-[#1b5ebe] focus:ring-[#1b5ebe] rounded-lg text-sm"
-                        placeholder="owner@company.rw"
-                        value={loginEmail}
-                        onChange={(e) => setLoginEmail(e.target.value)}
-                        required
-                        autoComplete="email"
-                      />
-                    </div>
+                    <Input
+                      id="login-email"
+                      type="email"
+                      className="mt-1 h-9 border-gray-300 focus:border-[#1b5ebe] focus:ring-[#1b5ebe] rounded-md text-xs"
+                      placeholder="owner@company.rw"
+                      value={loginEmail}
+                      onChange={(e) => setLoginEmail(e.target.value)}
+                      required
+                      autoComplete="email"
+                    />
                   </div>
 
                   <div>
                     <div className="flex items-center justify-between mb-1">
-                      <Label htmlFor="login-password" className="text-xs font-semibold uppercase tracking-wider text-gray-600">
+                      <Label htmlFor="login-password" className="text-xs font-medium text-gray-700">
                         Password <span className="text-red-500">*</span>
                       </Label>
                       <button
@@ -775,7 +716,7 @@ export default function LoginPage() {
                           setForgotStep(1);
                           setForgotModalOpen(true);
                         }}
-                        className="text-xs font-semibold text-[#1b5ebe] hover:underline"
+                        className="text-[11px] font-medium text-[#1b5ebe] hover:underline"
                       >
                         Forgot password?
                       </button>
@@ -784,7 +725,7 @@ export default function LoginPage() {
                       <Input
                         id="login-password"
                         type={showPassword ? "text" : "password"}
-                        className="h-11 border-gray-300 focus:border-[#1b5ebe] focus:ring-[#1b5ebe] rounded-lg pr-10 text-sm"
+                        className="h-9 border-gray-300 focus:border-[#1b5ebe] focus:ring-[#1b5ebe] rounded-md pr-8 text-xs"
                         placeholder="••••••••"
                         value={loginPassword}
                         onChange={(e) => setLoginPassword(e.target.value)}
@@ -794,35 +735,34 @@ export default function LoginPage() {
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-3 text-gray-400 hover:text-gray-600"
+                        className="absolute right-2.5 top-2.5 text-gray-400 hover:text-gray-600"
                       >
-                        {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                       </button>
                     </div>
                   </div>
 
                   <Button
                     type="submit"
-                    className="w-full h-11 font-semibold text-sm rounded-lg text-white shadow-sm transition-all hover:bg-[#144794]"
+                    className="w-full h-9 font-medium text-xs rounded-md text-white transition-colors"
                     style={{ backgroundColor: "#1b5ebe" }}
                     disabled={loginLoading}
                   >
-                    {loginLoading ? "Signing in…" : "Sign In to Workspace"}
+                    {loginLoading ? "Signing in…" : "Sign In"}
                   </Button>
 
-                  {/* Or continue with */}
-                  <div className="flex items-center gap-3 my-4">
+                  <div className="flex items-center gap-2 my-2.5">
                     <div className="flex-1 h-px bg-gray-200" />
-                    <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">Or</span>
+                    <span className="text-[10px] text-gray-400 uppercase">Or</span>
                     <div className="flex-1 h-px bg-gray-200" />
                   </div>
 
                   <button
                     type="button"
                     onClick={handleGoogleSignIn}
-                    className="w-full h-11 flex items-center justify-center gap-2 rounded-lg border border-gray-300 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors shadow-sm"
+                    className="w-full h-9 flex items-center justify-center gap-2 rounded-md border border-gray-300 text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors"
                   >
-                    <svg className="w-4 h-4" viewBox="0 0 24 24">
+                    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24">
                       <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
                       <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
                       <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
@@ -832,18 +772,17 @@ export default function LoginPage() {
                   </button>
                 </form>
 
-                {/* Sign up link */}
                 {!isDesktop && (
-                  <div className="mt-8 p-3 rounded-xl text-sm text-center bg-gray-50 border border-gray-200">
-                    New store or business?{" "}
+                  <div className="mt-6 p-2.5 rounded-lg text-xs text-center bg-gray-50 border border-gray-200 text-gray-600">
+                    Need a new account?{" "}
                     <button
                       onClick={() => {
                         setMode("register");
                         setRegisterStep(1);
                       }}
-                      className="font-bold text-[#1b5ebe] hover:underline"
+                      className="font-semibold text-[#1b5ebe] hover:underline"
                     >
-                      Create account
+                      Register
                     </button>
                   </div>
                 )}
@@ -852,71 +791,53 @@ export default function LoginPage() {
               /* ── Multi-Step Register Form ── */
               <motion.div
                 key="register"
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
-                transition={{ duration: 0.18 }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.15 }}
               >
                 {/* Stepper Header */}
-                <div className="mb-6">
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-xs font-bold uppercase tracking-wider text-[#1b5ebe]">
+                <div className="mb-4">
+                  <div className="flex items-center justify-between mb-2 text-xs">
+                    <span className="font-semibold text-[#1b5ebe]">
                       Step {registerStep} of 3
                     </span>
-                    <span className="text-xs text-gray-400 font-medium">
-                      {registerStep === 1 && "Business Details"}
-                      {registerStep === 2 && "Owner Profile"}
-                      {registerStep === 3 && "Secure Password"}
+                    <span className="text-gray-400 font-medium">
+                      {registerStep === 1 && "Store Info"}
+                      {registerStep === 2 && "Owner Info"}
+                      {registerStep === 3 && "Password"}
                     </span>
                   </div>
 
-                  {/* Progress bar */}
-                  <div className="w-full h-1.5 bg-gray-200 rounded-full overflow-hidden flex gap-1">
-                    <div
-                      className={`h-full flex-1 rounded-full transition-all duration-300 ${
-                        registerStep >= 1 ? "bg-[#1b5ebe]" : "bg-gray-200"
-                      }`}
-                    />
-                    <div
-                      className={`h-full flex-1 rounded-full transition-all duration-300 ${
-                        registerStep >= 2 ? "bg-[#1b5ebe]" : "bg-gray-200"
-                      }`}
-                    />
-                    <div
-                      className={`h-full flex-1 rounded-full transition-all duration-300 ${
-                        registerStep === 3 ? "bg-[#1b5ebe]" : "bg-gray-200"
-                      }`}
-                    />
+                  {/* Progress bars */}
+                  <div className="w-full h-1 bg-gray-200 rounded-full flex gap-1">
+                    <div className={`h-full flex-1 rounded-full ${registerStep >= 1 ? "bg-[#1b5ebe]" : "bg-gray-200"}`} />
+                    <div className={`h-full flex-1 rounded-full ${registerStep >= 2 ? "bg-[#1b5ebe]" : "bg-gray-200"}`} />
+                    <div className={`h-full flex-1 rounded-full ${registerStep === 3 ? "bg-[#1b5ebe]" : "bg-gray-200"}`} />
                   </div>
                 </div>
 
-                <form onSubmit={handleRegisterSubmit} className="space-y-4">
-                  {/* ── STEP 1: Business Profile ── */}
+                <form onSubmit={handleRegisterSubmit} className="space-y-3">
+                  {/* Step 1 */}
                   {registerStep === 1 && (
-                    <motion.div
-                      key="step1"
-                      initial={{ opacity: 0, x: 10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -10 }}
-                      className="space-y-4"
-                    >
+                    <div className="space-y-3">
                       <div>
-                        <h2 className="text-xl font-bold text-gray-900 tracking-tight flex items-center gap-2">
-                          <Building2 className="w-5 h-5 text-[#1b5ebe]" />
-                          Tell us about your business
+                        <h2 className="text-sm font-bold text-gray-900 flex items-center gap-1.5">
+                          <Building2 className="w-4 h-4 text-gray-500" />
+                          Business Details
                         </h2>
-                        <p className="text-xs text-gray-500 mt-0.5">Your official store and tax identification</p>
+                        <p className="text-[11px] text-gray-500">Your registered company or store name</p>
                       </div>
 
                       <div>
-                        <Label htmlFor="reg-company" className="text-xs font-semibold uppercase tracking-wider text-gray-600">
-                          Company / Store Name <span className="text-red-500">*</span>
+                        <Label htmlFor="reg-company" className="text-xs font-medium text-gray-700">
+                          Store / Company Name <span className="text-red-500">*</span>
                         </Label>
                         <Input
                           id="reg-company"
                           type="text"
-                          className="mt-1 h-10 border-gray-300 focus:border-[#1b5ebe] focus:ring-[#1b5ebe] rounded-lg"
-                          placeholder="Acme Supermarket Kigali"
+                          className="mt-1 h-9 border-gray-300 focus:border-[#1b5ebe] focus:ring-[#1b5ebe] rounded-md text-xs"
+                          placeholder="Acme Retail Kigali"
                           value={registerData.companyName}
                           onChange={(e) => setRegisterData({ ...registerData, companyName: e.target.value })}
                           required
@@ -925,30 +846,29 @@ export default function LoginPage() {
                       </div>
 
                       <div>
-                        <Label htmlFor="reg-tin" className="text-xs font-semibold uppercase tracking-wider text-gray-600">
-                          TIN / Tax Identification Number <span className="text-red-500">*</span>
+                        <Label htmlFor="reg-tin" className="text-xs font-medium text-gray-700">
+                          TIN / Tax Number <span className="text-red-500">*</span>
                         </Label>
                         <Input
                           id="reg-tin"
                           type="text"
-                          className="mt-1 h-10 border-gray-300 focus:border-[#1b5ebe] focus:ring-[#1b5ebe] rounded-lg"
+                          className="mt-1 h-9 border-gray-300 focus:border-[#1b5ebe] focus:ring-[#1b5ebe] rounded-md text-xs"
                           placeholder="109283746"
                           value={registerData.tinNumber}
                           onChange={(e) => setRegisterData({ ...registerData, tinNumber: e.target.value })}
                           required
                         />
-                        <p className="text-[11px] text-gray-400 mt-1">Used for RRA fiscal invoice compliance.</p>
                       </div>
 
                       <div>
-                        <Label htmlFor="reg-address" className="text-xs font-semibold uppercase tracking-wider text-gray-600">
-                          Physical Address / District
+                        <Label htmlFor="reg-address" className="text-xs font-medium text-gray-700">
+                          Physical Address
                         </Label>
                         <Input
                           id="reg-address"
                           type="text"
-                          className="mt-1 h-10 border-gray-300 focus:border-[#1b5ebe] focus:ring-[#1b5ebe] rounded-lg"
-                          placeholder="KN 4 Ave, Nyarugenge, Kigali"
+                          className="mt-1 h-9 border-gray-300 focus:border-[#1b5ebe] focus:ring-[#1b5ebe] rounded-md text-xs"
+                          placeholder="KN 4 Ave, Kigali"
                           value={registerData.address}
                           onChange={(e) => setRegisterData({ ...registerData, address: e.target.value })}
                         />
@@ -959,40 +879,34 @@ export default function LoginPage() {
                         onClick={() => {
                           if (validateStep1()) setRegisterStep(2);
                         }}
-                        className="w-full h-11 font-semibold text-sm rounded-lg text-white mt-4 flex items-center justify-center gap-2"
+                        className="w-full h-9 font-medium text-xs rounded-md text-white mt-1 flex items-center justify-center gap-1.5"
                         style={{ backgroundColor: "#1b5ebe" }}
                       >
-                        Continue to Owner Profile <ArrowRight className="w-4 h-4" />
+                        Next: Owner Info <ArrowRight className="w-3.5 h-3.5" />
                       </Button>
-                    </motion.div>
+                    </div>
                   )}
 
-                  {/* ── STEP 2: Owner & Contact Profile ── */}
+                  {/* Step 2 */}
                   {registerStep === 2 && (
-                    <motion.div
-                      key="step2"
-                      initial={{ opacity: 0, x: 10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -10 }}
-                      className="space-y-4"
-                    >
+                    <div className="space-y-3">
                       <div>
-                        <h2 className="text-xl font-bold text-gray-900 tracking-tight flex items-center gap-2">
-                          <User className="w-5 h-5 text-[#1b5ebe]" />
-                          Owner & Administrator Details
+                        <h2 className="text-sm font-bold text-gray-900 flex items-center gap-1.5">
+                          <User className="w-4 h-4 text-gray-500" />
+                          Owner Profile
                         </h2>
-                        <p className="text-xs text-gray-500 mt-0.5">Primary administrator of this business workspace</p>
+                        <p className="text-[11px] text-gray-500">Contact details for store administrator</p>
                       </div>
 
                       <div>
-                        <Label htmlFor="reg-owner" className="text-xs font-semibold uppercase tracking-wider text-gray-600">
+                        <Label htmlFor="reg-owner" className="text-xs font-medium text-gray-700">
                           Full Name <span className="text-red-500">*</span>
                         </Label>
                         <Input
                           id="reg-owner"
                           type="text"
-                          className="mt-1 h-10 border-gray-300 focus:border-[#1b5ebe] focus:ring-[#1b5ebe] rounded-lg"
-                          placeholder="Jean Pierre Habimana"
+                          className="mt-1 h-9 border-gray-300 focus:border-[#1b5ebe] focus:ring-[#1b5ebe] rounded-md text-xs"
+                          placeholder="Jean Habimana"
                           value={registerData.ownerName}
                           onChange={(e) => setRegisterData({ ...registerData, ownerName: e.target.value })}
                           required
@@ -1001,29 +915,28 @@ export default function LoginPage() {
                       </div>
 
                       <div>
-                        <Label htmlFor="reg-email" className="text-xs font-semibold uppercase tracking-wider text-gray-600">
-                          Work Email Address <span className="text-red-500">*</span>
+                        <Label htmlFor="reg-email" className="text-xs font-medium text-gray-700">
+                          Work Email <span className="text-red-500">*</span>
                         </Label>
                         <Input
                           id="reg-email"
                           type="email"
-                          className="mt-1 h-10 border-gray-300 focus:border-[#1b5ebe] focus:ring-[#1b5ebe] rounded-lg"
+                          className="mt-1 h-9 border-gray-300 focus:border-[#1b5ebe] focus:ring-[#1b5ebe] rounded-md text-xs"
                           placeholder="owner@acme.rw"
                           value={registerData.email}
                           onChange={(e) => setRegisterData({ ...registerData, email: e.target.value })}
                           required
                         />
-                        <p className="text-[11px] text-gray-400 mt-1">We will send a 6-digit verification code here.</p>
                       </div>
 
                       <div>
-                        <Label htmlFor="reg-phone" className="text-xs font-semibold uppercase tracking-wider text-gray-600">
+                        <Label htmlFor="reg-phone" className="text-xs font-medium text-gray-700">
                           Phone Number <span className="text-red-500">*</span>
                         </Label>
                         <Input
                           id="reg-phone"
                           type="tel"
-                          className="mt-1 h-10 border-gray-300 focus:border-[#1b5ebe] focus:ring-[#1b5ebe] rounded-lg"
+                          className="mt-1 h-9 border-gray-300 focus:border-[#1b5ebe] focus:ring-[#1b5ebe] rounded-md text-xs"
                           placeholder="+250 788 000 000"
                           value={registerData.phone}
                           onChange={(e) => setRegisterData({ ...registerData, phone: e.target.value })}
@@ -1031,56 +944,50 @@ export default function LoginPage() {
                         />
                       </div>
 
-                      <div className="flex items-center gap-3 pt-2">
+                      <div className="flex items-center gap-2 pt-1">
                         <Button
                           type="button"
                           variant="outline"
                           onClick={() => setRegisterStep(1)}
-                          className="h-11 px-4 border-gray-300 text-gray-700 rounded-lg flex items-center gap-1.5"
+                          className="h-9 px-3 border-gray-300 text-gray-700 rounded-md text-xs flex items-center gap-1"
                         >
-                          <ArrowLeft className="w-4 h-4" /> Back
+                          <ArrowLeft className="w-3.5 h-3.5" /> Back
                         </Button>
                         <Button
                           type="button"
                           onClick={() => {
                             if (validateStep2()) setRegisterStep(3);
                           }}
-                          className="flex-1 h-11 font-semibold text-sm rounded-lg text-white flex items-center justify-center gap-2"
+                          className="flex-1 h-9 font-medium text-xs rounded-md text-white flex items-center justify-center gap-1.5"
                           style={{ backgroundColor: "#1b5ebe" }}
                         >
-                          Next: Security <ArrowRight className="w-4 h-4" />
+                          Next: Password <ArrowRight className="w-3.5 h-3.5" />
                         </Button>
                       </div>
-                    </motion.div>
+                    </div>
                   )}
 
-                  {/* ── STEP 3: Security & Password ── */}
+                  {/* Step 3 */}
                   {registerStep === 3 && (
-                    <motion.div
-                      key="step3"
-                      initial={{ opacity: 0, x: 10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -10 }}
-                      className="space-y-4"
-                    >
+                    <div className="space-y-3">
                       <div>
-                        <h2 className="text-xl font-bold text-gray-900 tracking-tight flex items-center gap-2">
-                          <Lock className="w-5 h-5 text-[#1b5ebe]" />
-                          Create Workspace Password
+                        <h2 className="text-sm font-bold text-gray-900 flex items-center gap-1.5">
+                          <Lock className="w-4 h-4 text-gray-500" />
+                          Security Password
                         </h2>
-                        <p className="text-xs text-gray-500 mt-0.5">Protect your cashier terminal and dashboard</p>
+                        <p className="text-[11px] text-gray-500">Set password to protect your terminal</p>
                       </div>
 
                       <div>
-                        <Label htmlFor="reg-password" className="text-xs font-semibold uppercase tracking-wider text-gray-600">
-                          Password (min. 6 chars) <span className="text-red-500">*</span>
+                        <Label htmlFor="reg-password" className="text-xs font-medium text-gray-700">
+                          Password (min 6 chars) <span className="text-red-500">*</span>
                         </Label>
                         <div className="relative mt-1">
                           <Input
                             id="reg-password"
                             type={showRegPassword ? "text" : "password"}
-                            className="h-10 border-gray-300 focus:border-[#1b5ebe] focus:ring-[#1b5ebe] rounded-lg pr-10"
-                            placeholder="Create strong password"
+                            className="h-9 border-gray-300 focus:border-[#1b5ebe] focus:ring-[#1b5ebe] rounded-md pr-8 text-xs"
+                            placeholder="••••••••"
                             value={registerData.password}
                             onChange={(e) => setRegisterData({ ...registerData, password: e.target.value })}
                             required
@@ -1089,7 +996,7 @@ export default function LoginPage() {
                           <button
                             type="button"
                             onClick={() => setShowRegPassword(!showRegPassword)}
-                            className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600"
+                            className="absolute right-2.5 top-2.5 text-gray-400 hover:text-gray-600"
                           >
                             {showRegPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                           </button>
@@ -1097,65 +1004,61 @@ export default function LoginPage() {
                       </div>
 
                       <div>
-                        <Label htmlFor="reg-confirm-password" className="text-xs font-semibold uppercase tracking-wider text-gray-600">
+                        <Label htmlFor="reg-confirm-password" className="text-xs font-medium text-gray-700">
                           Confirm Password <span className="text-red-500">*</span>
                         </Label>
                         <Input
                           id="reg-confirm-password"
                           type={showRegPassword ? "text" : "password"}
-                          className="mt-1 h-10 border-gray-300 focus:border-[#1b5ebe] focus:ring-[#1b5ebe] rounded-lg"
-                          placeholder="Re-type password"
+                          className="mt-1 h-9 border-gray-300 focus:border-[#1b5ebe] focus:ring-[#1b5ebe] rounded-md text-xs"
+                          placeholder="••••••••"
                           value={registerData.confirmPassword}
                           onChange={(e) => setRegisterData({ ...registerData, confirmPassword: e.target.value })}
                           required
                         />
                       </div>
 
-                      {/* Summary box */}
-                      <div className="p-3 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-600 space-y-1">
+                      {/* Summary card */}
+                      <div className="p-2.5 rounded-md bg-slate-50 border border-slate-200 text-[11px] space-y-1">
                         <div className="flex justify-between">
-                          <span className="text-slate-400">Business:</span>
-                          <span className="font-semibold text-slate-800">{registerData.companyName}</span>
+                          <span className="text-gray-400">Store:</span>
+                          <span className="font-medium text-gray-800 truncate max-w-[180px]">{registerData.companyName}</span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-slate-400">Owner:</span>
-                          <span className="font-semibold text-slate-800">{registerData.ownerName}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-slate-400">Email:</span>
-                          <span className="font-semibold text-slate-800">{registerData.email}</span>
+                          <span className="text-gray-400">Email:</span>
+                          <span className="font-medium text-gray-800 truncate max-w-[180px]">{registerData.email}</span>
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-3 pt-2">
+                      <div className="flex items-center gap-2 pt-1">
                         <Button
                           type="button"
                           variant="outline"
                           onClick={() => setRegisterStep(2)}
-                          className="h-11 px-4 border-gray-300 text-gray-700 rounded-lg flex items-center gap-1.5"
+                          className="h-9 px-3 border-gray-300 text-gray-700 rounded-md text-xs flex items-center gap-1"
                         >
-                          <ArrowLeft className="w-4 h-4" /> Back
+                          <ArrowLeft className="w-3.5 h-3.5" /> Back
                         </Button>
                         <Button
                           type="submit"
-                          className="flex-1 h-11 font-semibold text-sm rounded-lg text-white"
+                          className="flex-1 h-9 font-medium text-xs rounded-md text-white"
                           style={{ backgroundColor: "#1b5ebe" }}
                           disabled={registerLoading}
                         >
-                          {registerLoading ? "Sending OTP Code…" : "Submit & Verify Email"}
+                          {registerLoading ? "Sending OTP…" : "Complete & Verify"}
                         </Button>
                       </div>
-                    </motion.div>
+                    </div>
                   )}
                 </form>
 
-                <div className="mt-8 p-3 rounded-xl text-sm text-center bg-gray-50 border border-gray-200">
+                <div className="mt-6 p-2.5 rounded-lg text-xs text-center bg-gray-50 border border-gray-200 text-gray-600">
                   Already registered?{" "}
                   <button
                     onClick={() => setMode("login")}
-                    className="font-bold text-[#1b5ebe] hover:underline"
+                    className="font-semibold text-[#1b5ebe] hover:underline"
                   >
-                    Sign in here
+                    Sign in
                   </button>
                 </div>
               </motion.div>
@@ -1164,103 +1067,96 @@ export default function LoginPage() {
         </div>
       </div>
 
-      {/* ─────── Register: OTP Verification Modal ─────── */}
+      {/* ─────── Register OTP Modal (Clean, No gradients) ─────── */}
       <Dialog open={otpModalOpen} onOpenChange={setOtpModalOpen}>
-        <DialogContent className="sm:max-w-[420px] rounded-2xl p-0 overflow-hidden shadow-2xl border-0">
-          {/* Modal header */}
-          <div className="p-6 pb-5" style={{ backgroundColor: "#0b1d3a" }}>
-            <div
-              className="w-10 h-10 rounded-xl flex items-center justify-center mb-3 shadow-inner"
-              style={{ backgroundColor: "rgba(27,94,190,0.35)" }}
-            >
-              <ShieldCheck className="w-5 h-5 text-white" />
+        <DialogContent className="sm:max-w-[380px] rounded-xl p-6 bg-white border border-gray-200 shadow-xl">
+          <div className="flex items-center gap-3 pb-4 border-b border-gray-100">
+            <div className="w-9 h-9 rounded-lg bg-slate-100 flex items-center justify-center text-slate-700">
+              <ShieldCheck className="w-5 h-5 text-[#1b5ebe]" />
             </div>
-            <DialogTitle className="text-white text-lg font-bold">Verify Business Email</DialogTitle>
-            <DialogDescription className="text-white/70 text-xs mt-1">
-              We sent a 6-digit confirmation code to{" "}
-              <strong className="text-white underline">{registerData.email}</strong>
-            </DialogDescription>
+            <div>
+              <DialogTitle className="text-sm font-bold text-gray-900 leading-none">Verify Email</DialogTitle>
+              <DialogDescription className="text-xs text-gray-500 mt-1 leading-normal">
+                Enter the 6-digit code sent to <span className="font-medium text-gray-800">{registerData.email}</span>
+              </DialogDescription>
+            </div>
           </div>
 
-          {/* Modal body */}
-          <div className="p-6 bg-white">
-            <form onSubmit={handleVerifyOtp} className="space-y-4">
-              <div>
-                <Label htmlFor="otp-input" className="text-xs font-semibold uppercase tracking-wider text-gray-600">
-                  Enter 6-Digit Code
-                </Label>
-                <Input
-                  id="otp-input"
-                  type="text"
-                  maxLength={6}
-                  value={otpCode}
-                  onChange={(e) => setOtpCode(e.target.value.trim())}
-                  placeholder="123456"
-                  className="mt-1.5 text-center text-2xl font-mono tracking-[0.4em] h-12 border-gray-300 focus:border-[#1b5ebe] focus:ring-[#1b5ebe] rounded-lg"
-                  required
-                  autoFocus
-                />
-              </div>
+          <form onSubmit={handleVerifyOtp} className="space-y-4 pt-3">
+            <div>
+              <Label htmlFor="otp-input" className="text-xs font-medium text-gray-700">
+                Verification Code
+              </Label>
+              <Input
+                id="otp-input"
+                type="text"
+                maxLength={6}
+                value={otpCode}
+                onChange={(e) => setOtpCode(e.target.value.trim())}
+                placeholder="123456"
+                className="mt-1 text-center text-xl font-mono tracking-[0.3em] h-10 border-gray-300 focus:border-[#1b5ebe] focus:ring-[#1b5ebe] rounded-md"
+                required
+                autoFocus
+              />
+            </div>
 
-              <div className="flex items-center justify-between text-xs text-gray-500 pt-1">
-                <span>Didn't receive the code?</span>
-                {canResend ? (
-                  <button
-                    type="button"
-                    onClick={handleResendOtp}
-                    className="font-bold flex items-center gap-1 text-[#1b5ebe] hover:underline"
-                  >
-                    <RefreshCw className="w-3 h-3" /> Resend Code
-                  </button>
-                ) : (
-                  <span className="font-medium text-gray-400">Resend in {resendTimer}s</span>
-                )}
-              </div>
+            <div className="flex items-center justify-between text-xs text-gray-500">
+              <span>Didn't receive code?</span>
+              {canResend ? (
+                <button
+                  type="button"
+                  onClick={handleResendOtp}
+                  className="font-semibold flex items-center gap-1 text-[#1b5ebe] hover:underline"
+                >
+                  <RefreshCw className="w-3 h-3" /> Resend
+                </button>
+              ) : (
+                <span className="text-gray-400">Resend in {resendTimer}s</span>
+              )}
+            </div>
 
-              <Button
-                type="submit"
-                className="w-full h-11 font-semibold text-sm rounded-lg text-white mt-2"
-                style={{ backgroundColor: "#1b5ebe" }}
-                disabled={otpLoading || otpCode.length < 4}
-              >
-                {otpLoading ? "Verifying…" : "Verify & Activate Store"}
-              </Button>
-            </form>
-          </div>
+            <Button
+              type="submit"
+              className="w-full h-9 font-medium text-xs rounded-md text-white"
+              style={{ backgroundColor: "#1b5ebe" }}
+              disabled={otpLoading || otpCode.length < 4}
+            >
+              {otpLoading ? "Verifying…" : "Confirm & Activate"}
+            </Button>
+          </form>
         </DialogContent>
       </Dialog>
 
-      {/* ─────── Forgot Password Modal ─────── */}
+      {/* ─────── Forgot Password Modal (Clean, No gradients) ─────── */}
       <Dialog open={forgotModalOpen} onOpenChange={setForgotModalOpen}>
-        <DialogContent className="sm:max-w-[420px] rounded-2xl p-0 overflow-hidden shadow-2xl border-0">
-          <div className="p-6 pb-5" style={{ backgroundColor: "#0b1d3a" }}>
-            <div
-              className="w-10 h-10 rounded-xl flex items-center justify-center mb-3 shadow-inner"
-              style={{ backgroundColor: "rgba(27,94,190,0.35)" }}
-            >
-              <KeyRound className="w-5 h-5 text-white" />
+        <DialogContent className="sm:max-w-[380px] rounded-xl p-6 bg-white border border-gray-200 shadow-xl">
+          <div className="flex items-center gap-3 pb-4 border-b border-gray-100">
+            <div className="w-9 h-9 rounded-lg bg-slate-100 flex items-center justify-center text-slate-700">
+              <KeyRound className="w-5 h-5 text-[#1b5ebe]" />
             </div>
-            <DialogTitle className="text-white text-lg font-bold">
-              {forgotStep === 1 ? "Reset Your Password" : "Set New Password"}
-            </DialogTitle>
-            <DialogDescription className="text-white/70 text-xs mt-1">
-              {forgotStep === 1
-                ? "Enter your account email to receive a password recovery verification code."
-                : `Enter the code sent to ${forgotEmail} and choose a new password.`}
-            </DialogDescription>
+            <div>
+              <DialogTitle className="text-sm font-bold text-gray-900 leading-none">
+                {forgotStep === 1 ? "Reset Password" : "Set New Password"}
+              </DialogTitle>
+              <DialogDescription className="text-xs text-gray-500 mt-1 leading-normal">
+                {forgotStep === 1
+                  ? "Enter your email to receive a password reset code."
+                  : `Enter the code sent to ${forgotEmail}`}
+              </DialogDescription>
+            </div>
           </div>
 
-          <div className="p-6 bg-white">
+          <div className="pt-3">
             {forgotStep === 1 ? (
-              <form onSubmit={handleForgotRequestOtp} className="space-y-4">
+              <form onSubmit={handleForgotRequestOtp} className="space-y-3.5">
                 <div>
-                  <Label htmlFor="forgot-email" className="text-xs font-semibold uppercase tracking-wider text-gray-600">
-                    Account Email Address
+                  <Label htmlFor="forgot-email" className="text-xs font-medium text-gray-700">
+                    Account Email
                   </Label>
                   <Input
                     id="forgot-email"
                     type="email"
-                    className="mt-1.5 h-11 border-gray-300 focus:border-[#1b5ebe] focus:ring-[#1b5ebe] rounded-lg text-sm"
+                    className="mt-1 h-9 border-gray-300 focus:border-[#1b5ebe] focus:ring-[#1b5ebe] rounded-md text-xs"
                     placeholder="name@business.rw"
                     value={forgotEmail}
                     onChange={(e) => setForgotEmail(e.target.value)}
@@ -1271,24 +1167,24 @@ export default function LoginPage() {
 
                 <Button
                   type="submit"
-                  className="w-full h-11 font-semibold text-sm rounded-lg text-white mt-2"
+                  className="w-full h-9 font-medium text-xs rounded-md text-white"
                   style={{ backgroundColor: "#1b5ebe" }}
                   disabled={forgotLoading}
                 >
-                  {forgotLoading ? "Sending Recovery Code…" : "Send Reset Code"}
+                  {forgotLoading ? "Sending Code…" : "Send Reset Code"}
                 </Button>
               </form>
             ) : (
-              <form onSubmit={handleForgotResetPassword} className="space-y-4">
+              <form onSubmit={handleForgotResetPassword} className="space-y-3">
                 <div>
-                  <Label htmlFor="forgot-otp" className="text-xs font-semibold uppercase tracking-wider text-gray-600">
-                    Verification Code (OTP)
+                  <Label htmlFor="forgot-otp" className="text-xs font-medium text-gray-700">
+                    6-Digit Code
                   </Label>
                   <Input
                     id="forgot-otp"
                     type="text"
                     maxLength={6}
-                    className="mt-1 text-center text-xl font-mono tracking-[0.3em] h-11 border-gray-300 focus:border-[#1b5ebe] focus:ring-[#1b5ebe] rounded-lg"
+                    className="mt-1 text-center text-lg font-mono tracking-[0.25em] h-9 border-gray-300 focus:border-[#1b5ebe] focus:ring-[#1b5ebe] rounded-md"
                     placeholder="123456"
                     value={forgotOtp}
                     onChange={(e) => setForgotOtp(e.target.value.trim())}
@@ -1298,15 +1194,15 @@ export default function LoginPage() {
                 </div>
 
                 <div>
-                  <Label htmlFor="forgot-new-pass" className="text-xs font-semibold uppercase tracking-wider text-gray-600">
+                  <Label htmlFor="forgot-new-pass" className="text-xs font-medium text-gray-700">
                     New Password
                   </Label>
                   <div className="relative mt-1">
                     <Input
                       id="forgot-new-pass"
                       type={showForgotPass ? "text" : "password"}
-                      className="h-10 border-gray-300 focus:border-[#1b5ebe] focus:ring-[#1b5ebe] rounded-lg pr-10 text-sm"
-                      placeholder="Min. 6 characters"
+                      className="h-9 border-gray-300 focus:border-[#1b5ebe] focus:ring-[#1b5ebe] rounded-md pr-8 text-xs"
+                      placeholder="Min. 6 chars"
                       value={forgotNewPassword}
                       onChange={(e) => setForgotNewPassword(e.target.value)}
                       required
@@ -1314,7 +1210,7 @@ export default function LoginPage() {
                     <button
                       type="button"
                       onClick={() => setShowForgotPass(!showForgotPass)}
-                      className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600"
+                      className="absolute right-2.5 top-2.5 text-gray-400 hover:text-gray-600"
                     >
                       {showForgotPass ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
@@ -1322,36 +1218,36 @@ export default function LoginPage() {
                 </div>
 
                 <div>
-                  <Label htmlFor="forgot-confirm-pass" className="text-xs font-semibold uppercase tracking-wider text-gray-600">
-                    Confirm New Password
+                  <Label htmlFor="forgot-confirm-pass" className="text-xs font-medium text-gray-700">
+                    Confirm Password
                   </Label>
                   <Input
                     id="forgot-confirm-pass"
                     type={showForgotPass ? "text" : "password"}
-                    className="mt-1 h-10 border-gray-300 focus:border-[#1b5ebe] focus:ring-[#1b5ebe] rounded-lg text-sm"
-                    placeholder="Re-type new password"
+                    className="mt-1 h-9 border-gray-300 focus:border-[#1b5ebe] focus:ring-[#1b5ebe] rounded-md text-xs"
+                    placeholder="Re-enter password"
                     value={forgotConfirmPassword}
                     onChange={(e) => setForgotConfirmPassword(e.target.value)}
                     required
                   />
                 </div>
 
-                <div className="flex items-center gap-3 pt-2">
+                <div className="flex items-center gap-2 pt-1">
                   <Button
                     type="button"
                     variant="outline"
                     onClick={() => setForgotStep(1)}
-                    className="h-11 px-4 border-gray-300 text-gray-700 rounded-lg text-xs"
+                    className="h-9 px-3 border-gray-300 text-gray-700 rounded-md text-xs"
                   >
-                    Change Email
+                    Back
                   </Button>
                   <Button
                     type="submit"
-                    className="flex-1 h-11 font-semibold text-sm rounded-lg text-white"
+                    className="flex-1 h-9 font-medium text-xs rounded-md text-white"
                     style={{ backgroundColor: "#1b5ebe" }}
                     disabled={forgotLoading}
                   >
-                    {forgotLoading ? "Resetting…" : "Update Password"}
+                    {forgotLoading ? "Updating…" : "Update Password"}
                   </Button>
                 </div>
               </form>
