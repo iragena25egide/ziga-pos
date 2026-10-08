@@ -21,6 +21,15 @@ import {
   ArrowUpRight,
   TrendingUp,
   Globe,
+  Building2,
+  User,
+  KeyRound,
+  ArrowLeft,
+  ArrowRight,
+  CheckCircle2,
+  Lock,
+  Mail,
+  FileText,
 } from "lucide-react";
 import {
   Dialog,
@@ -34,7 +43,7 @@ import ZigaLogo from "@/components/ZigaLogo";
 /* ─────────────────────────────────────────────────────────────
    Left panel: App Preview Mockup
    Shows a mini faithful screenshot of the Ziga POS dashboard
-   inside a browser/desktop window frame on a deep navy background
+   inside a browser/desktop window frame on a clean neutral background
 ───────────────────────────────────────────────────────────────*/
 function AppPreviewMockup() {
   return (
@@ -255,27 +264,43 @@ export default function LoginPage() {
   const [isDesktop, setIsDesktop] = useState(false);
   const [mode, setMode] = useState<"login" | "register">("login");
 
+  // Login state
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loginLoading, setLoginLoading] = useState(false);
 
+  // Multi-step Register state
+  const [registerStep, setRegisterStep] = useState<1 | 2 | 3>(1);
   const [registerData, setRegisterData] = useState({
     companyName: "",
+    tinNumber: "",
+    address: "",
     ownerName: "",
     email: "",
     phone: "",
-    address: "",
-    tinNumber: "",
     password: "",
+    confirmPassword: "",
   });
+  const [showRegPassword, setShowRegPassword] = useState(false);
   const [registerLoading, setRegisterLoading] = useState(false);
 
+  // Register OTP Modal
   const [otpModalOpen, setOtpModalOpen] = useState(false);
   const [otpCode, setOtpCode] = useState("");
   const [otpLoading, setOtpLoading] = useState(false);
   const [resendTimer, setResendTimer] = useState(60);
   const [canResend, setCanResend] = useState(false);
+
+  // Forgot Password Modal State
+  const [forgotModalOpen, setForgotModalOpen] = useState(false);
+  const [forgotStep, setForgotStep] = useState<1 | 2>(1); // 1 = enter email, 2 = enter otp & new password
+  const [forgotEmail, setForgotEmail] = useState("");
+  const [forgotOtp, setForgotOtp] = useState("");
+  const [forgotNewPassword, setForgotNewPassword] = useState("");
+  const [forgotConfirmPassword, setForgotConfirmPassword] = useState("");
+  const [showForgotPass, setShowForgotPass] = useState(false);
+  const [forgotLoading, setForgotLoading] = useState(false);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -300,7 +325,7 @@ export default function LoginPage() {
     return () => clearInterval(timer);
   }, [otpModalOpen, resendTimer]);
 
-  /* ── Handlers ── */
+  /* ── Handlers: Login ── */
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoginLoading(true);
@@ -382,8 +407,56 @@ export default function LoginPage() {
     }
   };
 
+  /* ── Handlers: Multi-Step Register Validation & Next ── */
+  const validateStep1 = () => {
+    if (!registerData.companyName.trim()) {
+      toast.error("Please enter your Company Name.");
+      return false;
+    }
+    if (!registerData.tinNumber.trim()) {
+      toast.error("Please enter your TIN / Tax Number.");
+      return false;
+    }
+    return true;
+  };
+
+  const validateStep2 = () => {
+    if (!registerData.ownerName.trim()) {
+      toast.error("Please enter the Owner / Representative Name.");
+      return false;
+    }
+    if (!registerData.email.trim() || !registerData.email.includes("@")) {
+      toast.error("Please enter a valid work email address.");
+      return false;
+    }
+    if (!registerData.phone.trim()) {
+      toast.error("Please enter a contact phone number.");
+      return false;
+    }
+    return true;
+  };
+
   const handleRegisterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (registerStep === 1) {
+      if (validateStep1()) setRegisterStep(2);
+      return;
+    }
+    if (registerStep === 2) {
+      if (validateStep2()) setRegisterStep(3);
+      return;
+    }
+
+    // Step 3 Validation
+    if (!registerData.password || registerData.password.length < 6) {
+      toast.error("Password must be at least 6 characters long.");
+      return;
+    }
+    if (registerData.password !== registerData.confirmPassword) {
+      toast.error("Passwords do not match.");
+      return;
+    }
+
     setRegisterLoading(true);
     try {
       try {
@@ -475,13 +548,89 @@ export default function LoginPage() {
     }
   };
 
+  /* ── Handlers: Forgot Password ── */
+  const handleForgotRequestOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!forgotEmail || !forgotEmail.includes("@")) {
+      toast.error("Please enter a valid email address.");
+      return;
+    }
+    setForgotLoading(true);
+    try {
+      try {
+        await api.post("/auth/forgot-password/", { email: forgotEmail });
+      } catch {
+        // Fallback endpoint or local mock
+        await fetch("/api/auth/forgot-password", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: forgotEmail }),
+        });
+      }
+      toast.success(`Reset code sent to ${forgotEmail}`);
+      setForgotStep(2);
+    } catch (err: any) {
+      toast.error(err.response?.data?.detail || "Failed to send reset code. Please try again.");
+    } finally {
+      setForgotLoading(false);
+    }
+  };
+
+  const handleForgotResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!forgotOtp || forgotOtp.length < 4) {
+      toast.error("Please enter the verification code sent to your email.");
+      return;
+    }
+    if (!forgotNewPassword || forgotNewPassword.length < 6) {
+      toast.error("New password must be at least 6 characters.");
+      return;
+    }
+    if (forgotNewPassword !== forgotConfirmPassword) {
+      toast.error("Passwords do not match.");
+      return;
+    }
+    setForgotLoading(true);
+    try {
+      try {
+        await api.post("/auth/reset-password/", {
+          email: forgotEmail,
+          otp: forgotOtp,
+          new_password: forgotNewPassword,
+        });
+      } catch {
+        await fetch("/api/auth/reset-password", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: forgotEmail,
+            otp: forgotOtp,
+            new_password: forgotNewPassword,
+          }),
+        });
+      }
+      toast.success("Password reset successful! Please log in with your new password.");
+      setForgotModalOpen(false);
+      setForgotStep(1);
+      setLoginEmail(forgotEmail);
+      setLoginPassword("");
+      setForgotOtp("");
+      setForgotNewPassword("");
+      setForgotConfirmPassword("");
+    } catch (err: any) {
+      toast.error(err.response?.data?.detail || "Invalid code or failed to reset password.");
+    } finally {
+      setForgotLoading(false);
+    }
+  };
+
   /* ── Render ── */
   return (
     <div className="flex min-h-screen" style={{ backgroundColor: "#f5f7fa" }}>
 
       {/* ─────── LEFT PANEL — Consistent with Presentation Web Hero ─────── */}
       <div
-        className="hidden lg:flex w-[52%] flex-col justify-between p-12 relative overflow-hidden bg-[#e8e9ef] border-r border-slate-300/80"
+        className="hidden lg:flex w-[50%] flex-col justify-between p-12 relative overflow-hidden bg-[#e8e9ef] border-r border-slate-300/80"
       >
         {/* Brand */}
         <div className="relative z-10 flex items-center gap-3">
@@ -537,12 +686,12 @@ export default function LoginPage() {
         </div>
       </div>
 
-      {/* ─────── RIGHT PANEL — Form ─────── */}
-      <div className="flex-1 flex items-center justify-center bg-white px-8 py-12 overflow-y-auto">
-        <div className="w-full max-w-sm">
+      {/* ─────── RIGHT PANEL — Interactive Forms ─────── */}
+      <div className="flex-1 flex items-center justify-center bg-white px-6 sm:px-12 py-10 overflow-y-auto">
+        <div className="w-full max-w-md">
 
           {/* Mobile logo */}
-          <div className="lg:hidden flex items-center gap-2 mb-8">
+          <div className="lg:hidden flex items-center gap-2 mb-6">
             <ZigaLogo size={32} showText={false} />
             <span className="font-bold text-gray-900 text-base tracking-tight">ZIGA POS</span>
           </div>
@@ -560,18 +709,21 @@ export default function LoginPage() {
 
           {/* Mode tabs (web only) */}
           {!isDesktop && (
-            <div className="flex border-b mb-8" style={{ borderColor: "#e5e7eb" }}>
+            <div className="flex border-b mb-6" style={{ borderColor: "#e5e7eb" }}>
               {(["login", "register"] as const).map((tab) => (
                 <button
                   key={tab}
-                  onClick={() => setMode(tab)}
-                  className="pb-3 px-1 mr-6 text-sm font-medium border-b-2 transition-colors"
+                  onClick={() => {
+                    setMode(tab);
+                    if (tab === "register") setRegisterStep(1);
+                  }}
+                  className="pb-3 px-1 mr-6 text-sm font-semibold border-b-2 transition-colors"
                   style={{
                     borderColor: mode === tab ? "#1b5ebe" : "transparent",
                     color: mode === tab ? "#1b5ebe" : "#6b7280",
                   }}
                 >
-                  {tab === "login" ? "Sign In" : "Register Company"}
+                  {tab === "login" ? "Sign In" : "Register Business"}
                 </button>
               ))}
             </div>
@@ -587,44 +739,52 @@ export default function LoginPage() {
                 exit={{ opacity: 0, y: -8 }}
                 transition={{ duration: 0.18 }}
               >
-                <h1 className="text-2xl font-bold text-gray-900 mb-1">Welcome!</h1>
-                <p className="text-sm text-gray-500 mb-7">Please sign in to your account.</p>
+                <div className="mb-6">
+                  <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Welcome back!</h1>
+                  <p className="text-sm text-gray-500 mt-1">Sign in to access your store register & dashboard.</p>
+                </div>
 
                 <form onSubmit={handleLogin} className="space-y-4">
                   <div>
-                    <Label htmlFor="login-email" className="text-sm font-medium text-gray-700">
-                      Email <span className="text-red-500">*</span>
+                    <Label htmlFor="login-email" className="text-xs font-semibold uppercase tracking-wider text-gray-600">
+                      Work Email <span className="text-red-500">*</span>
                     </Label>
-                    <Input
-                      id="login-email"
-                      type="email"
-                      className="mt-1 h-10 border-gray-300 focus:border-[#1b5ebe] focus:ring-[#1b5ebe] rounded-md"
-                      placeholder="owner@company.com"
-                      value={loginEmail}
-                      onChange={(e) => setLoginEmail(e.target.value)}
-                      required
-                      autoComplete="email"
-                    />
+                    <div className="relative mt-1">
+                      <Input
+                        id="login-email"
+                        type="email"
+                        className="h-11 pl-3 pr-4 border-gray-300 focus:border-[#1b5ebe] focus:ring-[#1b5ebe] rounded-lg text-sm"
+                        placeholder="owner@company.rw"
+                        value={loginEmail}
+                        onChange={(e) => setLoginEmail(e.target.value)}
+                        required
+                        autoComplete="email"
+                      />
+                    </div>
                   </div>
 
                   <div>
                     <div className="flex items-center justify-between mb-1">
-                      <Label htmlFor="login-password" className="text-sm font-medium text-gray-700">
+                      <Label htmlFor="login-password" className="text-xs font-semibold uppercase tracking-wider text-gray-600">
                         Password <span className="text-red-500">*</span>
                       </Label>
                       <button
                         type="button"
-                        className="text-xs font-medium"
-                        style={{ color: "#0e9f8a" }}
+                        onClick={() => {
+                          setForgotEmail(loginEmail);
+                          setForgotStep(1);
+                          setForgotModalOpen(true);
+                        }}
+                        className="text-xs font-semibold text-[#1b5ebe] hover:underline"
                       >
-                        Setup or Reset Password
+                        Forgot password?
                       </button>
                     </div>
                     <div className="relative">
                       <Input
                         id="login-password"
                         type={showPassword ? "text" : "password"}
-                        className="h-10 border-gray-300 focus:border-[#1b5ebe] focus:ring-[#1b5ebe] rounded-md pr-10"
+                        className="h-11 border-gray-300 focus:border-[#1b5ebe] focus:ring-[#1b5ebe] rounded-lg pr-10 text-sm"
                         placeholder="••••••••"
                         value={loginPassword}
                         onChange={(e) => setLoginPassword(e.target.value)}
@@ -634,34 +794,33 @@ export default function LoginPage() {
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600"
+                        className="absolute right-3 top-3 text-gray-400 hover:text-gray-600"
                       >
-                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                       </button>
                     </div>
                   </div>
 
                   <Button
                     type="submit"
-                    className="w-full h-10 font-semibold text-sm rounded-md text-white"
+                    className="w-full h-11 font-semibold text-sm rounded-lg text-white shadow-sm transition-all hover:bg-[#144794]"
                     style={{ backgroundColor: "#1b5ebe" }}
                     disabled={loginLoading}
                   >
-                    {loginLoading ? "Signing in…" : "Login"}
+                    {loginLoading ? "Signing in…" : "Sign In to Workspace"}
                   </Button>
 
                   {/* Or continue with */}
-                  <div className="flex items-center gap-3 my-2">
-                    <div className="flex-1 h-px" style={{ backgroundColor: "#e5e7eb" }} />
-                    <span className="text-xs text-gray-400">Or continue with</span>
-                    <div className="flex-1 h-px" style={{ backgroundColor: "#e5e7eb" }} />
+                  <div className="flex items-center gap-3 my-4">
+                    <div className="flex-1 h-px bg-gray-200" />
+                    <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">Or</span>
+                    <div className="flex-1 h-px bg-gray-200" />
                   </div>
 
                   <button
                     type="button"
                     onClick={handleGoogleSignIn}
-                    className="w-full h-10 flex items-center justify-center gap-2 rounded-full border text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
-                    style={{ borderColor: "#e5e7eb" }}
+                    className="w-full h-11 flex items-center justify-center gap-2 rounded-lg border border-gray-300 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors shadow-sm"
                   >
                     <svg className="w-4 h-4" viewBox="0 0 24 24">
                       <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
@@ -669,29 +828,28 @@ export default function LoginPage() {
                       <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
                       <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
                     </svg>
-                    Google
+                    Continue with Google
                   </button>
                 </form>
 
                 {/* Sign up link */}
                 {!isDesktop && (
-                  <div
-                    className="mt-6 p-3 rounded-lg text-sm text-center"
-                    style={{ backgroundColor: "#f9fafb", border: "1px solid #e5e7eb" }}
-                  >
-                    Don't have an account?{" "}
+                  <div className="mt-8 p-3 rounded-xl text-sm text-center bg-gray-50 border border-gray-200">
+                    New store or business?{" "}
                     <button
-                      onClick={() => setMode("register")}
-                      className="font-semibold"
-                      style={{ color: "#1b5ebe" }}
+                      onClick={() => {
+                        setMode("register");
+                        setRegisterStep(1);
+                      }}
+                      className="font-bold text-[#1b5ebe] hover:underline"
                     >
-                      Sign up
+                      Create account
                     </button>
                   </div>
                 )}
               </motion.div>
             ) : (
-              /* ── Register form ── */
+              /* ── Multi-Step Register Form ── */
               <motion.div
                 key="register"
                 initial={{ opacity: 0, y: 8 }}
@@ -699,58 +857,305 @@ export default function LoginPage() {
                 exit={{ opacity: 0, y: -8 }}
                 transition={{ duration: 0.18 }}
               >
-                <h1 className="text-2xl font-bold text-gray-900 mb-1">Create Company Account</h1>
-                <p className="text-sm text-gray-500 mb-6">Set up your business workspace on Ziga POS.</p>
+                {/* Stepper Header */}
+                <div className="mb-6">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-xs font-bold uppercase tracking-wider text-[#1b5ebe]">
+                      Step {registerStep} of 3
+                    </span>
+                    <span className="text-xs text-gray-400 font-medium">
+                      {registerStep === 1 && "Business Details"}
+                      {registerStep === 2 && "Owner Profile"}
+                      {registerStep === 3 && "Secure Password"}
+                    </span>
+                  </div>
 
-                <form onSubmit={handleRegisterSubmit} className="space-y-3">
-                  {[
-                    { id: "reg-company", label: "Company / Business Name", key: "companyName", placeholder: "Acme Retail Rwanda", type: "text" },
-                    { id: "reg-owner", label: "Owner Full Name", key: "ownerName", placeholder: "John Habimana", type: "text" },
-                    { id: "reg-email", label: "Work Email", key: "email", placeholder: "info@acme.rw", type: "email" },
-                    { id: "reg-phone", label: "Phone Number", key: "phone", placeholder: "+250 788 000 000", type: "tel" },
-                    { id: "reg-address", label: "Physical Address", key: "address", placeholder: "KN 4 Ave, Kigali", type: "text" },
-                    { id: "reg-tin", label: "TIN Number (Tax ID)", key: "tinNumber", placeholder: "109283746", type: "text" },
-                    { id: "reg-password", label: "Password", key: "password", placeholder: "Create strong password", type: "password" },
-                  ].map((field) => (
-                    <div key={field.id}>
-                      <Label htmlFor={field.id} className="text-sm font-medium text-gray-700">
-                        {field.label}
-                      </Label>
-                      <Input
-                        id={field.id}
-                        type={field.type}
-                        className="mt-1 h-10 border-gray-300 focus:border-[#1b5ebe] focus:ring-[#1b5ebe] rounded-md"
-                        placeholder={field.placeholder}
-                        value={(registerData as any)[field.key]}
-                        onChange={(e) =>
-                          setRegisterData({ ...registerData, [field.key]: e.target.value })
-                        }
-                        required={["companyName", "ownerName", "email", "tinNumber", "password"].includes(field.key)}
-                      />
-                    </div>
-                  ))}
+                  {/* Progress bar */}
+                  <div className="w-full h-1.5 bg-gray-200 rounded-full overflow-hidden flex gap-1">
+                    <div
+                      className={`h-full flex-1 rounded-full transition-all duration-300 ${
+                        registerStep >= 1 ? "bg-[#1b5ebe]" : "bg-gray-200"
+                      }`}
+                    />
+                    <div
+                      className={`h-full flex-1 rounded-full transition-all duration-300 ${
+                        registerStep >= 2 ? "bg-[#1b5ebe]" : "bg-gray-200"
+                      }`}
+                    />
+                    <div
+                      className={`h-full flex-1 rounded-full transition-all duration-300 ${
+                        registerStep === 3 ? "bg-[#1b5ebe]" : "bg-gray-200"
+                      }`}
+                    />
+                  </div>
+                </div>
 
-                  <Button
-                    type="submit"
-                    className="w-full h-10 font-semibold text-sm rounded-md text-white mt-2"
-                    style={{ backgroundColor: "#1b5ebe" }}
-                    disabled={registerLoading}
-                  >
-                    {registerLoading ? "Sending Verification Code…" : "Send Email Verification OTP"}
-                  </Button>
+                <form onSubmit={handleRegisterSubmit} className="space-y-4">
+                  {/* ── STEP 1: Business Profile ── */}
+                  {registerStep === 1 && (
+                    <motion.div
+                      key="step1"
+                      initial={{ opacity: 0, x: 10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -10 }}
+                      className="space-y-4"
+                    >
+                      <div>
+                        <h2 className="text-xl font-bold text-gray-900 tracking-tight flex items-center gap-2">
+                          <Building2 className="w-5 h-5 text-[#1b5ebe]" />
+                          Tell us about your business
+                        </h2>
+                        <p className="text-xs text-gray-500 mt-0.5">Your official store and tax identification</p>
+                      </div>
+
+                      <div>
+                        <Label htmlFor="reg-company" className="text-xs font-semibold uppercase tracking-wider text-gray-600">
+                          Company / Store Name <span className="text-red-500">*</span>
+                        </Label>
+                        <Input
+                          id="reg-company"
+                          type="text"
+                          className="mt-1 h-10 border-gray-300 focus:border-[#1b5ebe] focus:ring-[#1b5ebe] rounded-lg"
+                          placeholder="Acme Supermarket Kigali"
+                          value={registerData.companyName}
+                          onChange={(e) => setRegisterData({ ...registerData, companyName: e.target.value })}
+                          required
+                          autoFocus
+                        />
+                      </div>
+
+                      <div>
+                        <Label htmlFor="reg-tin" className="text-xs font-semibold uppercase tracking-wider text-gray-600">
+                          TIN / Tax Identification Number <span className="text-red-500">*</span>
+                        </Label>
+                        <Input
+                          id="reg-tin"
+                          type="text"
+                          className="mt-1 h-10 border-gray-300 focus:border-[#1b5ebe] focus:ring-[#1b5ebe] rounded-lg"
+                          placeholder="109283746"
+                          value={registerData.tinNumber}
+                          onChange={(e) => setRegisterData({ ...registerData, tinNumber: e.target.value })}
+                          required
+                        />
+                        <p className="text-[11px] text-gray-400 mt-1">Used for RRA fiscal invoice compliance.</p>
+                      </div>
+
+                      <div>
+                        <Label htmlFor="reg-address" className="text-xs font-semibold uppercase tracking-wider text-gray-600">
+                          Physical Address / District
+                        </Label>
+                        <Input
+                          id="reg-address"
+                          type="text"
+                          className="mt-1 h-10 border-gray-300 focus:border-[#1b5ebe] focus:ring-[#1b5ebe] rounded-lg"
+                          placeholder="KN 4 Ave, Nyarugenge, Kigali"
+                          value={registerData.address}
+                          onChange={(e) => setRegisterData({ ...registerData, address: e.target.value })}
+                        />
+                      </div>
+
+                      <Button
+                        type="button"
+                        onClick={() => {
+                          if (validateStep1()) setRegisterStep(2);
+                        }}
+                        className="w-full h-11 font-semibold text-sm rounded-lg text-white mt-4 flex items-center justify-center gap-2"
+                        style={{ backgroundColor: "#1b5ebe" }}
+                      >
+                        Continue to Owner Profile <ArrowRight className="w-4 h-4" />
+                      </Button>
+                    </motion.div>
+                  )}
+
+                  {/* ── STEP 2: Owner & Contact Profile ── */}
+                  {registerStep === 2 && (
+                    <motion.div
+                      key="step2"
+                      initial={{ opacity: 0, x: 10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -10 }}
+                      className="space-y-4"
+                    >
+                      <div>
+                        <h2 className="text-xl font-bold text-gray-900 tracking-tight flex items-center gap-2">
+                          <User className="w-5 h-5 text-[#1b5ebe]" />
+                          Owner & Administrator Details
+                        </h2>
+                        <p className="text-xs text-gray-500 mt-0.5">Primary administrator of this business workspace</p>
+                      </div>
+
+                      <div>
+                        <Label htmlFor="reg-owner" className="text-xs font-semibold uppercase tracking-wider text-gray-600">
+                          Full Name <span className="text-red-500">*</span>
+                        </Label>
+                        <Input
+                          id="reg-owner"
+                          type="text"
+                          className="mt-1 h-10 border-gray-300 focus:border-[#1b5ebe] focus:ring-[#1b5ebe] rounded-lg"
+                          placeholder="Jean Pierre Habimana"
+                          value={registerData.ownerName}
+                          onChange={(e) => setRegisterData({ ...registerData, ownerName: e.target.value })}
+                          required
+                          autoFocus
+                        />
+                      </div>
+
+                      <div>
+                        <Label htmlFor="reg-email" className="text-xs font-semibold uppercase tracking-wider text-gray-600">
+                          Work Email Address <span className="text-red-500">*</span>
+                        </Label>
+                        <Input
+                          id="reg-email"
+                          type="email"
+                          className="mt-1 h-10 border-gray-300 focus:border-[#1b5ebe] focus:ring-[#1b5ebe] rounded-lg"
+                          placeholder="owner@acme.rw"
+                          value={registerData.email}
+                          onChange={(e) => setRegisterData({ ...registerData, email: e.target.value })}
+                          required
+                        />
+                        <p className="text-[11px] text-gray-400 mt-1">We will send a 6-digit verification code here.</p>
+                      </div>
+
+                      <div>
+                        <Label htmlFor="reg-phone" className="text-xs font-semibold uppercase tracking-wider text-gray-600">
+                          Phone Number <span className="text-red-500">*</span>
+                        </Label>
+                        <Input
+                          id="reg-phone"
+                          type="tel"
+                          className="mt-1 h-10 border-gray-300 focus:border-[#1b5ebe] focus:ring-[#1b5ebe] rounded-lg"
+                          placeholder="+250 788 000 000"
+                          value={registerData.phone}
+                          onChange={(e) => setRegisterData({ ...registerData, phone: e.target.value })}
+                          required
+                        />
+                      </div>
+
+                      <div className="flex items-center gap-3 pt-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => setRegisterStep(1)}
+                          className="h-11 px-4 border-gray-300 text-gray-700 rounded-lg flex items-center gap-1.5"
+                        >
+                          <ArrowLeft className="w-4 h-4" /> Back
+                        </Button>
+                        <Button
+                          type="button"
+                          onClick={() => {
+                            if (validateStep2()) setRegisterStep(3);
+                          }}
+                          className="flex-1 h-11 font-semibold text-sm rounded-lg text-white flex items-center justify-center gap-2"
+                          style={{ backgroundColor: "#1b5ebe" }}
+                        >
+                          Next: Security <ArrowRight className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </motion.div>
+                  )}
+
+                  {/* ── STEP 3: Security & Password ── */}
+                  {registerStep === 3 && (
+                    <motion.div
+                      key="step3"
+                      initial={{ opacity: 0, x: 10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -10 }}
+                      className="space-y-4"
+                    >
+                      <div>
+                        <h2 className="text-xl font-bold text-gray-900 tracking-tight flex items-center gap-2">
+                          <Lock className="w-5 h-5 text-[#1b5ebe]" />
+                          Create Workspace Password
+                        </h2>
+                        <p className="text-xs text-gray-500 mt-0.5">Protect your cashier terminal and dashboard</p>
+                      </div>
+
+                      <div>
+                        <Label htmlFor="reg-password" className="text-xs font-semibold uppercase tracking-wider text-gray-600">
+                          Password (min. 6 chars) <span className="text-red-500">*</span>
+                        </Label>
+                        <div className="relative mt-1">
+                          <Input
+                            id="reg-password"
+                            type={showRegPassword ? "text" : "password"}
+                            className="h-10 border-gray-300 focus:border-[#1b5ebe] focus:ring-[#1b5ebe] rounded-lg pr-10"
+                            placeholder="Create strong password"
+                            value={registerData.password}
+                            onChange={(e) => setRegisterData({ ...registerData, password: e.target.value })}
+                            required
+                            autoFocus
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowRegPassword(!showRegPassword)}
+                            className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600"
+                          >
+                            {showRegPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                          </button>
+                        </div>
+                      </div>
+
+                      <div>
+                        <Label htmlFor="reg-confirm-password" className="text-xs font-semibold uppercase tracking-wider text-gray-600">
+                          Confirm Password <span className="text-red-500">*</span>
+                        </Label>
+                        <Input
+                          id="reg-confirm-password"
+                          type={showRegPassword ? "text" : "password"}
+                          className="mt-1 h-10 border-gray-300 focus:border-[#1b5ebe] focus:ring-[#1b5ebe] rounded-lg"
+                          placeholder="Re-type password"
+                          value={registerData.confirmPassword}
+                          onChange={(e) => setRegisterData({ ...registerData, confirmPassword: e.target.value })}
+                          required
+                        />
+                      </div>
+
+                      {/* Summary box */}
+                      <div className="p-3 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-600 space-y-1">
+                        <div className="flex justify-between">
+                          <span className="text-slate-400">Business:</span>
+                          <span className="font-semibold text-slate-800">{registerData.companyName}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-slate-400">Owner:</span>
+                          <span className="font-semibold text-slate-800">{registerData.ownerName}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-slate-400">Email:</span>
+                          <span className="font-semibold text-slate-800">{registerData.email}</span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-3 pt-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => setRegisterStep(2)}
+                          className="h-11 px-4 border-gray-300 text-gray-700 rounded-lg flex items-center gap-1.5"
+                        >
+                          <ArrowLeft className="w-4 h-4" /> Back
+                        </Button>
+                        <Button
+                          type="submit"
+                          className="flex-1 h-11 font-semibold text-sm rounded-lg text-white"
+                          style={{ backgroundColor: "#1b5ebe" }}
+                          disabled={registerLoading}
+                        >
+                          {registerLoading ? "Sending OTP Code…" : "Submit & Verify Email"}
+                        </Button>
+                      </div>
+                    </motion.div>
+                  )}
                 </form>
 
-                <div
-                  className="mt-5 p-3 rounded-lg text-sm text-center"
-                  style={{ backgroundColor: "#f9fafb", border: "1px solid #e5e7eb" }}
-                >
-                  Already have an account?{" "}
+                <div className="mt-8 p-3 rounded-xl text-sm text-center bg-gray-50 border border-gray-200">
+                  Already registered?{" "}
                   <button
                     onClick={() => setMode("login")}
-                    className="font-semibold"
-                    style={{ color: "#1b5ebe" }}
+                    className="font-bold text-[#1b5ebe] hover:underline"
                   >
-                    Sign in
+                    Sign in here
                   </button>
                 </div>
               </motion.div>
@@ -759,29 +1164,29 @@ export default function LoginPage() {
         </div>
       </div>
 
-      {/* ─────── OTP Verification Modal ─────── */}
+      {/* ─────── Register: OTP Verification Modal ─────── */}
       <Dialog open={otpModalOpen} onOpenChange={setOtpModalOpen}>
-        <DialogContent className="sm:max-w-[400px] rounded-xl p-0 overflow-hidden">
-          {/* Modal header — navy */}
+        <DialogContent className="sm:max-w-[420px] rounded-2xl p-0 overflow-hidden shadow-2xl border-0">
+          {/* Modal header */}
           <div className="p-6 pb-5" style={{ backgroundColor: "#0b1d3a" }}>
             <div
-              className="w-10 h-10 rounded-lg flex items-center justify-center mb-3"
-              style={{ backgroundColor: "rgba(27,94,190,0.3)" }}
+              className="w-10 h-10 rounded-xl flex items-center justify-center mb-3 shadow-inner"
+              style={{ backgroundColor: "rgba(27,94,190,0.35)" }}
             >
               <ShieldCheck className="w-5 h-5 text-white" />
             </div>
-            <DialogTitle className="text-white text-lg font-bold">Verify Email Address</DialogTitle>
-            <DialogDescription className="text-white/60 text-sm mt-1">
-              We sent a 6-digit code to{" "}
-              <strong className="text-white/90">{registerData.email}</strong>
+            <DialogTitle className="text-white text-lg font-bold">Verify Business Email</DialogTitle>
+            <DialogDescription className="text-white/70 text-xs mt-1">
+              We sent a 6-digit confirmation code to{" "}
+              <strong className="text-white underline">{registerData.email}</strong>
             </DialogDescription>
           </div>
 
           {/* Modal body */}
-          <div className="p-6">
+          <div className="p-6 bg-white">
             <form onSubmit={handleVerifyOtp} className="space-y-4">
               <div>
-                <Label htmlFor="otp-input" className="text-sm font-medium text-gray-700">
+                <Label htmlFor="otp-input" className="text-xs font-semibold uppercase tracking-wider text-gray-600">
                   Enter 6-Digit Code
                 </Label>
                 <Input
@@ -791,22 +1196,21 @@ export default function LoginPage() {
                   value={otpCode}
                   onChange={(e) => setOtpCode(e.target.value.trim())}
                   placeholder="123456"
-                  className="mt-1 text-center text-xl font-mono tracking-[0.4em] h-12 border-gray-300 focus:border-[#1b5ebe] focus:ring-[#1b5ebe] rounded-md"
+                  className="mt-1.5 text-center text-2xl font-mono tracking-[0.4em] h-12 border-gray-300 focus:border-[#1b5ebe] focus:ring-[#1b5ebe] rounded-lg"
                   required
                   autoFocus
                 />
               </div>
 
-              <div className="flex items-center justify-between text-xs text-gray-500">
+              <div className="flex items-center justify-between text-xs text-gray-500 pt-1">
                 <span>Didn't receive the code?</span>
                 {canResend ? (
                   <button
                     type="button"
                     onClick={handleResendOtp}
-                    className="font-semibold flex items-center gap-1"
-                    style={{ color: "#1b5ebe" }}
+                    className="font-bold flex items-center gap-1 text-[#1b5ebe] hover:underline"
                   >
-                    <RefreshCw className="w-3 h-3" /> Resend
+                    <RefreshCw className="w-3 h-3" /> Resend Code
                   </button>
                 ) : (
                   <span className="font-medium text-gray-400">Resend in {resendTimer}s</span>
@@ -815,13 +1219,143 @@ export default function LoginPage() {
 
               <Button
                 type="submit"
-                className="w-full h-10 font-semibold text-sm rounded-md text-white"
+                className="w-full h-11 font-semibold text-sm rounded-lg text-white mt-2"
                 style={{ backgroundColor: "#1b5ebe" }}
                 disabled={otpLoading || otpCode.length < 4}
               >
-                {otpLoading ? "Verifying…" : "Verify & Activate Business"}
+                {otpLoading ? "Verifying…" : "Verify & Activate Store"}
               </Button>
             </form>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* ─────── Forgot Password Modal ─────── */}
+      <Dialog open={forgotModalOpen} onOpenChange={setForgotModalOpen}>
+        <DialogContent className="sm:max-w-[420px] rounded-2xl p-0 overflow-hidden shadow-2xl border-0">
+          <div className="p-6 pb-5" style={{ backgroundColor: "#0b1d3a" }}>
+            <div
+              className="w-10 h-10 rounded-xl flex items-center justify-center mb-3 shadow-inner"
+              style={{ backgroundColor: "rgba(27,94,190,0.35)" }}
+            >
+              <KeyRound className="w-5 h-5 text-white" />
+            </div>
+            <DialogTitle className="text-white text-lg font-bold">
+              {forgotStep === 1 ? "Reset Your Password" : "Set New Password"}
+            </DialogTitle>
+            <DialogDescription className="text-white/70 text-xs mt-1">
+              {forgotStep === 1
+                ? "Enter your account email to receive a password recovery verification code."
+                : `Enter the code sent to ${forgotEmail} and choose a new password.`}
+            </DialogDescription>
+          </div>
+
+          <div className="p-6 bg-white">
+            {forgotStep === 1 ? (
+              <form onSubmit={handleForgotRequestOtp} className="space-y-4">
+                <div>
+                  <Label htmlFor="forgot-email" className="text-xs font-semibold uppercase tracking-wider text-gray-600">
+                    Account Email Address
+                  </Label>
+                  <Input
+                    id="forgot-email"
+                    type="email"
+                    className="mt-1.5 h-11 border-gray-300 focus:border-[#1b5ebe] focus:ring-[#1b5ebe] rounded-lg text-sm"
+                    placeholder="name@business.rw"
+                    value={forgotEmail}
+                    onChange={(e) => setForgotEmail(e.target.value)}
+                    required
+                    autoFocus
+                  />
+                </div>
+
+                <Button
+                  type="submit"
+                  className="w-full h-11 font-semibold text-sm rounded-lg text-white mt-2"
+                  style={{ backgroundColor: "#1b5ebe" }}
+                  disabled={forgotLoading}
+                >
+                  {forgotLoading ? "Sending Recovery Code…" : "Send Reset Code"}
+                </Button>
+              </form>
+            ) : (
+              <form onSubmit={handleForgotResetPassword} className="space-y-4">
+                <div>
+                  <Label htmlFor="forgot-otp" className="text-xs font-semibold uppercase tracking-wider text-gray-600">
+                    Verification Code (OTP)
+                  </Label>
+                  <Input
+                    id="forgot-otp"
+                    type="text"
+                    maxLength={6}
+                    className="mt-1 text-center text-xl font-mono tracking-[0.3em] h-11 border-gray-300 focus:border-[#1b5ebe] focus:ring-[#1b5ebe] rounded-lg"
+                    placeholder="123456"
+                    value={forgotOtp}
+                    onChange={(e) => setForgotOtp(e.target.value.trim())}
+                    required
+                    autoFocus
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="forgot-new-pass" className="text-xs font-semibold uppercase tracking-wider text-gray-600">
+                    New Password
+                  </Label>
+                  <div className="relative mt-1">
+                    <Input
+                      id="forgot-new-pass"
+                      type={showForgotPass ? "text" : "password"}
+                      className="h-10 border-gray-300 focus:border-[#1b5ebe] focus:ring-[#1b5ebe] rounded-lg pr-10 text-sm"
+                      placeholder="Min. 6 characters"
+                      value={forgotNewPassword}
+                      onChange={(e) => setForgotNewPassword(e.target.value)}
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowForgotPass(!showForgotPass)}
+                      className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600"
+                    >
+                      {showForgotPass ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <Label htmlFor="forgot-confirm-pass" className="text-xs font-semibold uppercase tracking-wider text-gray-600">
+                    Confirm New Password
+                  </Label>
+                  <Input
+                    id="forgot-confirm-pass"
+                    type={showForgotPass ? "text" : "password"}
+                    className="mt-1 h-10 border-gray-300 focus:border-[#1b5ebe] focus:ring-[#1b5ebe] rounded-lg text-sm"
+                    placeholder="Re-type new password"
+                    value={forgotConfirmPassword}
+                    onChange={(e) => setForgotConfirmPassword(e.target.value)}
+                    required
+                  />
+                </div>
+
+                <div className="flex items-center gap-3 pt-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setForgotStep(1)}
+                    className="h-11 px-4 border-gray-300 text-gray-700 rounded-lg text-xs"
+                  >
+                    Change Email
+                  </Button>
+                  <Button
+                    type="submit"
+                    className="flex-1 h-11 font-semibold text-sm rounded-lg text-white"
+                    style={{ backgroundColor: "#1b5ebe" }}
+                    disabled={forgotLoading}
+                  >
+                    {forgotLoading ? "Resetting…" : "Update Password"}
+                  </Button>
+                </div>
+              </form>
+            )}
           </div>
         </DialogContent>
       </Dialog>
