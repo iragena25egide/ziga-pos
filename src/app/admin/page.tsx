@@ -182,21 +182,47 @@ export default function AdminDashboardPage() {
     fetchData();
   }, []);
 
+  const selectedCompanyIdRef = useRef<number | null>(null);
+  useEffect(() => {
+    selectedCompanyIdRef.current = selectedCompanyId;
+  }, [selectedCompanyId]);
+
   // Connect Admin Socket.IO room for instant live monitoring
   useEffect(() => {
     const socket = getSocket();
 
     const onConnect = () => {
       setIsSocketConnected(true);
+      socket.emit("join_admin");
       socket.emit("join_admin_hub");
     };
 
     const onDisconnect = () => setIsSocketConnected(false);
 
     const onNewMessage = (newMsg: SupportMessage) => {
-      if (selectedCompanyId && String(newMsg.company_id) === String(selectedCompanyId)) {
+      const activeId = selectedCompanyIdRef.current;
+      if (activeId && String(newMsg.company_id) === String(activeId)) {
         setChatMessages((prev) => {
           if (newMsg.id && prev.some((m) => m.id === newMsg.id)) return prev;
+          const optimisticIndex = prev.findIndex(
+            (m) =>
+              !m.id &&
+              m.message === newMsg.message &&
+              Boolean(m.is_admin) === Boolean(newMsg.is_admin)
+          );
+          if (optimisticIndex !== -1) {
+            const updated = [...prev];
+            updated[optimisticIndex] = newMsg;
+            return updated;
+          }
+          // Deduplicate by text, sender, and timestamp
+          const isDuplicate = prev.some(
+            (m) =>
+              m.message === newMsg.message &&
+              Boolean(m.is_admin) === Boolean(newMsg.is_admin) &&
+              Math.abs(new Date(m.created_at || "").getTime() - new Date(newMsg.created_at || "").getTime()) < 3000
+          );
+          if (isDuplicate) return prev;
           return [...prev, newMsg];
         });
       }
@@ -219,12 +245,13 @@ export default function AdminDashboardPage() {
         }
         return prev.map((c) => {
           if (String(c.company_id) === String(newMsg.company_id)) {
+            const isCurrentlySelected = selectedCompanyIdRef.current === c.company_id;
             return {
               ...c,
               last_message: newMsg.message,
               last_message_at: newMsg.created_at,
               last_message_is_admin: newMsg.is_admin,
-              unread_count: selectedCompanyId === c.company_id ? 0 : c.unread_count + 1,
+              unread_count: isCurrentlySelected ? 0 : c.unread_count + 1,
             };
           }
           return c;
@@ -261,7 +288,7 @@ export default function AdminDashboardPage() {
       socket.off("company_registered", onCompanyRegistered);
       if (typingTimerRef.current) clearTimeout(typingTimerRef.current);
     };
-  }, [selectedCompanyId]);
+  }, []);
 
   // Load chat messages when a company is selected
   useEffect(() => {

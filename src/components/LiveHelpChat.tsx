@@ -69,9 +69,31 @@ export default function LiveHelpChat({ currentUser }: { currentUser?: any }) {
     const handleNewMessage = (newMsg: Message) => {
       if (String(newMsg.company_id) === String(companyId) || !newMsg.company_id) {
         setMessages((prev) => {
+          // If message already exists by ID
           if (newMsg.id && prev.some((m) => m.id === newMsg.id)) {
             return prev;
           }
+          // If optimistic message exists without ID, match by message text and is_admin
+          const optimisticIndex = prev.findIndex(
+            (m) =>
+              !m.id &&
+              m.message === newMsg.message &&
+              Boolean(m.is_admin) === Boolean(newMsg.is_admin)
+          );
+          if (optimisticIndex !== -1) {
+            // Replace optimistic message with the server-confirmed message
+            const updated = [...prev];
+            updated[optimisticIndex] = newMsg;
+            return updated;
+          }
+          // Prevent any duplicate text within 3 seconds
+          const isDuplicate = prev.some(
+            (m) =>
+              m.message === newMsg.message &&
+              Boolean(m.is_admin) === Boolean(newMsg.is_admin) &&
+              Math.abs(new Date(m.created_at || "").getTime() - new Date(newMsg.created_at || "").getTime()) < 3000
+          );
+          if (isDuplicate) return prev;
           return [...prev, newMsg];
         });
 
