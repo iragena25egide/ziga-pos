@@ -24,6 +24,7 @@ import {
   AlertCircle,
   Clock,
   ExternalLink,
+  Download,
 } from "lucide-react";
 import api from "@/lib/api";
 import { OfflineIndicator, OfflineSyncProvider } from "./OfflineSync";
@@ -612,6 +613,16 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
                               <UserCircle className="w-3.5 h-3.5 text-gray-400" />
                               My Profile
                             </Link>
+                            <a
+                              href="https://github.com/iragena25egide/ziga-pos/releases"
+                              target="_blank"
+                              rel="noreferrer"
+                              className="flex items-center gap-2 px-3 py-2 text-[13px] text-gray-700 hover:bg-gray-50 rounded-md transition-colors"
+                              onClick={() => setShowProfileMenu(false)}
+                            >
+                              <Download className="w-3.5 h-3.5 text-gray-400" />
+                              Desktop App
+                            </a>
                             <div className="my-1 border-t border-gray-100" />
                             <button
                               onClick={handleLogout}

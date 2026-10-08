@@ -19,7 +19,23 @@ import {
   Package,
   ShoppingCart,
   ArrowUpRight,
+  Monitor,
+  Download,
+  Laptop,
+  CheckCircle2,
+  ExternalLink,
+  ShieldCheck,
+  Printer,
+  WifiOff,
+  Zap,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 const NAVY = "#0b1d3a";
 const BLUE = "#1b5ebe";
@@ -28,9 +44,18 @@ export default function Dashboard() {
   const router = useRouter();
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [desktopModalOpen, setDesktopModalOpen] = useState(false);
+  const [isDesktopApp, setIsDesktopApp] = useState(false);
 
   useEffect(() => {
     fetchStats();
+    if (typeof window !== "undefined") {
+      const isElectron =
+        navigator.userAgent.toLowerCase().includes("electron") ||
+        !!(window as any).process?.versions?.electron ||
+        window.location.search.includes("desktop=true");
+      setIsDesktopApp(isElectron);
+    }
   }, []);
 
   const fetchStats = async () => {
@@ -81,6 +106,75 @@ export default function Dashboard() {
         <h2 className="text-xl font-bold text-gray-900 tracking-tight">Dashboard Overview</h2>
         <p className="text-sm text-gray-500 mt-0.5">Platform-wide analytics and key metrics.</p>
       </motion.div>
+
+      {/* Desktop App Download Banner */}
+      {!isDesktopApp && (
+        <motion.div
+          initial={{ opacity: 0, y: -6 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#0b1d3a] via-[#112a52] to-[#1b5ebe] p-5 sm:p-6 text-white shadow-lg border border-white/10"
+        >
+          <div className="absolute -top-12 -right-12 w-48 h-48 rounded-full bg-blue-500/20 blur-2xl pointer-events-none" />
+
+          <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-5">
+            <div className="flex items-start sm:items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center shrink-0 shadow-inner">
+                <Monitor className="w-6 h-6 text-blue-300" />
+              </div>
+              <div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <h3 className="text-base sm:text-lg font-bold tracking-tight text-white">
+                    Download Ziga POS for Desktop
+                  </h3>
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                    v1.1.0 Ready
+                  </span>
+                </div>
+                <p className="text-xs sm:text-sm text-blue-100/80 mt-1 max-w-xl leading-relaxed">
+                  Install the official desktop application for hardware thermal printing, offline local caching, and instant launch without a browser.
+                </p>
+                <div className="flex flex-wrap items-center gap-3 mt-2 text-[11px] text-blue-200/70">
+                  <span className="flex items-center gap-1">
+                    <Printer className="w-3 h-3 text-emerald-400" /> Thermal Printer Direct
+                  </span>
+                  <span>•</span>
+                  <span className="flex items-center gap-1">
+                    <WifiOff className="w-3 h-3 text-emerald-400" /> Offline Auto-Sync
+                  </span>
+                  <span>•</span>
+                  <span className="flex items-center gap-1">
+                    <Zap className="w-3 h-3 text-amber-400" /> Ultra Fast
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2.5 w-full md:w-auto shrink-0">
+              <Button
+                onClick={() => setDesktopModalOpen(true)}
+                className="w-full sm:w-auto bg-white text-[#0b1d3a] hover:bg-blue-50 font-bold px-4 py-2.5 h-10 rounded-xl shadow-md gap-2 transition-all active:scale-95 cursor-pointer"
+              >
+                <Download className="w-4 h-4 text-[#1b5ebe]" />
+                Download Desktop Setup
+              </Button>
+            </div>
+          </div>
+        </motion.div>
+      )}
+
+      {/* When running on Desktop App */}
+      {isDesktopApp && (
+        <div className="flex items-center justify-between px-4 py-2.5 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-900 text-xs">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+            <span className="font-semibold">Ziga POS Desktop App v1.1.0</span>
+            <span className="text-emerald-700 hidden sm:inline">— Hardware accelerated & offline enabled.</span>
+          </div>
+          <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 bg-emerald-200/60 rounded text-emerald-800">
+            Active
+          </span>
+        </div>
+      )}
 
       {/* Metric cards */}
       <motion.div
@@ -253,6 +347,113 @@ export default function Dashboard() {
       <p className="text-center text-xs text-gray-400 pt-4">
         © {new Date().getFullYear()} Ziga POS. All rights reserved.
       </p>
+
+      {/* ── Desktop Setup Download Modal ── */}
+      <Dialog open={desktopModalOpen} onOpenChange={setDesktopModalOpen}>
+        <DialogContent className="sm:max-w-md p-6 bg-white dark:bg-slate-900 text-slate-900 dark:text-white rounded-2xl">
+          <DialogHeader className="space-y-1">
+            <div className="flex items-center gap-2 text-primary font-semibold text-xs uppercase tracking-wider">
+              <Monitor className="w-4 h-4" /> Official Desktop Release
+            </div>
+            <DialogTitle className="text-xl font-bold">
+              Install Ziga POS Desktop Setup
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2">
+            <p className="text-xs text-slate-500 leading-relaxed">
+              Choose your operating system to download the standalone installer. The desktop version runs locally and supports ESC/POS thermal printers.
+            </p>
+
+            {/* Platform download buttons */}
+            <div className="space-y-2">
+              <a
+                href="https://github.com/iragena25egide/ziga-pos/releases/latest/download/ZigaPOS-Setup-1.1.0.exe"
+                className="flex items-center justify-between p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-primary/50 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-all group"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-lg bg-blue-50 dark:bg-blue-950 flex items-center justify-center text-blue-600">
+                    <Laptop className="w-5 h-5" />
+                  </div>
+                  <div className="text-left">
+                    <p className="text-sm font-bold group-hover:text-primary transition-colors">
+                      Windows Installer (.exe)
+                    </p>
+                    <p className="text-[11px] text-slate-400">Windows 10 / 11 (64-bit) • Setup v1.1.0</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-1 text-xs font-semibold text-primary bg-primary/10 px-2.5 py-1 rounded-lg">
+                  <Download className="w-3.5 h-3.5" /> Download
+                </div>
+              </a>
+
+              <a
+                href="https://github.com/iragena25egide/ziga-pos/releases/latest/download/Ziga-POS-1.1.0.dmg"
+                className="flex items-center justify-between p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-primary/50 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-all group"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-700 dark:text-slate-300">
+                    <Monitor className="w-5 h-5" />
+                  </div>
+                  <div className="text-left">
+                    <p className="text-sm font-bold group-hover:text-primary transition-colors">
+                      macOS Package (.dmg)
+                    </p>
+                    <p className="text-[11px] text-slate-400">Apple Silicon & Intel • Setup v1.1.0</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-1 text-xs font-semibold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-lg">
+                  <Download className="w-3.5 h-3.5" /> Download
+                </div>
+              </a>
+
+              <a
+                href="https://github.com/iragena25egide/ziga-pos/releases/latest/download/Ziga-POS-1.1.0.AppImage"
+                className="flex items-center justify-between p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-primary/50 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-all group"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-lg bg-amber-50 dark:bg-amber-950 flex items-center justify-center text-amber-600">
+                    <Monitor className="w-5 h-5" />
+                  </div>
+                  <div className="text-left">
+                    <p className="text-sm font-bold group-hover:text-primary transition-colors">
+                      Linux AppImage (.AppImage)
+                    </p>
+                    <p className="text-[11px] text-slate-400">Ubuntu, Debian, Fedora • Universal</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-1 text-xs font-semibold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-lg">
+                  <Download className="w-3.5 h-3.5" /> Download
+                </div>
+              </a>
+            </div>
+
+            {/* Quick 3-step setup guide */}
+            <div className="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-800 space-y-1.5 text-xs text-slate-600 dark:text-slate-400">
+              <p className="font-semibold text-slate-900 dark:text-white flex items-center gap-1.5">
+                <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" /> Easy 3-Step Setup:
+              </p>
+              <ol className="list-decimal list-inside space-y-0.5 text-[11px]">
+                <li>Download the setup file for your OS above.</li>
+                <li>Run the installer and follow the quick setup wizard.</li>
+                <li>Sign in with your Ziga account or Google to start selling!</li>
+              </ol>
+            </div>
+
+            <div className="text-center pt-1">
+              <a
+                href="https://github.com/iragena25egide/ziga-pos/releases"
+                target="_blank"
+                rel="noreferrer"
+                className="text-xs text-primary hover:underline inline-flex items-center gap-1 font-medium"
+              >
+                View all releases on GitHub
+                <ExternalLink className="w-3 h-3" />
+              </a>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
