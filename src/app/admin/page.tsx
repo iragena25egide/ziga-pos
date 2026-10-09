@@ -178,6 +178,11 @@ export default function AdminDashboardPage() {
   const [adminPreviewImage, setAdminPreviewImage] = useState<string | null>(null);
   const adminFileInputRef = useRef<HTMLInputElement>(null);
 
+  // Delete Customer Chat Confirmation Modal
+  const [deleteChatModalOpen, setDeleteChatModalOpen] = useState(false);
+  const [chatToDelete, setChatToDelete] = useState<{ companyId: number; companyName: string } | null>(null);
+  const [deleteChatLoading, setDeleteChatLoading] = useState(false);
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const typingTimerRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -345,15 +350,10 @@ export default function AdminDashboardPage() {
     const onConversationCleared = (data: { company_id: number }) => {
       const activeId = selectedCompanyIdRef.current;
       if (activeId && String(data.company_id) === String(activeId)) {
+        setSelectedCompanyId(null);
         setChatMessages([]);
       }
-      setConversations((prev) =>
-        prev.map((c) =>
-          c.company_id === data.company_id
-            ? { ...c, last_message: null, last_message_at: null, unread_count: 0 }
-            : c
-        )
-      );
+      setConversations((prev) => prev.filter((c) => c.company_id !== data.company_id));
     };
 
     socket.on("connect", onConnect);
@@ -749,31 +749,28 @@ export default function AdminDashboardPage() {
     }
   };
 
-  const handleClearConversation = async (companyId: number, companyName?: string) => {
-    if (
-      !confirm(
-        `Are you sure you want to delete the entire chat history for "${
-          companyName || "this customer"
-        }"? This action cannot be undone.`
-      )
-    ) {
-      return;
-    }
+  const requestDeleteChat = (companyId: number, companyName?: string) => {
+    setChatToDelete({ companyId, companyName: companyName || "Customer" });
+    setDeleteChatModalOpen(true);
+  };
+
+  const confirmDeleteChat = async () => {
+    if (!chatToDelete) return;
+    setDeleteChatLoading(true);
     try {
-      await api.post("/support-messages/clear_conversation/", { company_id: companyId });
-      toast.success(`Entire chat for "${companyName || "Customer"}" deleted.`);
-      if (selectedCompanyId === companyId) {
+      await api.post("/support-messages/clear_conversation/", { company_id: chatToDelete.companyId });
+      toast.success(`Chat history for "${chatToDelete.companyName}" deleted.`);
+      if (selectedCompanyId === chatToDelete.companyId) {
+        setSelectedCompanyId(null);
         setChatMessages([]);
       }
-      setConversations((prev) =>
-        prev.map((c) =>
-          c.company_id === companyId
-            ? { ...c, last_message: null, last_message_at: null, unread_count: 0 }
-            : c
-        )
-      );
+      setConversations((prev) => prev.filter((c) => c.company_id !== chatToDelete.companyId));
+      setDeleteChatModalOpen(false);
+      setChatToDelete(null);
     } catch (err: any) {
       toast.error(err.response?.data?.error || "Failed to delete chat history.");
+    } finally {
+      setDeleteChatLoading(false);
     }
   };
 
@@ -1515,7 +1512,7 @@ export default function AdminDashboardPage() {
                               type="button"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                handleClearConversation(c.company_id, c.company_name);
+                                requestDeleteChat(c.company_id, c.company_name);
                               }}
                               className="text-gray-300 hover:text-red-600 p-0.5 rounded transition-colors"
                               title="Delete customer chat"
@@ -1569,7 +1566,7 @@ export default function AdminDashboardPage() {
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => handleClearConversation(selectedCompany.id, selectedCompany.name)}
+                        onClick={() => requestDeleteChat(selectedCompany.id, selectedCompany.name)}
                         className="rounded-xl text-xs font-semibold h-8 border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300"
                         title="Delete entire chat history for this customer"
                       >
@@ -2121,6 +2118,40 @@ export default function AdminDashboardPage() {
           </div>
         )}
       </AnimatePresence>
+
+      {/* Delete Customer Chat Confirmation Dialog */}
+      <AlertDialog open={deleteChatModalOpen} onOpenChange={setDeleteChatModalOpen}>
+        <AlertDialogContent className="admin-modal-content sm:max-w-[400px] text-center p-0">
+          <div className="bg-[#1e293b] pt-8 pb-6 flex flex-col items-center">
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-red-500 to-red-600 text-white flex items-center justify-center mb-4 shadow-[0_0_25px_rgba(239,68,68,0.35)]">
+              <Trash2 className="w-8 h-8" />
+            </div>
+            <AlertDialogTitle className="text-xl font-bold tracking-tight text-white mb-2">
+              Delete Customer Chat?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-slate-300 text-xs max-w-[280px]">
+              Are you sure you want to delete the entire chat history for <strong className="text-white">{chatToDelete?.companyName}</strong>?
+            </AlertDialogDescription>
+          </div>
+          <div className="p-6 bg-white flex flex-col items-center">
+            <div className="w-full bg-red-50 border border-red-100 rounded-xl p-3.5 mb-5 text-xs text-red-600 text-center font-medium">
+              This conversation will disappear from your Support Inbox and cannot be undone.
+            </div>
+            <AlertDialogFooter className="w-full sm:justify-center flex-row gap-3">
+              <AlertDialogCancel disabled={deleteChatLoading} className="admin-btn-secondary flex-1 m-0">
+                Cancel
+              </AlertDialogCancel>
+              <AlertDialogAction
+                onClick={confirmDeleteChat}
+                disabled={deleteChatLoading}
+                className="admin-btn-primary bg-red-600 hover:bg-red-700 text-white flex-1 m-0"
+              >
+                {deleteChatLoading ? "Deleting..." : "Delete Chat"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </div>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
