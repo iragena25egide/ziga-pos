@@ -121,24 +121,28 @@ export default function LoginPage() {
     }
   ) => {
     try {
-      if (companyInfo?.password) {
-        if (companyInfo.password.length < 6) {
-          toast.error("Password must be at least 6 characters.");
+      if (companyInfo) {
+        if (!companyInfo.companyName?.trim()) {
+          toast.error("Please enter your Store / Company Name.");
+          return;
+        }
+        if (!companyInfo.password || companyInfo.password.length < 6) {
+          toast.error("Please set a password of at least 6 characters so you can log in on the Desktop app.");
           return;
         }
         if (companyInfo.password !== companyInfo.confirmPassword) {
-          toast.error("Passwords do not match.");
+          toast.error("Passwords do not match. Please re-type your password.");
           return;
         }
       }
 
       setGoogleSubmitting(true);
-      toast.loading("Authenticating with Google…", { id: "google-auth" });
+      toast.loading("Saving account details and password…", { id: "google-auth" });
       const payload: any = { id_token: idToken };
       if (companyInfo?.companyName) {
-        payload.company_name = companyInfo.companyName;
-        payload.address = companyInfo.address;
-        payload.tin_number = companyInfo.tinNumber;
+        payload.company_name = companyInfo.companyName.trim();
+        payload.address = companyInfo.address.trim();
+        payload.tin_number = companyInfo.tinNumber.trim();
       }
       if (companyInfo?.password) {
         payload.password = companyInfo.password;
@@ -147,14 +151,14 @@ export default function LoginPage() {
       toast.dismiss("google-auth");
       if (res.data?.pending) {
         setGoogleOnboardingOpen(false);
-        toast.success("Google account registered! Pending Super Admin approval.", { duration: 6000 });
+        toast.success("Google account registered & password saved! Pending Super Admin approval.", { duration: 6000 });
         return;
       }
       // Store ONLY standard JWT access and refresh tokens — no credentials or user details
       localStorage.setItem("access_token", res.data.access);
       localStorage.setItem("refresh_token", res.data.refresh);
       setGoogleOnboardingOpen(false);
-      toast.success("Signed in successfully!");
+      toast.success("Password set successfully! Signed in.");
       router.push("/");
     } catch (err: any) {
       toast.dismiss("google-auth");
@@ -1151,10 +1155,10 @@ export default function LoginPage() {
               <Building2 className="w-5 h-5" />
             </div>
             <DialogTitle className="text-base font-bold text-gray-900">
-              Complete Your Business Profile
+              Set Store Details & Password
             </DialogTitle>
             <DialogDescription className="text-xs text-gray-500 leading-relaxed">
-              If this is your first time signing in with Google, provide your store details below to configure your workspace and receipt headers.
+              Complete your store profile and set a password so you can log into the Desktop App and Web using your email.
             </DialogDescription>
           </DialogHeader>
 
@@ -1167,10 +1171,11 @@ export default function LoginPage() {
           >
             <div>
               <Label className="text-xs font-medium text-gray-700">
-                Store / Company Name
+                Store / Company Name <span className="text-red-500">*</span>
               </Label>
               <Input
                 type="text"
+                required
                 placeholder="e.g. Kigali Fresh Market"
                 value={googleCompanyData.companyName}
                 onChange={(e) => setGoogleCompanyData({ ...googleCompanyData, companyName: e.target.value })}
@@ -1207,16 +1212,17 @@ export default function LoginPage() {
             <div className="pt-2 border-t border-gray-100">
               <div className="flex items-center justify-between mb-1">
                 <Label className="text-xs font-medium text-gray-700">
-                  Desktop & Direct Password <span className="text-gray-400 font-normal">(Recommended)</span>
+                  Desktop & Account Password <span className="text-red-500">*</span>
                 </Label>
               </div>
               <p className="text-[11px] text-gray-500 mb-2">
-                Set a password to log in directly on our Desktop app and offline terminals.
+                This password allows you to log in on the Desktop App and Web using your email.
               </p>
               <div className="space-y-2">
                 <div className="relative">
                   <Input
                     type={showGooglePassword ? "text" : "password"}
+                    required
                     placeholder="Create a password (min 6 characters)"
                     value={googleCompanyData.password}
                     onChange={(e) => setGoogleCompanyData({ ...googleCompanyData, password: e.target.value })}
@@ -1231,37 +1237,37 @@ export default function LoginPage() {
                   </button>
                 </div>
 
-                {googleCompanyData.password && (
+                <div className="relative">
                   <Input
                     type={showGooglePassword ? "text" : "password"}
-                    placeholder="Confirm your password"
+                    required
+                    placeholder="Confirm password"
                     value={googleCompanyData.confirmPassword}
                     onChange={(e) => setGoogleCompanyData({ ...googleCompanyData, confirmPassword: e.target.value })}
-                    className="h-9 text-xs border-gray-300 rounded-md focus:border-[#1b5ebe]"
+                    className="h-9 text-xs border-gray-300 rounded-md pr-8 focus:border-[#1b5ebe]"
                   />
-                )}
+                </div>
               </div>
             </div>
 
-            <div className="flex items-center gap-2 pt-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => submitGoogleAuth(googleIdToken)}
-                className="h-9 px-3 text-xs border-gray-200 text-gray-600 rounded-md"
-                disabled={googleSubmitting}
-              >
-                Skip / Direct Sign In
-              </Button>
-
+            <div className="pt-2 space-y-2">
               <Button
                 type="submit"
-                className="flex-1 h-9 text-xs text-white font-medium rounded-md"
+                className="w-full h-9 text-xs text-white font-medium rounded-md shadow-sm"
                 style={{ backgroundColor: "#1b5ebe" }}
                 disabled={googleSubmitting}
               >
-                {googleSubmitting ? "Connecting..." : "Continue"}
+                {googleSubmitting ? "Saving & Setting Password..." : "Save Store & Set Password"}
               </Button>
+
+              <button
+                type="button"
+                onClick={() => submitGoogleAuth(googleIdToken)}
+                className="w-full text-center text-[11px] text-gray-400 hover:text-gray-600 hover:underline py-1"
+                disabled={googleSubmitting}
+              >
+                I already set my password / Sign in directly
+              </button>
             </div>
           </form>
         </DialogContent>
