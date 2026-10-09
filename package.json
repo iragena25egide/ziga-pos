@@ -85,7 +85,7 @@
     ],
     "mac": {
       "category": "public.app-category.business",
-      "icon": "public/favicon_512.png",
+      "icon": "build/icon.icns",
       "extendInfo": {
         "NSAppTransportSecurity": {
           "NSAllowsArbitraryLoads": true
@@ -99,7 +99,7 @@
           ]
         }
       ],
-      "hardenedRuntime": true
+      "hardenedRuntime": false
     },
     "win": {
       "target": [
@@ -116,7 +116,7 @@
           ]
         }
       ],
-      "icon": "public/favicon_512.png"
+      "icon": "build/icon.ico"
     },
     "nsis": {
       "oneClick": false,
