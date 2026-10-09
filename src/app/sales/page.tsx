@@ -26,10 +26,18 @@ import { PaginationControls } from "@/components/ui/pagination-controls";
 import { ThermalReceipt } from "@/components/pos/ThermalReceipt";
 import jsPDF from "jspdf";
 import QRCode from "qrcode";
+import { getUserPermissions } from "@/lib/permissions";
 
 export default function SalesPage() {
+  const [currentUser, setCurrentUser] = useState<any>(null);
   const [sales, setSales] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    api.get("/users/me/").then((res) => setCurrentUser(res.data)).catch(() => {});
+  }, []);
+
+  const permissions = getUserPermissions(currentUser);
 
 
   const [searchTerm, setSearchTerm] = useState("");
@@ -459,12 +467,16 @@ export default function SalesPage() {
                       <Button variant="ghost" size="icon" onClick={() => setSelectedSale(sale)} className="text-blue-400 hover:text-blue-500 hover:bg-blue-50 h-7 w-7 transition-colors">
                         <Eye className="w-4 h-4" />
                       </Button>
-                      <Button variant="ghost" size="icon" onClick={() => handleEditOpen(sale)} className="text-indigo-400 hover:text-indigo-500 hover:bg-indigo-50 ml-1 h-7 w-7 transition-colors">
-                        <Edit className="w-4 h-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon" onClick={() => { setSaleToDelete(sale.id); setDeleteConfirmOpen(true); }} className="text-red-400 hover:text-red-500 hover:bg-red-50 ml-1 h-7 w-7 transition-colors">
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
+                      {permissions.can_edit_sales && (
+                        <Button variant="ghost" size="icon" onClick={() => handleEditOpen(sale)} className="text-indigo-400 hover:text-indigo-500 hover:bg-indigo-50 ml-1 h-7 w-7 transition-colors" title="Edit Sale">
+                          <Edit className="w-4 h-4" />
+                        </Button>
+                      )}
+                      {permissions.can_delete_sales && (
+                        <Button variant="ghost" size="icon" onClick={() => { setSaleToDelete(sale.id); setDeleteConfirmOpen(true); }} className="text-red-400 hover:text-red-500 hover:bg-red-50 ml-1 h-7 w-7 transition-colors" title="Delete Sale">
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      )}
                     </TableCell>
                   </TableRow>
                 );

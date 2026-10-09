@@ -32,6 +32,7 @@ import LiveHelpChat from "./LiveHelpChat";
 import ZigaLogo from "./ZigaLogo";
 import { getSocket } from "@/lib/socket";
 import { toast } from "sonner";
+import { getUserPermissions } from "@/lib/permissions";
 
 interface AppNotification {
   id: string;
@@ -209,6 +210,24 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
   }, [user, isPublicPage]);
 
   const isSuperAdmin = Boolean(user?.is_superuser || user?.role === "super_admin");
+  const isCompanyOwnerOrAdmin = Boolean(
+    user?.role === "company_admin" ||
+    user?.role === "owner" ||
+    user?.role === "admin"
+  );
+  const permissions = getUserPermissions(user);
+
+  const [unreadSupportCount, setUnreadSupportCount] = useState(0);
+
+  useEffect(() => {
+    const handleUnread = (e: any) => {
+      if (typeof e.detail === "number") {
+        setUnreadSupportCount(e.detail);
+      }
+    };
+    window.addEventListener("support_unread_count", handleUnread);
+    return () => window.removeEventListener("support_unread_count", handleUnread);
+  }, []);
 
   // Automatically redirect Super Admin away from store-level pages to /admin
   useEffect(() => {
@@ -226,26 +245,47 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
     router.push("/login");
   };
 
-  const navItems = isSuperAdmin
+  const navItems: { name: string; href: string; icon: any }[] = isSuperAdmin
     ? [
         { name: "Admin Hub", href: "/admin", icon: ShieldCheck },
         { name: "Live Support", href: "/admin?tab=support", icon: Headphones },
         { name: "Companies", href: "/companies", icon: Building2 },
+        { name: "Platform Users", href: "/users", icon: Users },
         { name: "System Reports", href: "/reports", icon: FileText },
         { name: "My Profile", href: "/profile", icon: UserCircle },
       ]
-    : [
-        { name: "Dashboard", href: "/", icon: LayoutDashboard },
-        { name: "Point of Sale", href: "/pos", icon: ShoppingCart },
-        { name: "Customers", href: "/customers", icon: Users },
-        { name: "Products", href: "/products", icon: Package },
-        { name: "Sales", href: "/sales", icon: FileText },
-        { name: "Loans", href: "/loans", icon: CreditCard },
-        { name: "Payments", href: "/payments", icon: Wallet },
-        { name: "Reports", href: "/reports", icon: FileText },
-        { name: "Balance", href: "/balance", icon: FileText },
-        { name: "My Profile", href: "/profile", icon: UserCircle },
-      ];
+    : (() => {
+        const list: { name: string; href: string; icon: any }[] = [
+          { name: "Dashboard", href: "/", icon: LayoutDashboard },
+        ];
+        if (permissions.can_view_pos) {
+          list.push({ name: "Point of Sale", href: "/pos", icon: ShoppingCart });
+        }
+        if (permissions.can_view_customers) {
+          list.push({ name: "Customers", href: "/customers", icon: Users });
+        }
+        if (permissions.can_view_products) {
+          list.push({ name: "Products", href: "/products", icon: Package });
+        }
+        if (permissions.can_view_sales) {
+          list.push({ name: "Sales", href: "/sales", icon: FileText });
+        }
+        list.push(
+          { name: "Loans", href: "/loans", icon: CreditCard },
+          { name: "Payments", href: "/payments", icon: Wallet }
+        );
+        if (permissions.can_view_reports) {
+          list.push(
+            { name: "Reports", href: "/reports", icon: FileText },
+            { name: "Balance", href: "/balance", icon: FileText }
+          );
+        }
+        if (isCompanyOwnerOrAdmin || permissions.can_manage_team) {
+          list.push({ name: "Team & Roles", href: "/users", icon: Users });
+        }
+        list.push({ name: "My Profile", href: "/profile", icon: UserCircle });
+        return list;
+      })();
 
   const [navAvatarErr, setNavAvatarErr] = useState(false);
   const storedAvatar = typeof window !== "undefined" ? (localStorage.getItem("user_avatar") || (user?.email ? localStorage.getItem(`user_avatar_${user.email.toLowerCase()}`) : null)) : null;
@@ -371,9 +411,31 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
                   )}
                 </nav>
 
-                {/* Offline status */}
-                <div className="p-4 border-t border-white/8 flex-shrink-0">
-                  <OfflineIndicator />
+                {/* Support & Help + Offline status in left nav */}
+                <div className="p-3 border-t border-white/8 flex-shrink-0 space-y-2">
+                  {!isSuperAdmin && (
+                    <button
+                      onClick={() => window.dispatchEvent(new CustomEvent("toggle_support_chat"))}
+                      className="w-full flex items-center justify-between px-3 py-2 rounded-lg bg-white/8 hover:bg-white/12 text-white text-xs font-medium transition-all group border border-white/6 shadow-xs"
+                    >
+                      <div className="flex items-center gap-2">
+                        <div className="relative">
+                          <Headphones className="w-4 h-4 text-sky-400 group-hover:scale-110 transition-transform" />
+                          <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
+                        </div>
+                        <span className="text-white/90">Support & Help</span>
+                      </div>
+                      {unreadSupportCount > 0 && (
+                        <span className="bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.2 min-w-[18px] h-[18px] rounded-full flex items-center justify-center">
+                          {unreadSupportCount}
+                        </span>
+                      )}
+                    </button>
+                  )}
+
+                  <div className="flex items-center justify-between px-1">
+                    <OfflineIndicator />
+                  </div>
                 </div>
               </div>
             )}
@@ -428,6 +490,22 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
 
                   {/* Right actions */}
                   <div className="flex items-center gap-2">
+                    {/* Live Support trigger for mobile / small screens */}
+                    {!isSuperAdmin && (
+                      <button
+                        onClick={() => window.dispatchEvent(new CustomEvent("toggle_support_chat"))}
+                        className="relative w-8 h-8 rounded-full border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-50 transition-colors md:hidden"
+                        title="Live Support & Help"
+                      >
+                        <Headphones className="w-3.5 h-3.5" />
+                        {unreadSupportCount > 0 && (
+                          <span className="absolute -top-1 -right-1 bg-red-600 text-white text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center border border-white">
+                            {unreadSupportCount}
+                          </span>
+                        )}
+                      </button>
+                    )}
+
                     {/* Bell Notification Center */}
                     <div className="relative">
                       <button

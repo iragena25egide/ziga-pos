@@ -181,6 +181,10 @@ export default function AdminDashboardPage() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const typingTimerRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Authentication & Permission state
+  const [checkingAuth, setCheckingAuth] = useState(true);
+  const [isAuthorized, setIsAuthorized] = useState(false);
+
   // Load all admin data
   const fetchData = async () => {
     try {
@@ -214,8 +218,26 @@ export default function AdminDashboardPage() {
   };
 
   useEffect(() => {
-    fetchData();
-  }, []);
+    const verifySuperAdmin = async () => {
+      try {
+        const res = await api.get("/users/me/");
+        const isSuper = Boolean(res.data?.is_superuser || res.data?.role === "super_admin");
+        if (!isSuper) {
+          toast.error("Access Denied: Super Admin privileges are required to view the Admin Hub.");
+          router.replace("/");
+          return;
+        }
+        setIsAuthorized(true);
+        fetchData();
+      } catch (e) {
+        toast.error("Session expired or unauthorized.");
+        router.replace("/login");
+      } finally {
+        setCheckingAuth(false);
+      }
+    };
+    verifySuperAdmin();
+  }, [router]);
 
   const selectedCompanyIdRef = useRef<number | null>(null);
   useEffect(() => {
@@ -725,6 +747,19 @@ export default function AdminDashboardPage() {
   });
 
   const selectedCompany = companies.find((c) => c.id === selectedCompanyId);
+
+  if (checkingAuth) {
+    return (
+      <div className="min-h-[60vh] flex flex-col items-center justify-center gap-3">
+        <Loader2 className="w-8 h-8 text-[#1b5ebe] animate-spin" />
+        <p className="text-xs text-gray-500 font-medium">Verifying administrator authorization...</p>
+      </div>
+    );
+  }
+
+  if (!isAuthorized) {
+    return null;
+  }
 
   return (
     <div className="space-y-6 pb-12 text-gray-900">

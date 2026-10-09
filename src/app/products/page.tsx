@@ -53,11 +53,13 @@ import {
 import { usePagination } from "@/hooks/use-pagination";
 import { PaginationControls } from "@/components/ui/pagination-controls";
 import { fetchWithCache } from "@/lib/offlineCache";
+import { getUserPermissions } from "@/lib/permissions";
 
 export default function ProductsPage() {
   const [products, setProducts] = useState<any[]>([]);
   const [companies, setCompanies] = useState<any[]>([]);
   const [currentUser, setCurrentUser] = useState<any>(null);
+  const permissions = getUserPermissions(currentUser);
   const [loading, setLoading] = useState(true);
 
   const [searchTerm, setSearchTerm] = useState("");
@@ -275,9 +277,11 @@ export default function ProductsPage() {
             Manage your inventory and pricing.
           </p>
         </div>
-        <Button onClick={() => handleOpenModal()} className="gap-2 shrink-0">
-          <Plus className="w-4 h-4" /> Add Product
-        </Button>
+        {permissions.can_create_products && (
+          <Button onClick={() => handleOpenModal()} className="gap-2 shrink-0">
+            <Plus className="w-4 h-4" /> Add Product
+          </Button>
+        )}
       </div>
 
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
@@ -371,25 +375,31 @@ export default function ProductsPage() {
                       </span>
                     </TableCell>
                     <TableCell className="text-right">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleOpenModal(product)}
-                        className="text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50"
-                      >
-                        <Edit className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => {
-                          setProductToDelete(product.id);
-                          setDeleteConfirmOpen(true);
-                        }}
-                        className="text-red-500 hover:text-red-600 hover:bg-red-50"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
+                      {permissions.can_edit_products && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleOpenModal(product)}
+                          className="text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50"
+                          title="Edit Product"
+                        >
+                          <Edit className="w-4 h-4" />
+                        </Button>
+                      )}
+                      {permissions.can_delete_products && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => {
+                            setProductToDelete(product.id);
+                            setDeleteConfirmOpen(true);
+                          }}
+                          className="text-red-500 hover:text-red-600 hover:bg-red-50"
+                          title="Delete Product"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))

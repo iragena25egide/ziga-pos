@@ -71,6 +71,13 @@
     "directories": {
       "output": "dist"
     },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "iragena25egide",
+        "repo": "ziga-pos"
+      }
+    ],
     "files": [
       "out/**/*",
       "electron/main.js",

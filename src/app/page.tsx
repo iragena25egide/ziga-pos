@@ -162,15 +162,13 @@ export default function Dashboard() {
                 href={
                   userPlatform === "mac"
                     ? "https://github.com/iragena25egide/ziga-pos/releases/latest/download/Ziga-POS-1.1.0.dmg"
-                    : userPlatform === "linux"
-                    ? "https://github.com/iragena25egide/ziga-pos/releases/latest/download/Ziga-POS-1.1.0.AppImage"
                     : "https://github.com/iragena25egide/ziga-pos/releases/latest/download/ZigaPOS-Setup-1.1.0.exe"
                 }
                 download
                 className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 bg-[#1b5ebe] hover:bg-[#154ca0] text-white text-xs font-semibold px-4 py-2.5 rounded-md shadow-xs transition-colors"
               >
                 <Download className="w-4 h-4" />
-                Download {userPlatform === "mac" ? "for Mac (.dmg)" : userPlatform === "linux" ? "for Linux" : "for Windows (.exe)"}
+                Download {userPlatform === "mac" ? "for Mac (.dmg)" : "for Windows (.exe)"}
               </a>
 
               <Button

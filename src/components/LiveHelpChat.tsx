@@ -76,6 +76,28 @@ export default function LiveHelpChat({ currentUser }: { currentUser?: any }) {
     isOpenRef.current = isOpen;
   }, [isOpen]);
 
+  useEffect(() => {
+    const handleToggle = () => setIsOpen((prev) => !prev);
+    const handleOpen = () => setIsOpen(true);
+    const handleClose = () => setIsOpen(false);
+    window.addEventListener("toggle_support_chat", handleToggle);
+    window.addEventListener("open_support_chat", handleOpen);
+    window.addEventListener("close_support_chat", handleClose);
+    return () => {
+      window.removeEventListener("toggle_support_chat", handleToggle);
+      window.removeEventListener("open_support_chat", handleOpen);
+      window.removeEventListener("close_support_chat", handleClose);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(
+        new CustomEvent("support_unread_count", { detail: unreadCount })
+      );
+    }
+  }, [unreadCount]);
+
   // Load message history via REST API (handles offline catch-up and synchronization)
   const fetchHistory = useCallback(async () => {
     if (isAdmin) return;
@@ -419,29 +441,6 @@ export default function LiveHelpChat({ currentUser }: { currentUser?: any }) {
 
   return (
     <>
-      {/* Floating Trigger Button */}
-      <div className="fixed bottom-6 right-6 z-40">
-        <motion.button
-          whileHover={{ scale: 1.03 }}
-          whileTap={{ scale: 0.97 }}
-          onClick={() => setIsOpen(!isOpen)}
-          className="relative flex items-center gap-2.5 px-4 py-2.5 rounded-full shadow-lg border border-gray-200 text-white font-medium text-xs tracking-wide"
-          style={{ backgroundColor: "#0b1d3a" }}
-        >
-          <div className="relative">
-            <Headphones className="w-4 h-4 text-white" />
-            <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full" style={{ backgroundColor: "#1b5ebe" }} />
-          </div>
-          <span>Support & Help</span>
-
-          {unreadCount > 0 && (
-            <span className="ml-1 bg-red-600 text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
-              {unreadCount}
-            </span>
-          )}
-        </motion.button>
-      </div>
-
       {/* Floating Chat Window Drawer */}
       <AnimatePresence>
         {isOpen && (
@@ -450,7 +449,7 @@ export default function LiveHelpChat({ currentUser }: { currentUser?: any }) {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.98 }}
             transition={{ duration: 0.18 }}
-            className="fixed bottom-20 right-6 z-50 w-[410px] h-[560px] max-w-[calc(100vw-2rem)] bg-white border border-gray-200 rounded-2xl shadow-2xl flex flex-col overflow-hidden"
+            className="fixed bottom-3 sm:bottom-6 left-2 sm:left-4 md:left-60 z-50 w-[95vw] sm:w-[420px] max-w-[420px] h-[82vh] sm:h-[580px] max-h-[640px] bg-white border border-gray-200 rounded-2xl shadow-2xl flex flex-col overflow-hidden"
           >
             {/* Header */}
             <div className="px-5 py-4 text-white flex items-center justify-between shadow-xs" style={{ backgroundColor: "#0b1d3a" }}>
