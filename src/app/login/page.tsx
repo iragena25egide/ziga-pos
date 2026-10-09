@@ -423,19 +423,12 @@ export default function LoginPage() {
     }
     setForgotLoading(true);
     try {
-      try {
-        await api.post("/auth/forgot-password/", { email: forgotEmail });
-      } catch {
-        await fetch("/api/auth/forgot-password", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email: forgotEmail }),
-        });
-      }
-      toast.success(`Reset code sent to ${forgotEmail}`);
+      const res = await api.post("/auth/forgot-password/", { email: forgotEmail });
+      toast.success(res.data?.message || `Reset code sent to ${forgotEmail}`);
       setForgotStep(2);
     } catch (err: any) {
-      toast.error(err.response?.data?.detail || "Failed to send reset code.");
+      const msg = err.response?.data?.error || err.response?.data?.detail || err.response?.data?.message;
+      toast.error(msg || "Failed to send reset code.");
     } finally {
       setForgotLoading(false);
     }
@@ -457,24 +450,12 @@ export default function LoginPage() {
     }
     setForgotLoading(true);
     try {
-      try {
-        await api.post("/auth/reset-password/", {
-          email: forgotEmail,
-          otp: forgotOtp,
-          new_password: forgotNewPassword,
-        });
-      } catch {
-        await fetch("/api/auth/reset-password", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            email: forgotEmail,
-            otp: forgotOtp,
-            new_password: forgotNewPassword,
-          }),
-        });
-      }
-      toast.success("Password updated successfully! Please log in.");
+      const res = await api.post("/auth/reset-password/", {
+        email: forgotEmail,
+        otp: forgotOtp,
+        new_password: forgotNewPassword,
+      });
+      toast.success(res.data?.message || "Password updated successfully! Please log in.");
       setForgotModalOpen(false);
       setForgotStep(1);
       setLoginEmail(forgotEmail);
@@ -483,7 +464,8 @@ export default function LoginPage() {
       setForgotNewPassword("");
       setForgotConfirmPassword("");
     } catch (err: any) {
-      toast.error(err.response?.data?.detail || "Invalid code or failed to reset password.");
+      const msg = err.response?.data?.error || err.response?.data?.detail || err.response?.data?.message;
+      toast.error(msg || "Invalid code or failed to reset password.");
     } finally {
       setForgotLoading(false);
     }
