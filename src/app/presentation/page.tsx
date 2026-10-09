@@ -20,6 +20,7 @@ import {
   Headphones,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import OfficialDashboardMockup from "@/components/OfficialDashboardMockup";
 
 export default function PresentationPage() {
   return (
@@ -114,33 +115,9 @@ export default function PresentationPage() {
             initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.2 }}
-            className="mt-16 rounded-3xl border border-slate-800 bg-slate-900/60 p-3 shadow-2xl backdrop-blur-xl relative"
+            className="mt-16 rounded-3xl border border-slate-800 bg-slate-900/60 p-2 sm:p-4 shadow-2xl backdrop-blur-xl relative"
           >
-            <div className="flex items-center gap-2 px-4 py-3 border-b border-slate-800/80 mb-3 text-xs text-slate-500 font-mono">
-              <div className="w-3 h-3 rounded-full bg-red-500/80"></div>
-              <div className="w-3 h-3 rounded-full bg-yellow-500/80"></div>
-              <div className="w-3 h-3 rounded-full bg-emerald-500/80"></div>
-              <span className="ml-2 text-slate-400">ziga-pos-desktop.app</span>
-            </div>
-            <div className="aspect-[16/9] rounded-2xl bg-gradient-to-br from-slate-900 via-slate-950 to-slate-900 border border-slate-800/60 flex items-center justify-center p-8 overflow-hidden relative group">
-              <div className="grid grid-cols-3 gap-6 w-full opacity-90">
-                <div className="p-6 bg-slate-800/50 rounded-2xl border border-slate-700/50 text-left">
-                  <p className="text-xs font-semibold text-slate-400">Total Sales Today</p>
-                  <p className="text-2xl font-bold text-white mt-1">1,450,000 RWF</p>
-                  <span className="text-[10px] text-emerald-400 font-bold mt-2 inline-block">↑ +18.4% vs yesterday</span>
-                </div>
-                <div className="p-6 bg-slate-800/50 rounded-2xl border border-slate-700/50 text-left">
-                  <p className="text-xs font-semibold text-slate-400">Transactions Count</p>
-                  <p className="text-2xl font-bold text-white mt-1">142 Sales</p>
-                  <span className="text-[10px] text-primary font-bold mt-2 inline-block">● Real-time register</span>
-                </div>
-                <div className="p-6 bg-slate-800/50 rounded-2xl border border-slate-700/50 text-left">
-                  <p className="text-xs font-semibold text-slate-400">Sync Status</p>
-                  <p className="text-2xl font-bold text-emerald-400 mt-1">Connected</p>
-                  <span className="text-[10px] text-slate-400 font-bold mt-2 inline-block">IndexedDB Local Cache</span>
-                </div>
-              </div>
-            </div>
+            <OfficialDashboardMockup variant="full" />
           </motion.div>
         </div>
       </section>
