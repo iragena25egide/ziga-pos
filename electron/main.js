@@ -26,11 +26,14 @@ function createWindow() {
   });
 
   mainWindow.setMenuBarVisibility(false);
+  try {
+    mainWindow.webContents.setUserAgent(mainWindow.webContents.getUserAgent() + ' Electron ZigaDesktopApp/1.0');
+  } catch (e) {}
 
   if (isDev) {
     // In development mode, load the Next.js local server
     // Using port 3333 to avoid conflicts with port 3000 which might be occupied
-    mainWindow.loadURL('http://localhost:3333');
+    mainWindow.loadURL('http://localhost:3333?desktop=true');
 
     // Optionally open DevTools in dev mode
     // mainWindow.webContents.openDevTools();

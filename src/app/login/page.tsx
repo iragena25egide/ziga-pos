@@ -57,7 +57,17 @@ export default function LoginPage() {
   const router = useRouter();
   const googleBtnContainerRef = useRef<HTMLDivElement>(null);
 
-  const [isDesktop, setIsDesktop] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return (
+      navigator.userAgent.toLowerCase().includes("electron") ||
+      navigator.userAgent.toLowerCase().includes("zigadesktopapp") ||
+      !!(window as any).process?.versions?.electron ||
+      !!(window as any).electron ||
+      !!(window as any).electronAPI ||
+      window.location.search.includes("desktop=true")
+    );
+  });
   const [mode, setMode] = useState<"login" | "register">("login");
 
   // Login state
@@ -540,28 +550,39 @@ export default function LoginPage() {
             <span className="font-bold text-gray-900 text-base tracking-tight">ZIGA POS</span>
           </div>
 
-          {/* Mode switch */}
-          <div className="flex border-b border-gray-200 mb-6">
-            {(["login", "register"] as const).map((tab) => (
-              <button
-                key={tab}
-                onClick={() => {
-                  setMode(tab);
-                  if (tab === "register") setRegisterStep(1);
-                }}
-                className="pb-2.5 px-1 mr-5 text-xs font-semibold border-b-2 transition-colors"
-                style={{
-                  borderColor: mode === tab ? "#1b5ebe" : "transparent",
-                  color: mode === tab ? "#1b5ebe" : "#64748b",
-                }}
-              >
-                {tab === "login" ? "Sign In" : "Register Business"}
-              </button>
-            ))}
-          </div>
+          {/* Mode switch (Web only) */}
+          {isDesktop ? (
+            <div className="mb-6">
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-blue-50 text-[#1b5ebe] border border-blue-100 text-[11px] font-semibold mb-2">
+                <Building2 className="w-3.5 h-3.5" />
+                <span>Desktop Terminal</span>
+              </div>
+              <h1 className="text-xl font-bold text-gray-900 tracking-tight">Desktop Login</h1>
+              <p className="text-xs text-gray-500 mt-0.5">Sign in to your cashier & store terminal.</p>
+            </div>
+          ) : (
+            <div className="flex border-b border-gray-200 mb-6">
+              {(["login", "register"] as const).map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => {
+                    setMode(tab);
+                    if (tab === "register") setRegisterStep(1);
+                  }}
+                  className="pb-2.5 px-1 mr-5 text-xs font-semibold border-b-2 transition-colors"
+                  style={{
+                    borderColor: mode === tab ? "#1b5ebe" : "transparent",
+                    color: mode === tab ? "#1b5ebe" : "#64748b",
+                  }}
+                >
+                  {tab === "login" ? "Sign In" : "Register Business"}
+                </button>
+              ))}
+            </div>
+          )}
 
           <AnimatePresence mode="wait">
-            {mode === "login" ? (
+            {mode === "login" || isDesktop ? (
               /* ── Login Form ── */
               <motion.div
                 key="login"
@@ -570,10 +591,12 @@ export default function LoginPage() {
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.15 }}
               >
-                <div className="mb-5">
-                  <h1 className="text-xl font-bold text-gray-900 tracking-tight">Welcome back</h1>
-                  <p className="text-xs text-gray-500 mt-0.5">Sign in to access your store terminal.</p>
-                </div>
+                {!isDesktop && (
+                  <div className="mb-5">
+                    <h1 className="text-xl font-bold text-gray-900 tracking-tight">Welcome back</h1>
+                    <p className="text-xs text-gray-500 mt-0.5">Sign in to access your store terminal.</p>
+                  </div>
+                )}
 
                 <form onSubmit={handleLogin} className="space-y-3.5">
                   <div>
@@ -666,18 +689,20 @@ export default function LoginPage() {
                   )}
                 </form>
 
-                <div className="mt-6 p-2.5 rounded-lg text-xs text-center bg-gray-50 border border-gray-200 text-gray-600">
-                  Need a new account?{" "}
-                  <button
-                    onClick={() => {
-                      setMode("register");
-                      setRegisterStep(1);
-                    }}
-                    className="font-semibold text-[#1b5ebe] hover:underline"
-                  >
-                    Register
-                  </button>
-                </div>
+                {!isDesktop && (
+                  <div className="mt-6 p-2.5 rounded-lg text-xs text-center bg-gray-50 border border-gray-200 text-gray-600">
+                    Need a new account?{" "}
+                    <button
+                      onClick={() => {
+                        setMode("register");
+                        setRegisterStep(1);
+                      }}
+                      className="font-semibold text-[#1b5ebe] hover:underline"
+                    >
+                      Register
+                    </button>
+                  </div>
+                )}
               </motion.div>
             ) : (
               /* ── Multi-Step Register Form ── */

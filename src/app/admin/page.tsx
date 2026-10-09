@@ -342,11 +342,26 @@ export default function AdminDashboardPage() {
       fetchData();
     };
 
+    const onConversationCleared = (data: { company_id: number }) => {
+      const activeId = selectedCompanyIdRef.current;
+      if (activeId && String(data.company_id) === String(activeId)) {
+        setChatMessages([]);
+      }
+      setConversations((prev) =>
+        prev.map((c) =>
+          c.company_id === data.company_id
+            ? { ...c, last_message: null, last_message_at: null, unread_count: 0 }
+            : c
+        )
+      );
+    };
+
     socket.on("connect", onConnect);
     socket.on("disconnect", onDisconnect);
     socket.on("new_message", onNewMessage);
     socket.on("update_message", onUpdateMessage);
     socket.on("delete_message", onDeleteMessage);
+    socket.on("conversation_cleared", onConversationCleared);
     socket.on("user_typing", onTyping);
     socket.on("company_registered", onCompanyRegistered);
 
@@ -358,6 +373,7 @@ export default function AdminDashboardPage() {
       socket.off("new_message", onNewMessage);
       socket.off("update_message", onUpdateMessage);
       socket.off("delete_message", onDeleteMessage);
+      socket.off("conversation_cleared", onConversationCleared);
       socket.off("user_typing", onTyping);
       socket.off("company_registered", onCompanyRegistered);
       if (typingTimerRef.current) clearTimeout(typingTimerRef.current);
@@ -730,6 +746,34 @@ export default function AdminDashboardPage() {
       toast.success("Message deleted");
     } catch (err) {
       toast.error("Failed to delete message.");
+    }
+  };
+
+  const handleClearConversation = async (companyId: number, companyName?: string) => {
+    if (
+      !confirm(
+        `Are you sure you want to delete the entire chat history for "${
+          companyName || "this customer"
+        }"? This action cannot be undone.`
+      )
+    ) {
+      return;
+    }
+    try {
+      await api.post("/support-messages/clear_conversation/", { company_id: companyId });
+      toast.success(`Entire chat for "${companyName || "Customer"}" deleted.`);
+      if (selectedCompanyId === companyId) {
+        setChatMessages([]);
+      }
+      setConversations((prev) =>
+        prev.map((c) =>
+          c.company_id === companyId
+            ? { ...c, last_message: null, last_message_at: null, unread_count: 0 }
+            : c
+        )
+      );
+    } catch (err: any) {
+      toast.error(err.response?.data?.error || "Failed to delete chat history.");
     }
   };
 
@@ -1458,14 +1502,27 @@ export default function AdminDashboardPage() {
                         }`}
                       >
                         <div className="flex items-center justify-between mb-1">
-                          <span className="font-semibold text-xs text-gray-900 truncate max-w-[170px]">
+                          <span className="font-semibold text-xs text-gray-900 truncate max-w-[150px]">
                             {c.company_name}
                           </span>
-                          {c.unread_count > 0 && (
-                            <span className="bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.2 rounded-full">
-                              {c.unread_count}
-                            </span>
-                          )}
+                          <div className="flex items-center gap-1.5">
+                            {c.unread_count > 0 && (
+                              <span className="bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.2 rounded-full">
+                                {c.unread_count}
+                              </span>
+                            )}
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleClearConversation(c.company_id, c.company_name);
+                              }}
+                              className="text-gray-300 hover:text-red-600 p-0.5 rounded transition-colors"
+                              title="Delete customer chat"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
                         </div>
                         <p className="text-[11px] text-gray-500 truncate">
                           {c.last_message || "Started chat"}
@@ -1508,14 +1565,27 @@ export default function AdminDashboardPage() {
                       </p>
                     </div>
 
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleToggleCompanyApproval(selectedCompany)}
-                      className="rounded-xl text-xs font-semibold h-8"
-                    >
-                      {selectedCompany.is_approved ? "Suspend Account" : "Approve Company"}
-                    </Button>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleClearConversation(selectedCompany.id, selectedCompany.name)}
+                        className="rounded-xl text-xs font-semibold h-8 border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300"
+                        title="Delete entire chat history for this customer"
+                      >
+                        <Trash2 className="w-3.5 h-3.5 mr-1 text-red-500" />
+                        Delete Customer Chat
+                      </Button>
+
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleToggleCompanyApproval(selectedCompany)}
+                        className="rounded-xl text-xs font-semibold h-8"
+                      >
+                        {selectedCompany.is_approved ? "Suspend Account" : "Approve Company"}
+                      </Button>
+                    </div>
                   </div>
 
                   {/* Messages Bubble Area */}

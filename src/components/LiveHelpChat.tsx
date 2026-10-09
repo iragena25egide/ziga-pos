@@ -243,11 +243,19 @@ export default function LiveHelpChat({ currentUser }: { currentUser?: any }) {
       }
     };
 
+    const handleConversationCleared = (data: { company_id: number }) => {
+      if (!companyId || String(data.company_id) === String(companyId)) {
+        setMessages([]);
+        toast.info("Support chat history was cleared by Administrator.");
+      }
+    };
+
     socket.on("connect", handleConnect);
     socket.on("disconnect", handleDisconnect);
     socket.on("new_message", handleNewMessage);
     socket.on("update_message", handleUpdateMessage);
     socket.on("delete_message", handleDeleteMessage);
+    socket.on("conversation_cleared", handleConversationCleared);
     socket.on("user_typing", handleTyping);
 
     if (socket.connected) {
@@ -260,6 +268,7 @@ export default function LiveHelpChat({ currentUser }: { currentUser?: any }) {
       socket.off("new_message", handleNewMessage);
       socket.off("update_message", handleUpdateMessage);
       socket.off("delete_message", handleDeleteMessage);
+      socket.off("conversation_cleared", handleConversationCleared);
       socket.off("user_typing", handleTyping);
       if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
     };
