@@ -40,12 +40,12 @@ import OfficialDashboardMockup from "@/components/OfficialDashboardMockup";
 
 /* ─────────────────────────────────────────────────────────────
    Left panel: App Preview Mockup
-   Official high-fidelity Ziga POS Dashboard replica
+   Official clean Ziga POS Dashboard replica matching screen length
 ───────────────────────────────────────────────────────────────*/
 function AppPreviewMockup() {
   return (
-    <div className="w-full max-w-[620px] select-none shadow-2xl rounded-2xl overflow-hidden">
-      <OfficialDashboardMockup variant="full" />
+    <div className="w-full max-w-[440px] mx-auto select-none">
+      <OfficialDashboardMockup />
     </div>
   );
 }
@@ -495,7 +495,7 @@ export default function LoginPage() {
 
       {/* ─────── LEFT PANEL ─────── */}
       <div
-        className="hidden lg:flex w-[52%] xl:w-[55%] flex-col justify-between p-8 xl:p-10 relative overflow-hidden bg-[#e8e9ef] border-r border-slate-300"
+        className="hidden lg:flex w-[48%] flex-col justify-between p-8 xl:p-10 relative overflow-hidden bg-[#e8e9ef] border-r border-slate-300"
       >
         {/* Brand */}
         <div className="flex items-center gap-2.5">

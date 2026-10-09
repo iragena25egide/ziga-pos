@@ -117,7 +117,7 @@ export default function PresentationPage() {
             transition={{ duration: 0.8, delay: 0.2 }}
             className="mt-16 rounded-3xl border border-slate-800 bg-slate-900/60 p-2 sm:p-4 shadow-2xl backdrop-blur-xl relative"
           >
-            <OfficialDashboardMockup variant="full" />
+            <OfficialDashboardMockup />
           </motion.div>
         </div>
       </section>
