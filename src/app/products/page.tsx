@@ -436,7 +436,7 @@ export default function ProductsPage() {
                   onChange={(e) =>
                     setFormData({ ...formData, name: e.target.value })
                   }
-                  placeholder="e.g. Handwoven Basket"
+                  placeholder="Product Name"
                   required
                   className="admin-input"
                 />
@@ -451,7 +451,7 @@ export default function ProductsPage() {
                   onChange={(e) =>
                     setFormData({ ...formData, description: e.target.value })
                   }
-                  placeholder="Describe this product..."
+                  placeholder="Product Description"
                   className="admin-input h-20"
                 />
               </div>
@@ -503,7 +503,7 @@ export default function ProductsPage() {
               </Button>
               <Button
                 type="submit"
-                className="bg-indigo-500 hover:bg-indigo-600 text-white rounded-lg px-6 shadow-sm"
+                className="bg-[#0b1d3a] hover:bg-[#142a4d] text-white rounded-lg px-6 shadow-sm"
               >
                 {editingProduct ? "Save Changes" : "Add Product"}
               </Button>
@@ -514,7 +514,7 @@ export default function ProductsPage() {
 
       <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
         <AlertDialogContent className="admin-modal-content sm:max-w-[380px] text-center p-0">
-          <div className="bg-[#2c2c3e] pt-8 pb-6 flex flex-col items-center">
+          <div className="bg-[#0b1d3a] pt-8 pb-6 flex flex-col items-center">
             <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-red-400 to-red-500 text-white flex items-center justify-center mb-4 shadow-[0_0_30px_rgba(239,68,68,0.3)]">
               <AlertTriangle className="w-8 h-8" />
             </div>

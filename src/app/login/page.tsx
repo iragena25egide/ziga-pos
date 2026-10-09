@@ -571,8 +571,8 @@ export default function LoginPage() {
                   }}
                   className="pb-2.5 px-1 mr-5 text-xs font-semibold border-b-2 transition-colors"
                   style={{
-                    borderColor: mode === tab ? "#1b5ebe" : "transparent",
-                    color: mode === tab ? "#1b5ebe" : "#64748b",
+                    borderColor: mode === tab ? "#0b1d3a" : "transparent",
+                    color: mode === tab ? "#0b1d3a" : "#64748b",
                   }}
                 >
                   {tab === "login" ? "Sign In" : "Register Business"}
@@ -606,8 +606,8 @@ export default function LoginPage() {
                     <Input
                       id="login-email"
                       type="email"
-                      className="mt-1 h-9 border-gray-300 focus:border-[#1b5ebe] focus:ring-[#1b5ebe] rounded-md text-xs"
-                      placeholder="owner@company.rw"
+                      className="mt-1 h-9 border-gray-300 focus:border-[#0b1d3a] focus:ring-[#0b1d3a] rounded-md text-xs"
+                      placeholder="Work Email"
                       value={loginEmail}
                       onChange={(e) => setLoginEmail(e.target.value)}
                       required
@@ -627,7 +627,7 @@ export default function LoginPage() {
                           setForgotStep(1);
                           setForgotModalOpen(true);
                         }}
-                        className="text-[11px] font-medium text-[#1b5ebe] hover:underline"
+                        className="text-[11px] font-medium text-[#0b1d3a] hover:underline"
                       >
                         Forgot password?
                       </button>
@@ -636,7 +636,7 @@ export default function LoginPage() {
                       <Input
                         id="login-password"
                         type={showPassword ? "text" : "password"}
-                        className="h-9 border-gray-300 focus:border-[#1b5ebe] focus:ring-[#1b5ebe] rounded-md pr-8 text-xs"
+                        className="h-9 border-gray-300 focus:border-[#0b1d3a] focus:ring-[#0b1d3a] rounded-md pr-8 text-xs"
                         placeholder="••••••••"
                         value={loginPassword}
                         onChange={(e) => setLoginPassword(e.target.value)}
@@ -656,7 +656,7 @@ export default function LoginPage() {
                   <Button
                     type="submit"
                     className="w-full h-9 font-medium text-xs rounded-md text-white transition-colors"
-                    style={{ backgroundColor: "#1b5ebe" }}
+                    style={{ backgroundColor: "#0b1d3a" }}
                     disabled={loginLoading}
                   >
                     {loginLoading ? "Signing in…" : "Sign In"}
@@ -716,7 +716,7 @@ export default function LoginPage() {
                 {/* Stepper Header */}
                 <div className="mb-4">
                   <div className="flex items-center justify-between mb-2 text-xs">
-                    <span className="font-semibold text-[#1b5ebe]">
+                    <span className="font-semibold text-[#0b1d3a]">
                       Step {registerStep} of 3
                     </span>
                     <span className="text-gray-400 font-medium">
@@ -728,9 +728,9 @@ export default function LoginPage() {
 
                   {/* Progress bars */}
                   <div className="w-full h-1 bg-gray-200 rounded-full flex gap-1">
-                    <div className={`h-full flex-1 rounded-full ${registerStep >= 1 ? "bg-[#1b5ebe]" : "bg-gray-200"}`} />
-                    <div className={`h-full flex-1 rounded-full ${registerStep >= 2 ? "bg-[#1b5ebe]" : "bg-gray-200"}`} />
-                    <div className={`h-full flex-1 rounded-full ${registerStep === 3 ? "bg-[#1b5ebe]" : "bg-gray-200"}`} />
+                    <div className={`h-full flex-1 rounded-full ${registerStep >= 1 ? "bg-[#0b1d3a]" : "bg-gray-200"}`} />
+                    <div className={`h-full flex-1 rounded-full ${registerStep >= 2 ? "bg-[#0b1d3a]" : "bg-gray-200"}`} />
+                    <div className={`h-full flex-1 rounded-full ${registerStep === 3 ? "bg-[#0b1d3a]" : "bg-gray-200"}`} />
                   </div>
                 </div>
 
@@ -753,8 +753,8 @@ export default function LoginPage() {
                         <Input
                           id="reg-company"
                           type="text"
-                          className="mt-1 h-9 border-gray-300 focus:border-[#1b5ebe] focus:ring-[#1b5ebe] rounded-md text-xs"
-                          placeholder="Acme Retail Kigali"
+                          className="mt-1 h-9 border-gray-300 focus:border-[#0b1d3a] focus:ring-[#0b1d3a] rounded-md text-xs"
+                          placeholder="Store Name"
                           value={registerData.companyName}
                           onChange={(e) => setRegisterData({ ...registerData, companyName: e.target.value })}
                           required
@@ -769,8 +769,8 @@ export default function LoginPage() {
                         <Input
                           id="reg-tin"
                           type="text"
-                          className="mt-1 h-9 border-gray-300 focus:border-[#1b5ebe] focus:ring-[#1b5ebe] rounded-md text-xs"
-                          placeholder="e.g. 109283746 (Optional)"
+                          className="mt-1 h-9 border-gray-300 focus:border-[#0b1d3a] focus:ring-[#0b1d3a] rounded-md text-xs"
+                          placeholder="TIN / Tax Number"
                           value={registerData.tinNumber}
                           onChange={(e) => setRegisterData({ ...registerData, tinNumber: e.target.value })}
                         />
@@ -783,8 +783,8 @@ export default function LoginPage() {
                         <Input
                           id="reg-address"
                           type="text"
-                          className="mt-1 h-9 border-gray-300 focus:border-[#1b5ebe] focus:ring-[#1b5ebe] rounded-md text-xs"
-                          placeholder="KN 4 Ave, Kigali"
+                          className="mt-1 h-9 border-gray-300 focus:border-[#0b1d3a] focus:ring-[#0b1d3a] rounded-md text-xs"
+                          placeholder="Store Address"
                           value={registerData.address}
                           onChange={(e) => setRegisterData({ ...registerData, address: e.target.value })}
                         />
@@ -796,7 +796,7 @@ export default function LoginPage() {
                           if (validateStep1()) setRegisterStep(2);
                         }}
                         className="w-full h-9 font-medium text-xs rounded-md text-white mt-1 flex items-center justify-center gap-1.5"
-                        style={{ backgroundColor: "#1b5ebe" }}
+                        style={{ backgroundColor: "#0b1d3a" }}
                       >
                         Next: Owner Info <ArrowRight className="w-3.5 h-3.5" />
                       </Button>
@@ -821,8 +821,8 @@ export default function LoginPage() {
                         <Input
                           id="reg-owner"
                           type="text"
-                          className="mt-1 h-9 border-gray-300 focus:border-[#1b5ebe] focus:ring-[#1b5ebe] rounded-md text-xs"
-                          placeholder="Jean Habimana"
+                          className="mt-1 h-9 border-gray-300 focus:border-[#0b1d3a] focus:ring-[#0b1d3a] rounded-md text-xs"
+                          placeholder="Owner Name"
                           value={registerData.ownerName}
                           onChange={(e) => setRegisterData({ ...registerData, ownerName: e.target.value })}
                           required
@@ -837,8 +837,8 @@ export default function LoginPage() {
                         <Input
                           id="reg-email"
                           type="email"
-                          className="mt-1 h-9 border-gray-300 focus:border-[#1b5ebe] focus:ring-[#1b5ebe] rounded-md text-xs"
-                          placeholder="owner@acme.rw"
+                          className="mt-1 h-9 border-gray-300 focus:border-[#0b1d3a] focus:ring-[#0b1d3a] rounded-md text-xs"
+                          placeholder="Work Email"
                           value={registerData.email}
                           onChange={(e) => setRegisterData({ ...registerData, email: e.target.value })}
                           required
@@ -852,8 +852,8 @@ export default function LoginPage() {
                         <Input
                           id="reg-phone"
                           type="tel"
-                          className="mt-1 h-9 border-gray-300 focus:border-[#1b5ebe] focus:ring-[#1b5ebe] rounded-md text-xs"
-                          placeholder="+250 788 000 000"
+                          className="mt-1 h-9 border-gray-300 focus:border-[#0b1d3a] focus:ring-[#0b1d3a] rounded-md text-xs"
+                          placeholder="Phone Number"
                           value={registerData.phone}
                           onChange={(e) => setRegisterData({ ...registerData, phone: e.target.value })}
                           required
@@ -875,7 +875,7 @@ export default function LoginPage() {
                             if (validateStep2()) setRegisterStep(3);
                           }}
                           className="flex-1 h-9 font-medium text-xs rounded-md text-white flex items-center justify-center gap-1.5"
-                          style={{ backgroundColor: "#1b5ebe" }}
+                          style={{ backgroundColor: "#0b1d3a" }}
                         >
                           Next: Password <ArrowRight className="w-3.5 h-3.5" />
                         </Button>
@@ -902,7 +902,7 @@ export default function LoginPage() {
                           <Input
                             id="reg-password"
                             type={showRegPassword ? "text" : "password"}
-                            className="h-9 border-gray-300 focus:border-[#1b5ebe] focus:ring-[#1b5ebe] rounded-md pr-8 text-xs"
+                            className="h-9 border-gray-300 focus:border-[#0b1d3a] focus:ring-[#0b1d3a] rounded-md pr-8 text-xs"
                             placeholder="••••••••"
                             value={registerData.password}
                             onChange={(e) => setRegisterData({ ...registerData, password: e.target.value })}
@@ -926,7 +926,7 @@ export default function LoginPage() {
                         <Input
                           id="reg-confirm-password"
                           type={showRegPassword ? "text" : "password"}
-                          className="mt-1 h-9 border-gray-300 focus:border-[#1b5ebe] focus:ring-[#1b5ebe] rounded-md text-xs"
+                          className="mt-1 h-9 border-gray-300 focus:border-[#0b1d3a] focus:ring-[#0b1d3a] rounded-md text-xs"
                           placeholder="••••••••"
                           value={registerData.confirmPassword}
                           onChange={(e) => setRegisterData({ ...registerData, confirmPassword: e.target.value })}
@@ -958,7 +958,7 @@ export default function LoginPage() {
                         <Button
                           type="submit"
                           className="flex-1 h-9 font-medium text-xs rounded-md text-white"
-                          style={{ backgroundColor: "#1b5ebe" }}
+                          style={{ backgroundColor: "#0b1d3a" }}
                           disabled={registerLoading}
                         >
                           {registerLoading ? "Sending OTP…" : "Complete & Verify"}
@@ -972,7 +972,7 @@ export default function LoginPage() {
                   Already registered?{" "}
                   <button
                     onClick={() => setMode("login")}
-                    className="font-semibold text-[#1b5ebe] hover:underline"
+                    className="font-semibold text-[#0b1d3a] hover:underline"
                   >
                     Sign in
                   </button>
@@ -1010,7 +1010,7 @@ export default function LoginPage() {
                 value={otpCode}
                 onChange={(e) => setOtpCode(e.target.value.trim())}
                 placeholder="123456"
-                className="mt-1 text-center text-xl font-mono tracking-[0.3em] h-10 border-gray-300 focus:border-[#1b5ebe] focus:ring-[#1b5ebe] rounded-md"
+                className="mt-1 text-center text-xl font-mono tracking-[0.3em] h-10 border-gray-300 focus:border-[#0b1d3a] focus:ring-[#0b1d3a] rounded-md"
                 required
                 autoFocus
               />
@@ -1022,7 +1022,7 @@ export default function LoginPage() {
                 <button
                   type="button"
                   onClick={handleResendOtp}
-                  className="font-semibold flex items-center gap-1 text-[#1b5ebe] hover:underline"
+                  className="font-semibold flex items-center gap-1 text-[#0b1d3a] hover:underline"
                 >
                   <RefreshCw className="w-3 h-3" /> Resend
                 </button>
@@ -1034,7 +1034,7 @@ export default function LoginPage() {
             <Button
               type="submit"
               className="w-full h-9 font-medium text-xs rounded-md text-white"
-              style={{ backgroundColor: "#1b5ebe" }}
+              style={{ backgroundColor: "#0b1d3a" }}
               disabled={otpLoading || otpCode.length < 4}
             >
               {otpLoading ? "Verifying…" : "Confirm & Activate"}
@@ -1048,7 +1048,7 @@ export default function LoginPage() {
         <DialogContent className="sm:max-w-[380px] rounded-xl p-6 bg-white border border-gray-200 shadow-xl">
           <div className="flex items-center gap-3 pb-4 border-b border-gray-100">
             <div className="w-9 h-9 rounded-lg bg-slate-100 flex items-center justify-center text-slate-700">
-              <KeyRound className="w-5 h-5 text-[#1b5ebe]" />
+              <KeyRound className="w-5 h-5 text-[#0b1d3a]" />
             </div>
             <div>
               <DialogTitle className="text-sm font-bold text-gray-900 leading-none">
@@ -1072,8 +1072,8 @@ export default function LoginPage() {
                   <Input
                     id="forgot-email"
                     type="email"
-                    className="mt-1 h-9 border-gray-300 focus:border-[#1b5ebe] focus:ring-[#1b5ebe] rounded-md text-xs"
-                    placeholder="name@business.rw"
+                    className="mt-1 h-9 border-gray-300 focus:border-[#0b1d3a] focus:ring-[#0b1d3a] rounded-md text-xs"
+                    placeholder="Work Email"
                     value={forgotEmail}
                     onChange={(e) => setForgotEmail(e.target.value)}
                     required
@@ -1084,7 +1084,7 @@ export default function LoginPage() {
                 <Button
                   type="submit"
                   className="w-full h-9 font-medium text-xs rounded-md text-white"
-                  style={{ backgroundColor: "#1b5ebe" }}
+                  style={{ backgroundColor: "#0b1d3a" }}
                   disabled={forgotLoading}
                 >
                   {forgotLoading ? "Sending Code…" : "Send Reset Code"}
@@ -1100,7 +1100,7 @@ export default function LoginPage() {
                     id="forgot-otp"
                     type="text"
                     maxLength={6}
-                    className="mt-1 text-center text-lg font-mono tracking-[0.25em] h-9 border-gray-300 focus:border-[#1b5ebe] focus:ring-[#1b5ebe] rounded-md"
+                    className="mt-1 text-center text-lg font-mono tracking-[0.25em] h-9 border-gray-300 focus:border-[#0b1d3a] focus:ring-[#0b1d3a] rounded-md"
                     placeholder="123456"
                     value={forgotOtp}
                     onChange={(e) => setForgotOtp(e.target.value.trim())}
@@ -1117,7 +1117,7 @@ export default function LoginPage() {
                     <Input
                       id="forgot-new-pass"
                       type={showForgotPass ? "text" : "password"}
-                      className="h-9 border-gray-300 focus:border-[#1b5ebe] focus:ring-[#1b5ebe] rounded-md pr-8 text-xs"
+                      className="h-9 border-gray-300 focus:border-[#0b1d3a] focus:ring-[#0b1d3a] rounded-md pr-8 text-xs"
                       placeholder="Min. 6 chars"
                       value={forgotNewPassword}
                       onChange={(e) => setForgotNewPassword(e.target.value)}
@@ -1140,8 +1140,8 @@ export default function LoginPage() {
                   <Input
                     id="forgot-confirm-pass"
                     type={showForgotPass ? "text" : "password"}
-                    className="mt-1 h-9 border-gray-300 focus:border-[#1b5ebe] focus:ring-[#1b5ebe] rounded-md text-xs"
-                    placeholder="Re-enter password"
+                    className="mt-1 h-9 border-gray-300 focus:border-[#0b1d3a] focus:ring-[#0b1d3a] rounded-md text-xs"
+                    placeholder="Confirm password"
                     value={forgotConfirmPassword}
                     onChange={(e) => setForgotConfirmPassword(e.target.value)}
                     required
@@ -1160,7 +1160,7 @@ export default function LoginPage() {
                   <Button
                     type="submit"
                     className="flex-1 h-9 font-medium text-xs rounded-md text-white"
-                    style={{ backgroundColor: "#1b5ebe" }}
+                    style={{ backgroundColor: "#0b1d3a" }}
                     disabled={forgotLoading}
                   >
                     {forgotLoading ? "Updating…" : "Update Password"}
@@ -1176,7 +1176,7 @@ export default function LoginPage() {
       <Dialog open={googleOnboardingOpen} onOpenChange={setGoogleOnboardingOpen}>
         <DialogContent className="bg-white rounded-2xl max-w-sm p-6">
           <DialogHeader>
-            <div className="w-10 h-10 rounded-xl bg-blue-50 text-[#1b5ebe] flex items-center justify-center mb-2">
+            <div className="w-10 h-10 rounded-xl bg-slate-100 text-[#0b1d3a] flex items-center justify-center mb-2">
               <Building2 className="w-5 h-5" />
             </div>
             <DialogTitle className="text-base font-bold text-gray-900">
@@ -1201,10 +1201,10 @@ export default function LoginPage() {
               <Input
                 type="text"
                 required
-                placeholder="e.g. Kigali Fresh Market"
+                placeholder="Store Name"
                 value={googleCompanyData.companyName}
                 onChange={(e) => setGoogleCompanyData({ ...googleCompanyData, companyName: e.target.value })}
-                className="mt-1 h-9 text-xs border-gray-300 rounded-md focus:border-[#1b5ebe]"
+                className="mt-1 h-9 text-xs border-gray-300 rounded-md focus:border-[#0b1d3a]"
               />
             </div>
 
@@ -1214,10 +1214,10 @@ export default function LoginPage() {
               </Label>
               <Input
                 type="text"
-                placeholder="e.g. KN 4 Ave, Kigali"
+                placeholder="Store Address"
                 value={googleCompanyData.address}
                 onChange={(e) => setGoogleCompanyData({ ...googleCompanyData, address: e.target.value })}
-                className="mt-1 h-9 text-xs border-gray-300 rounded-md focus:border-[#1b5ebe]"
+                className="mt-1 h-9 text-xs border-gray-300 rounded-md focus:border-[#0b1d3a]"
               />
             </div>
 
@@ -1227,10 +1227,10 @@ export default function LoginPage() {
               </Label>
               <Input
                 type="text"
-                placeholder="e.g. 109283746"
+                placeholder="TIN / Tax Number"
                 value={googleCompanyData.tinNumber}
                 onChange={(e) => setGoogleCompanyData({ ...googleCompanyData, tinNumber: e.target.value })}
-                className="mt-1 h-9 text-xs border-gray-300 rounded-md focus:border-[#1b5ebe]"
+                className="mt-1 h-9 text-xs border-gray-300 rounded-md focus:border-[#0b1d3a]"
               />
             </div>
 
@@ -1251,7 +1251,7 @@ export default function LoginPage() {
                     placeholder="Create a password (min 6 characters)"
                     value={googleCompanyData.password}
                     onChange={(e) => setGoogleCompanyData({ ...googleCompanyData, password: e.target.value })}
-                    className="h-9 text-xs border-gray-300 rounded-md pr-8 focus:border-[#1b5ebe]"
+                    className="h-9 text-xs border-gray-300 rounded-md pr-8 focus:border-[#0b1d3a]"
                   />
                   <button
                     type="button"
@@ -1269,7 +1269,7 @@ export default function LoginPage() {
                     placeholder="Confirm password"
                     value={googleCompanyData.confirmPassword}
                     onChange={(e) => setGoogleCompanyData({ ...googleCompanyData, confirmPassword: e.target.value })}
-                    className="h-9 text-xs border-gray-300 rounded-md pr-8 focus:border-[#1b5ebe]"
+                    className="h-9 text-xs border-gray-300 rounded-md pr-8 focus:border-[#0b1d3a]"
                   />
                 </div>
               </div>
@@ -1279,7 +1279,7 @@ export default function LoginPage() {
               <Button
                 type="submit"
                 className="w-full h-9 text-xs text-white font-medium rounded-md shadow-sm"
-                style={{ backgroundColor: "#1b5ebe" }}
+                style={{ backgroundColor: "#0b1d3a" }}
                 disabled={googleSubmitting}
               >
                 {googleSubmitting ? "Saving & Setting Password..." : "Save Store & Set Password"}

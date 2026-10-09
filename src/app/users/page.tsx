@@ -706,7 +706,7 @@ export default function UsersPage() {
       <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
         <DialogContent className="bg-white rounded-2xl max-w-xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <div className="w-10 h-10 rounded-xl bg-blue-50 text-[#1b5ebe] flex items-center justify-center mb-1">
+            <div className="w-10 h-10 rounded-xl bg-slate-100 text-[#0b1d3a] flex items-center justify-center mb-1">
               <User className="w-5 h-5" />
             </div>
             <DialogTitle className="text-base font-bold text-gray-900">
@@ -723,7 +723,7 @@ export default function UsersPage() {
                 <Label className="text-xs font-semibold text-gray-700">Username *</Label>
                 <Input
                   required
-                  placeholder="e.g. cashier1"
+                  placeholder="Username"
                   value={createForm.username}
                   onChange={(e) => setCreateForm({ ...createForm, username: e.target.value })}
                   className="mt-1 h-9 text-xs rounded-xl"
@@ -735,7 +735,7 @@ export default function UsersPage() {
                 <Input
                   type="email"
                   required
-                  placeholder="staff@example.com"
+                  placeholder="Staff Email"
                   value={createForm.email}
                   onChange={(e) => setCreateForm({ ...createForm, email: e.target.value })}
                   className="mt-1 h-9 text-xs rounded-xl"
@@ -962,7 +962,7 @@ export default function UsersPage() {
               <Button
                 type="submit"
                 disabled={creatingStaff}
-                className="bg-[#1b5ebe] hover:bg-[#154ca0] text-white rounded-xl text-xs font-semibold gap-1.5"
+                className="bg-[#0b1d3a] hover:bg-[#142a4d] text-white rounded-xl text-xs font-semibold gap-1.5"
               >
                 {creatingStaff ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
                 Create Staff Account
@@ -1127,7 +1127,7 @@ export default function UsersPage() {
               <Button
                 onClick={handleSavePermissions}
                 disabled={savingPermissions}
-                className="bg-[#1b5ebe] hover:bg-[#154ca0] text-white rounded-xl text-xs font-semibold gap-1.5"
+                className="bg-[#0b1d3a] hover:bg-[#142a4d] text-white rounded-xl text-xs font-semibold gap-1.5"
               >
                 {savingPermissions ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
                 Save Permissions

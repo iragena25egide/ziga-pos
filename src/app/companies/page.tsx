@@ -294,9 +294,9 @@ export default function CompaniesPage() {
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
         <DialogContent className="admin-modal-content max-w-lg">
           <form onSubmit={handleSubmit}>
-            <DialogHeader className="admin-modal-header border-b border-gray-100 pb-3">
-              <DialogTitle className="admin-modal-title flex items-center gap-2 text-base font-bold text-gray-900">
-                <Building2 className="w-5 h-5 text-indigo-600" />
+            <DialogHeader className="admin-modal-header border-b border-white/10 pb-3">
+              <DialogTitle className="admin-modal-title flex items-center gap-2 text-base font-bold text-white">
+                <Building2 className="w-5 h-5 text-white/90" />
                 {editingCompany ? "Edit Company Information" : "Add New Company"}
               </DialogTitle>
             </DialogHeader>
@@ -313,7 +313,7 @@ export default function CompaniesPage() {
                   }
                   required
                   className="rounded-xl border-gray-200 text-xs h-10"
-                  placeholder="e.g. Kigali Fresh Supplies Ltd"
+                  placeholder="Company Name"
                 />
               </div>
 
@@ -329,7 +329,7 @@ export default function CompaniesPage() {
                       setFormData({ ...formData, ceo_founder: e.target.value })
                     }
                     className="rounded-xl border-gray-200 text-xs h-10"
-                    placeholder="e.g. John Doe"
+                    placeholder="Owner Name"
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -343,7 +343,7 @@ export default function CompaniesPage() {
                       setFormData({ ...formData, tin_number: e.target.value })
                     }
                     className="rounded-xl border-gray-200 text-xs h-10"
-                    placeholder="e.g. 109283746"
+                    placeholder="TIN / Tax Number"
                   />
                 </div>
               </div>
@@ -359,7 +359,7 @@ export default function CompaniesPage() {
                     setFormData({ ...formData, address: e.target.value })
                   }
                   className="rounded-xl border-gray-200 text-xs h-10"
-                  placeholder="e.g. KG 123 St, Downtown Kigali, Rwanda"
+                  placeholder="Company Address"
                 />
               </div>
 
@@ -376,7 +376,7 @@ export default function CompaniesPage() {
                       setFormData({ ...formData, contact_email: e.target.value })
                     }
                     className="rounded-xl border-gray-200 text-xs h-10"
-                    placeholder="contact@example.com"
+                    placeholder="Company Email"
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -390,7 +390,7 @@ export default function CompaniesPage() {
                       setFormData({ ...formData, contact_phone: e.target.value })
                     }
                     className="rounded-xl border-gray-200 text-xs h-10"
-                    placeholder="e.g. +250 788 123 456"
+                    placeholder="Company Phone"
                   />
                 </div>
               </div>
@@ -406,7 +406,7 @@ export default function CompaniesPage() {
               </Button>
               <Button
                 type="submit"
-                className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl px-5 text-xs font-semibold shadow-sm"
+                className="bg-[#0b1d3a] hover:bg-[#142a4d] text-white rounded-xl px-5 text-xs font-semibold shadow-sm"
               >
                 {editingCompany ? "Save Changes" : "Add Company"}
               </Button>
@@ -418,7 +418,7 @@ export default function CompaniesPage() {
       {/* Delete Confirmation */}
       <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
         <AlertDialogContent className="admin-modal-content sm:max-w-[380px] text-center p-0">
-          <div className="bg-[#2c2c3e] pt-8 pb-6 flex flex-col items-center">
+          <div className="bg-[#0b1d3a] pt-8 pb-6 flex flex-col items-center">
             <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-red-400 to-red-500 text-white flex items-center justify-center mb-4 shadow-[0_0_30px_rgba(239,68,68,0.3)]">
               <AlertTriangle className="w-8 h-8" />
             </div>

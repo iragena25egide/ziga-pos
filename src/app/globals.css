@@ -61,8 +61,8 @@
   --popover: #ffffff;
   --popover-foreground: #111827;
 
-  /* Primary action — corporate blue */
-  --primary: #1b5ebe;
+  /* Primary action — deep navy (matching left nav) */
+  --primary: #0b1d3a;
   --primary-foreground: #ffffff;
 
   /* Secondary (muted surfaces) */
@@ -75,7 +75,7 @@
 
   /* Accent (hover states etc.) */
   --accent: #eff6ff;
-  --accent-foreground: #1b5ebe;
+  --accent-foreground: #0b1d3a;
 
   /* Destructive (errors, delete) */
   --destructive: #dc2626;
@@ -85,10 +85,10 @@
   --input: #e5e7eb;
 
   /* Focus ring */
-  --ring: #1b5ebe;
+  --ring: #0b1d3a;
 
   /* Charts */
-  --chart-1: #1b5ebe;
+  --chart-1: #0b1d3a;
   --chart-2: #0e9f8a;
   --chart-3: #f59e0b;
   --chart-4: #ef4444;
@@ -105,7 +105,7 @@
   --sidebar-accent: rgba(255, 255, 255, 0.08);
   --sidebar-accent-foreground: #ffffff;
   --sidebar-border: rgba(255, 255, 255, 0.08);
-  --sidebar-ring: #1b5ebe;
+  --sidebar-ring: #0b1d3a;
 }
 
 /* No dark mode — clean light-only design */

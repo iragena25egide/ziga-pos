@@ -387,7 +387,7 @@ export default function CustomersPage() {
                   }
                   required
                   className="admin-input"
-                  placeholder="John Doe"
+                  placeholder="Customer Name"
                 />
               </div>
               <div className="space-y-1.5">
@@ -401,7 +401,7 @@ export default function CustomersPage() {
                     setFormData({ ...formData, phone: e.target.value })
                   }
                   className="admin-input"
-                  placeholder="+250 788 123 456"
+                  placeholder="Customer Phone"
                 />
               </div>
               <div className="space-y-1.5">
@@ -416,7 +416,7 @@ export default function CustomersPage() {
                     setFormData({ ...formData, email: e.target.value })
                   }
                   className="admin-input"
-                  placeholder="john@example.com"
+                  placeholder="Customer Email"
                 />
               </div>
               <div className="space-y-1.5">
@@ -430,7 +430,7 @@ export default function CustomersPage() {
                     setFormData({ ...formData, address: e.target.value })
                   }
                   className="admin-input"
-                  placeholder="Kigali, Rwanda"
+                  placeholder="Customer Address"
                 />
               </div>
             </div>
@@ -445,7 +445,7 @@ export default function CustomersPage() {
               </Button>
               <Button
                 type="submit"
-                className="bg-indigo-500 hover:bg-indigo-600 text-white rounded-lg px-6 shadow-sm"
+                className="bg-[#0b1d3a] hover:bg-[#142a4d] text-white rounded-lg px-6 shadow-sm"
               >
                 {editingCustomer ? "Save Changes" : "Add Customer"}
               </Button>
@@ -457,7 +457,7 @@ export default function CustomersPage() {
       {/* Delete Confirmation */}
       <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
         <AlertDialogContent className="admin-modal-content sm:max-w-[380px] text-center p-0">
-          <div className="bg-[#2c2c3e] pt-8 pb-6 flex flex-col items-center">
+          <div className="bg-[#0b1d3a] pt-8 pb-6 flex flex-col items-center">
             <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-red-400 to-red-500 text-white flex items-center justify-center mb-4 shadow-[0_0_30px_rgba(239,68,68,0.3)]">
               <AlertTriangle className="w-8 h-8" />
             </div>

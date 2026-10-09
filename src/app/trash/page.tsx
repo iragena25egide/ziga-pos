@@ -266,7 +266,7 @@ export default function TrashPage() {
               placeholder="Search deleted records by name or company..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-9 h-9 text-xs border-gray-200 rounded-xl focus:border-[#1b5ebe]"
+              className="pl-9 h-9 text-xs border-gray-200 rounded-xl focus:border-[#0b1d3a]"
             />
           </div>
 
@@ -278,7 +278,7 @@ export default function TrashPage() {
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as any)}
-              className="h-9 px-3 rounded-xl border border-gray-200 bg-white text-xs font-medium text-gray-700 focus:outline-none focus:border-[#1b5ebe]"
+              className="h-9 px-3 rounded-xl border border-gray-200 bg-white text-xs font-medium text-gray-700 focus:outline-none focus:border-[#0b1d3a]"
             >
               <option value="newest">Newest Deleted</option>
               <option value="oldest">Oldest Deleted</option>
@@ -311,7 +311,7 @@ export default function TrashPage() {
                 onClick={() => setSelectedType(tab.id)}
                 className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium transition-all ${
                   active
-                    ? "bg-[#1b5ebe] text-white shadow-xs font-semibold"
+                    ? "bg-[#0b1d3a] text-white shadow-xs font-semibold"
                     : "bg-gray-100/70 text-gray-600 hover:bg-gray-200/60"
                 }`}
               >
@@ -350,7 +350,7 @@ export default function TrashPage() {
               <TableRow>
                 <TableCell colSpan={5} className="text-center py-12 text-xs text-gray-400">
                   <div className="flex items-center justify-center gap-2">
-                    <div className="w-5 h-5 border-2 border-[#1b5ebe] border-t-transparent rounded-full animate-spin" />
+                    <div className="w-5 h-5 border-2 border-[#0b1d3a] border-t-transparent rounded-full animate-spin" />
                     <span>Loading recycle bin...</span>
                   </div>
                 </TableCell>
@@ -449,7 +449,7 @@ export default function TrashPage() {
       {/* ── Dialog: Permanently Delete Single Record ── */}
       <AlertDialog open={confirmHardDeleteOpen} onOpenChange={setConfirmHardDeleteOpen}>
         <AlertDialogContent className="admin-modal-content sm:max-w-[400px] text-center p-0">
-          <div className="bg-[#1e293b] pt-8 pb-6 flex flex-col items-center">
+          <div className="bg-[#0b1d3a] pt-8 pb-6 flex flex-col items-center">
             <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-red-500 to-red-600 text-white flex items-center justify-center mb-4 shadow-[0_0_25px_rgba(239,68,68,0.35)]">
               <ShieldAlert className="w-8 h-8" />
             </div>
@@ -483,7 +483,7 @@ export default function TrashPage() {
       {/* ── Dialog: Restore Record ── */}
       <AlertDialog open={confirmRestoreOpen} onOpenChange={setConfirmRestoreOpen}>
         <AlertDialogContent className="admin-modal-content sm:max-w-[400px] text-center p-0">
-          <div className="bg-[#1e293b] pt-8 pb-6 flex flex-col items-center">
+          <div className="bg-[#0b1d3a] pt-8 pb-6 flex flex-col items-center">
             <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-emerald-500 to-emerald-600 text-white flex items-center justify-center mb-4 shadow-[0_0_25px_rgba(16,185,129,0.35)]">
               <RefreshCcw className="w-8 h-8" />
             </div>
@@ -517,7 +517,7 @@ export default function TrashPage() {
       {/* ── Dialog: Empty Entire Recycle Bin ── */}
       <AlertDialog open={confirmEmptyBinOpen} onOpenChange={setConfirmEmptyBinOpen}>
         <AlertDialogContent className="admin-modal-content sm:max-w-[420px] text-center p-0">
-          <div className="bg-[#1e293b] pt-8 pb-6 flex flex-col items-center">
+          <div className="bg-[#0b1d3a] pt-8 pb-6 flex flex-col items-center">
             <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-red-500 to-red-600 text-white flex items-center justify-center mb-4 shadow-[0_0_25px_rgba(239,68,68,0.35)]">
               <AlertTriangle className="w-8 h-8" />
             </div>

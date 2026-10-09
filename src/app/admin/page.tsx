@@ -1895,15 +1895,15 @@ export default function AdminDashboardPage() {
 
       {/* ─── Company Edit Modal ─── */}
       <Dialog open={!!companyToEdit} onOpenChange={(open) => !open && setCompanyToEdit(null)}>
-        <DialogContent className="bg-white rounded-2xl max-w-lg">
+        <DialogContent className="admin-modal-content max-w-lg p-0 overflow-hidden rounded-2xl bg-white border border-border shadow-xl">
           <form onSubmit={handleSaveCompanyEdit}>
-            <DialogHeader className="border-b border-gray-100 pb-3">
-              <DialogTitle className="flex items-center gap-2 text-base font-bold text-gray-900">
-                <Building2 className="w-5 h-5 text-indigo-600" />
+            <DialogHeader className="admin-modal-header border-b border-white/10 p-6 pb-5">
+              <DialogTitle className="admin-modal-title flex items-center gap-2 text-base font-bold text-white">
+                <Building2 className="w-5 h-5 text-white/90" />
                 Edit Company: {companyToEdit?.name}
               </DialogTitle>
             </DialogHeader>
-            <div className="space-y-4 py-4 text-xs">
+            <div className="space-y-4 p-6 py-4 text-xs bg-white">
               <div className="space-y-1.5">
                 <Label htmlFor="admin_company_name" className="font-semibold text-gray-700">
                   Company / Store Name *
@@ -1916,7 +1916,7 @@ export default function AdminDashboardPage() {
                   }
                   required
                   className="rounded-xl border-gray-200 text-xs h-10"
-                  placeholder="e.g. Acme Supermarket"
+                  placeholder="Company Name"
                 />
               </div>
 
@@ -1932,7 +1932,7 @@ export default function AdminDashboardPage() {
                       setCompanyEditForm({ ...companyEditForm, ceo_founder: e.target.value })
                     }
                     className="rounded-xl border-gray-200 text-xs h-10"
-                    placeholder="Owner name"
+                    placeholder="Owner Name"
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -1946,7 +1946,7 @@ export default function AdminDashboardPage() {
                       setCompanyEditForm({ ...companyEditForm, tin_number: e.target.value })
                     }
                     className="rounded-xl border-gray-200 text-xs h-10"
-                    placeholder="e.g. 109283746"
+                    placeholder="TIN / Tax Number"
                   />
                 </div>
               </div>
@@ -1962,7 +1962,7 @@ export default function AdminDashboardPage() {
                     setCompanyEditForm({ ...companyEditForm, address: e.target.value })
                   }
                   className="rounded-xl border-gray-200 text-xs h-10"
-                  placeholder="e.g. Downtown Kigali, Rwanda"
+                  placeholder="Company Address"
                 />
               </div>
 
@@ -1979,7 +1979,7 @@ export default function AdminDashboardPage() {
                       setCompanyEditForm({ ...companyEditForm, contact_email: e.target.value })
                     }
                     className="rounded-xl border-gray-200 text-xs h-10"
-                    placeholder="contact@company.com"
+                    placeholder="Company Email"
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -1993,12 +1993,12 @@ export default function AdminDashboardPage() {
                       setCompanyEditForm({ ...companyEditForm, contact_phone: e.target.value })
                     }
                     className="rounded-xl border-gray-200 text-xs h-10"
-                    placeholder="e.g. +250 788 123 456"
+                    placeholder="Company Phone"
                   />
                 </div>
               </div>
             </div>
-            <DialogFooter className="border-t border-gray-100 pt-3 gap-2">
+            <DialogFooter className="border-t border-gray-100 p-4 px-6 bg-gray-50 flex justify-end gap-2">
               <Button
                 type="button"
                 variant="outline"
@@ -2010,7 +2010,7 @@ export default function AdminDashboardPage() {
               <Button
                 type="submit"
                 disabled={savingCompanyEdit}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl px-5 text-xs font-semibold shadow-sm"
+                className="bg-[#0b1d3a] hover:bg-[#142a4d] text-white rounded-xl px-5 text-xs font-semibold shadow-sm"
               >
                 {savingCompanyEdit ? (
                   <>
@@ -2122,7 +2122,7 @@ export default function AdminDashboardPage() {
       {/* Delete Customer Chat Confirmation Dialog */}
       <AlertDialog open={deleteChatModalOpen} onOpenChange={setDeleteChatModalOpen}>
         <AlertDialogContent className="admin-modal-content sm:max-w-[400px] text-center p-0">
-          <div className="bg-[#1e293b] pt-8 pb-6 flex flex-col items-center">
+          <div className="bg-[#0b1d3a] pt-8 pb-6 flex flex-col items-center">
             <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-red-500 to-red-600 text-white flex items-center justify-center mb-4 shadow-[0_0_25px_rgba(239,68,68,0.35)]">
               <Trash2 className="w-8 h-8" />
             </div>
