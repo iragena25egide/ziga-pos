@@ -257,11 +257,34 @@ export default function LoginPage() {
     companyName: "",
     address: "",
     tinNumber: "",
+    password: "",
+    confirmPassword: "",
   });
+  const [showGooglePassword, setShowGooglePassword] = useState(false);
   const [googleSubmitting, setGoogleSubmitting] = useState(false);
 
-  const submitGoogleAuth = async (idToken: string, companyInfo?: { companyName: string; address: string; tinNumber: string }) => {
+  const submitGoogleAuth = async (
+    idToken: string,
+    companyInfo?: {
+      companyName: string;
+      address: string;
+      tinNumber: string;
+      password?: string;
+      confirmPassword?: string;
+    }
+  ) => {
     try {
+      if (companyInfo?.password) {
+        if (companyInfo.password.length < 6) {
+          toast.error("Password must be at least 6 characters.");
+          return;
+        }
+        if (companyInfo.password !== companyInfo.confirmPassword) {
+          toast.error("Passwords do not match.");
+          return;
+        }
+      }
+
       setGoogleSubmitting(true);
       toast.loading("Authenticating with Google…", { id: "google-auth" });
       const payload: any = { id_token: idToken };
@@ -269,6 +292,9 @@ export default function LoginPage() {
         payload.company_name = companyInfo.companyName;
         payload.address = companyInfo.address;
         payload.tin_number = companyInfo.tinNumber;
+      }
+      if (companyInfo?.password) {
+        payload.password = companyInfo.password;
       }
       const res = await api.post("/auth/google/", payload);
       toast.dismiss("google-auth");
@@ -1347,6 +1373,45 @@ export default function LoginPage() {
                 onChange={(e) => setGoogleCompanyData({ ...googleCompanyData, tinNumber: e.target.value })}
                 className="mt-1 h-9 text-xs border-gray-300 rounded-md focus:border-[#1b5ebe]"
               />
+            </div>
+
+            <div className="pt-2 border-t border-gray-100">
+              <div className="flex items-center justify-between mb-1">
+                <Label className="text-xs font-medium text-gray-700">
+                  Desktop & Direct Password <span className="text-gray-400 font-normal">(Recommended)</span>
+                </Label>
+              </div>
+              <p className="text-[11px] text-gray-500 mb-2">
+                Set a password to log in directly on our Desktop app and offline terminals.
+              </p>
+              <div className="space-y-2">
+                <div className="relative">
+                  <Input
+                    type={showGooglePassword ? "text" : "password"}
+                    placeholder="Create a password (min 6 characters)"
+                    value={googleCompanyData.password}
+                    onChange={(e) => setGoogleCompanyData({ ...googleCompanyData, password: e.target.value })}
+                    className="h-9 text-xs border-gray-300 rounded-md pr-8 focus:border-[#1b5ebe]"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowGooglePassword(!showGooglePassword)}
+                    className="absolute right-2.5 top-2.5 text-gray-400 hover:text-gray-600"
+                  >
+                    {showGooglePassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+
+                {googleCompanyData.password && (
+                  <Input
+                    type={showGooglePassword ? "text" : "password"}
+                    placeholder="Confirm your password"
+                    value={googleCompanyData.confirmPassword}
+                    onChange={(e) => setGoogleCompanyData({ ...googleCompanyData, confirmPassword: e.target.value })}
+                    className="h-9 text-xs border-gray-300 rounded-md focus:border-[#1b5ebe]"
+                  />
+                )}
+              </div>
             </div>
 
             <div className="flex items-center gap-2 pt-2">
