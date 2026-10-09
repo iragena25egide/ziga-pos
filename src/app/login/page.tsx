@@ -305,9 +305,9 @@ export default function LoginPage() {
     }
   }, []);
 
-  // Initialize official Google Identity Services button
+  // Initialize official Google Identity Services button (web only)
   useEffect(() => {
-    if (mode !== "login") return;
+    if (mode !== "login" || isDesktop) return;
 
     const clientId =
       process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ||
@@ -780,27 +780,31 @@ export default function LoginPage() {
                     {loginLoading ? "Signing in…" : "Sign In"}
                   </Button>
 
-                  <div className="flex items-center gap-2 my-2.5">
-                    <div className="flex-1 h-px bg-gray-200" />
-                    <span className="text-[10px] text-gray-400 uppercase">Or</span>
-                    <div className="flex-1 h-px bg-gray-200" />
-                  </div>
+                  {!isDesktop && (
+                    <>
+                      <div className="flex items-center gap-2 my-2.5">
+                        <div className="flex-1 h-px bg-gray-200" />
+                        <span className="text-[10px] text-gray-400 uppercase">Or</span>
+                        <div className="flex-1 h-px bg-gray-200" />
+                      </div>
 
-                  {/* Official Google Identity Button Mount */}
-                  <div className="w-full flex justify-center min-h-[40px]">
-                    <div ref={googleBtnContainerRef} className="w-full flex justify-center" />
-                  </div>
+                      {/* Official Google Identity Button Mount */}
+                      <div className="w-full flex justify-center min-h-[40px]">
+                        <div ref={googleBtnContainerRef} className="w-full flex justify-center" />
+                      </div>
 
-                  {/* Fallback button if GIS script hasn't rendered yet */}
-                  <noscript>
-                    <button
-                      type="button"
-                      onClick={handleGooglePrompt}
-                      className="w-full h-9 flex items-center justify-center gap-2 rounded-md border border-gray-300 text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors"
-                    >
-                      Continue with Google
-                    </button>
-                  </noscript>
+                      {/* Fallback button if GIS script hasn't rendered yet */}
+                      <noscript>
+                        <button
+                          type="button"
+                          onClick={handleGooglePrompt}
+                          className="w-full h-9 flex items-center justify-center gap-2 rounded-md border border-gray-300 text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                        >
+                          Continue with Google
+                        </button>
+                      </noscript>
+                    </>
+                  )}
                 </form>
 
                 <div className="mt-6 p-2.5 rounded-lg text-xs text-center bg-gray-50 border border-gray-200 text-gray-600">
