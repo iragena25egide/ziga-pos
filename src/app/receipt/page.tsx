@@ -52,37 +52,53 @@ export default function ReceiptViewPage() {
     
     pdf.setFontSize(16);
     pdf.setFont("helvetica", "bold");
-    const headerTitle = (receipt.company_name || "ZIGA POS").toUpperCase();
-    pdf.text(headerTitle, 40, 15, { align: "center" });
+    pdf.text("Ziga Pos", 40, 13, { align: "center" });
+
+    let y = 18;
+    const companyName = (receipt.company_name || receipt.company?.name || "").trim();
+    if (companyName) {
+      pdf.setFontSize(10);
+      pdf.setFont("helvetica", "bold");
+      pdf.text(companyName, 40, y, { align: "center" });
+      y += 5;
+    }
 
     pdf.setFontSize(8);
     pdf.setFont("helvetica", "normal");
-    pdf.text("Kigali, Rwanda | +250 788 123 456", 40, 20, { align: "center" });
-    pdf.text(`Receipt #${receipt.id}`, 40, 25, { align: "center" });
-    pdf.text(new Date(receipt.created_at).toLocaleString(), 40, 30, { align: "center" });
+    const address = receipt.company_address || "Kigali, Rwanda";
+    const phone = receipt.company_phone || "+250 788 123 456";
+    pdf.text(`${address} | ${phone}`, 40, y, { align: "center" });
+    y += 4.5;
+    pdf.text(`Receipt #${receipt.id}`, 40, y, { align: "center" });
+    y += 4.5;
+    pdf.text(new Date(receipt.created_at).toLocaleString(), 40, y, { align: "center" });
+    y += 6;
 
-    pdf.text(`Customer: ${receipt.customer_name}`, 4, 40);
+    pdf.text(`Customer: ${receipt.customer_name}`, 4, y);
+    y += 5;
     const customerPhone = receipt.customer_phone || receipt.phone;
     if (customerPhone) {
-      pdf.text(`Phone: ${customerPhone}`, 4, 45);
-      pdf.text(`Salesperson: ${receipt.salesperson_name || 'Admin'}`, 4, 50);
-    } else {
-      pdf.text(`Salesperson: ${receipt.salesperson_name || 'Admin'}`, 4, 45);
+      pdf.text(`Phone: ${customerPhone}`, 4, y);
+      y += 5;
     }
+    pdf.text(`Salesperson: ${receipt.salesperson_name || 'Admin'}`, 4, y);
+    y += 5;
 
     pdf.setLineWidth(0.5);
     pdf.setDrawColor(200, 200, 200);
-    pdf.line(4, 50, 70, 50); 
+    pdf.line(4, y, 70, y); 
+    y += 5;
     
     pdf.setFont("helvetica", "bold");
-    pdf.text("Item", 4, 55);
-    pdf.text("Qty", 30, 55, { align: "center" });
-    pdf.text("Price", 50, 55, { align: "right" });
-    pdf.text("Total", 70, 55, { align: "right" });
-    pdf.line(4, 58, 70, 58);
+    pdf.text("Item", 4, y);
+    pdf.text("Qty", 30, y, { align: "center" });
+    pdf.text("Price", 50, y, { align: "right" });
+    pdf.text("Total", 70, y, { align: "right" });
+    y += 3;
+    pdf.line(4, y, 70, y);
+    y += 5;
 
     pdf.setFont("helvetica", "normal");
-    let y = 63;
     receipt.items?.forEach((item: any) => {
       pdf.text(item.product_name.substring(0, 14), 4, y);
       pdf.text(String(item.quantity), 30, y, { align: "center" });
@@ -177,13 +193,22 @@ export default function ReceiptViewPage() {
       <Card className="w-full max-w-md glass-dark border-border/50 shadow-2xl">
         <CardHeader className="text-center pb-2">
           <CardTitle className="text-2xl font-bold text-primary flex items-center justify-center gap-2">
-            <ReceiptText className="w-6 h-6" /> {receipt.company_name || "ZIGA POS"}
+            <ReceiptText className="w-6 h-6" /> Ziga Pos
           </CardTitle>
-          <p className="text-sm text-muted-foreground mt-1">Receipt #{receipt.id}</p>
+          {receipt.company_name && (
+            <p className="text-sm font-semibold text-slate-300 mt-1 uppercase tracking-wide">
+              {receipt.company_name}
+            </p>
+          )}
+          <p className="text-sm text-muted-foreground mt-0.5">Receipt #{receipt.id}</p>
         </CardHeader>
         <CardContent>
           <div className="bg-[#0f172a] rounded-xl border border-dashed border-border/50 p-6 font-mono text-sm shadow-inner mb-6">
             <div className="text-center mb-6 space-y-1">
+              <h3 className="text-lg font-bold text-white uppercase tracking-wider">Ziga Pos</h3>
+              {receipt.company_name && (
+                <p className="text-xs font-semibold text-slate-300 uppercase tracking-wide">{receipt.company_name}</p>
+              )}
               <p className="text-slate-400">Kigali, Rwanda | +250 788 123 456</p>
               <p className="text-slate-400">{new Date(receipt.created_at).toLocaleString()}</p>
             </div>

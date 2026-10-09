@@ -12,13 +12,20 @@ let mainWindow;
 function createWindow() {
   mainWindow = new BrowserWindow({
     title: 'Ziga POS',
-    width: 1280,
-    height: 800,
+    width: 1366,
+    height: 850,
+    minWidth: 1024,
+    minHeight: 700,
+    backgroundColor: '#ffffff',
+    autoHideMenuBar: true,
+    icon: path.join(__dirname, '../public/favicon_512.png'),
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
     }
   });
+
+  mainWindow.setMenuBarVisibility(false);
 
   if (isDev) {
     // In development mode, load the Next.js local server

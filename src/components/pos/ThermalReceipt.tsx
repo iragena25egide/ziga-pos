@@ -40,9 +40,14 @@ export function ThermalReceipt({ receipt, onPrint, onDownload, onClose }: Therma
         {/* Fixed Header Area */}
         <div className="px-6 pt-6 shrink-0">
           <div className="text-center mb-6">
-            <h1 className="text-2xl font-bold tracking-widest uppercase mb-1">
-              {receipt.company_name || "ZIGA POS"}
+            <h1 className="text-2xl font-bold tracking-widest uppercase mb-0.5">
+              Ziga Pos
             </h1>
+            {receipt.company_name && (
+              <p className="text-sm font-semibold text-gray-800 uppercase mb-1 tracking-wide">
+                {receipt.company_name}
+              </p>
+            )}
             <p className="text-gray-500">{receipt.company_address || "KN 4 Ave, Kigali, Rwanda"}</p>
             <p className="text-gray-500">{receipt.company_phone || "+250 788 123 456"}</p>
             <p className="text-[10px] font-bold text-gray-700 tracking-wider mt-1 uppercase">

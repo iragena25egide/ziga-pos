@@ -217,18 +217,27 @@ export default function PaymentsPage() {
 
     // Header
     doc.setFontSize(16); doc.setFont("helvetica", "bold");
-    const headerTitle = (detail.company_name || "ZIGA POS").toUpperCase();
-    doc.text(headerTitle, 40, 12, { align: "center" });
+    doc.text("Ziga Pos", 40, 11, { align: "center" });
+
+    let y = 16;
+    const companyName = (detail.company_name || detail.company?.name || "").trim();
+    if (companyName) {
+      doc.setFontSize(10); doc.setFont("helvetica", "bold");
+      doc.text(companyName, 40, y, { align: "center" });
+      y += 5;
+    }
+
     doc.setFontSize(8); doc.setFont("helvetica", "normal");
-    doc.text("Kigali, Rwanda", 40, 18, { align: "center" });
-    doc.text("+250 788 123 456", 40, 22, { align: "center" });
+    const address = detail.company_address || "Kigali, Rwanda";
+    const phone = detail.company_phone || "+250 788 123 456";
+    doc.text(address, 40, y, { align: "center" }); y += 4;
+    doc.text(phone, 40, y, { align: "center" }); y += 4;
 
     doc.setLineDashPattern([1, 1], 0);
-    doc.line(4, 26, 76, 26);
+    doc.line(4, y, 76, y); y += 5;
     doc.setLineDashPattern([], 0);
 
     // Info
-    let y = 32;
     const infoRight = 76;
     doc.setFontSize(8);
     doc.text("Date:", 4, y); doc.setFont("helvetica", "bold"); doc.text(new Date(detail.saleDate).toLocaleString(), infoRight, y, { align: "right" }); doc.setFont("helvetica", "normal"); y += 5;
@@ -449,8 +458,13 @@ export default function PaymentsPage() {
                 {/* Store Name */}
                 <div className="text-center mb-5">
                   <h2 className="text-2xl font-black tracking-widest text-slate-900 uppercase">
-                    {detail.company_name || "ZIGA POS"}
+                    Ziga Pos
                   </h2>
+                  {detail.company_name && (
+                    <p className="text-xs font-semibold text-slate-600 uppercase mt-0.5 tracking-wide">
+                      {detail.company_name}
+                    </p>
+                  )}
                   <p className="text-xs text-slate-400 mt-1">Kigali, Rwanda</p>
                   <p className="text-xs text-slate-400">+250 788 123 456</p>
                 </div>

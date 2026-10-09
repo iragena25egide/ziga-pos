@@ -307,7 +307,7 @@ export default function LoginPage() {
 
   // Initialize official Google Identity Services button
   useEffect(() => {
-    if (mode !== "login" || isDesktop) return;
+    if (mode !== "login") return;
 
     const clientId =
       process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ||
@@ -630,16 +630,9 @@ export default function LoginPage() {
           <div>
             <p className="text-slate-950 font-bold text-base tracking-tight leading-none">ZIGA POS</p>
             <p className="text-slate-500 text-[9.5px] font-semibold tracking-wider uppercase mt-0.5">
-              {isDesktop ? "Desktop Platform" : "Cloud Retail System"}
+              Cloud Retail System
             </p>
           </div>
-          {isDesktop && (
-            <span
-              className="ml-auto text-[10px] font-semibold px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200"
-            >
-              Desktop Mode
-            </span>
-          )}
         </div>
 
         {/* Headline + App preview */}
@@ -688,35 +681,25 @@ export default function LoginPage() {
             <span className="font-bold text-gray-900 text-base tracking-tight">ZIGA POS</span>
           </div>
 
-          {/* Desktop banner */}
-          {isDesktop && (
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-md mb-5 text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
-              <Laptop className="w-3.5 h-3.5" />
-              Desktop App — Login Only
-            </div>
-          )}
-
           {/* Mode switch */}
-          {!isDesktop && (
-            <div className="flex border-b border-gray-200 mb-6">
-              {(["login", "register"] as const).map((tab) => (
-                <button
-                  key={tab}
-                  onClick={() => {
-                    setMode(tab);
-                    if (tab === "register") setRegisterStep(1);
-                  }}
-                  className="pb-2.5 px-1 mr-5 text-xs font-semibold border-b-2 transition-colors"
-                  style={{
-                    borderColor: mode === tab ? "#1b5ebe" : "transparent",
-                    color: mode === tab ? "#1b5ebe" : "#64748b",
-                  }}
-                >
-                  {tab === "login" ? "Sign In" : "Register Business"}
-                </button>
-              ))}
-            </div>
-          )}
+          <div className="flex border-b border-gray-200 mb-6">
+            {(["login", "register"] as const).map((tab) => (
+              <button
+                key={tab}
+                onClick={() => {
+                  setMode(tab);
+                  if (tab === "register") setRegisterStep(1);
+                }}
+                className="pb-2.5 px-1 mr-5 text-xs font-semibold border-b-2 transition-colors"
+                style={{
+                  borderColor: mode === tab ? "#1b5ebe" : "transparent",
+                  color: mode === tab ? "#1b5ebe" : "#64748b",
+                }}
+              >
+                {tab === "login" ? "Sign In" : "Register Business"}
+              </button>
+            ))}
+          </div>
 
           <AnimatePresence mode="wait">
             {mode === "login" ? (
@@ -820,20 +803,18 @@ export default function LoginPage() {
                   </noscript>
                 </form>
 
-                {!isDesktop && (
-                  <div className="mt-6 p-2.5 rounded-lg text-xs text-center bg-gray-50 border border-gray-200 text-gray-600">
-                    Need a new account?{" "}
-                    <button
-                      onClick={() => {
-                        setMode("register");
-                        setRegisterStep(1);
-                      }}
-                      className="font-semibold text-[#1b5ebe] hover:underline"
-                    >
-                      Register
-                    </button>
-                  </div>
-                )}
+                <div className="mt-6 p-2.5 rounded-lg text-xs text-center bg-gray-50 border border-gray-200 text-gray-600">
+                  Need a new account?{" "}
+                  <button
+                    onClick={() => {
+                      setMode("register");
+                      setRegisterStep(1);
+                    }}
+                    className="font-semibold text-[#1b5ebe] hover:underline"
+                  >
+                    Register
+                  </button>
+                </div>
               </motion.div>
             ) : (
               /* ── Multi-Step Register Form ── */

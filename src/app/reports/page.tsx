@@ -100,31 +100,53 @@ export default function ReportsPage() {
     
     pdf.setFontSize(16);
     pdf.setFont("helvetica", "bold");
-    const headerTitle = (selectedSale.company_name || "ZIGA POS").toUpperCase();
-    pdf.text(headerTitle, 40, 15, { align: "center" });
+    pdf.text("Ziga Pos", 40, 13, { align: "center" });
+
+    let y = 18;
+    const companyName = (selectedSale.company_name || selectedSale.company?.name || "").trim();
+    if (companyName) {
+      pdf.setFontSize(10);
+      pdf.setFont("helvetica", "bold");
+      pdf.text(companyName, 40, y, { align: "center" });
+      y += 5;
+    }
 
     pdf.setFontSize(8);
     pdf.setFont("helvetica", "normal");
-    pdf.text("Kigali, Rwanda | +250 788 123 456", 40, 20, { align: "center" });
-    pdf.text(`Receipt #${selectedSale.id}`, 40, 25, { align: "center" });
-    pdf.text(new Date(selectedSale.created_at).toLocaleString(), 40, 30, { align: "center" });
+    const address = selectedSale.company_address || "Kigali, Rwanda";
+    const phone = selectedSale.company_phone || "+250 788 123 456";
+    pdf.text(`${address} | ${phone}`, 40, y, { align: "center" });
+    y += 4.5;
+    pdf.text(`Receipt #${selectedSale.id}`, 40, y, { align: "center" });
+    y += 4.5;
+    pdf.text(new Date(selectedSale.created_at).toLocaleString(), 40, y, { align: "center" });
+    y += 6;
 
-    pdf.text(`Customer: ${selectedSale.customer_name}`, 4, 40);
-    pdf.text(`Salesperson: ${selectedSale.salesperson_name || 'Admin'}`, 4, 45);
+    pdf.text(`Customer: ${selectedSale.customer_name}`, 4, y);
+    y += 5;
+    const customerPhone = selectedSale.customer_phone || selectedSale.phone;
+    if (customerPhone) {
+      pdf.text(`Phone: ${customerPhone}`, 4, y);
+      y += 5;
+    }
+    pdf.text(`Salesperson: ${selectedSale.salesperson_name || 'Admin'}`, 4, y);
+    y += 5;
 
     pdf.setLineWidth(0.5);
     pdf.setDrawColor(200, 200, 200);
-    pdf.line(4, 50, 70, 50); 
+    pdf.line(4, y, 70, y); 
+    y += 5;
     
     pdf.setFont("helvetica", "bold");
-    pdf.text("Item", 4, 55);
-    pdf.text("Qty", 30, 55, { align: "center" });
-    pdf.text("Price", 50, 55, { align: "right" });
-    pdf.text("Total", 70, 55, { align: "right" });
-    pdf.line(4, 58, 70, 58);
+    pdf.text("Item", 4, y);
+    pdf.text("Qty", 30, y, { align: "center" });
+    pdf.text("Price", 50, y, { align: "right" });
+    pdf.text("Total", 70, y, { align: "right" });
+    y += 3;
+    pdf.line(4, y, 70, y);
+    y += 5;
 
     pdf.setFont("helvetica", "normal");
-    let y = 63;
     selectedSale.items?.forEach((item: any) => {
       const name = item.product_name || item.name || "Item";
       pdf.text(name.substring(0, 14), 4, y);
