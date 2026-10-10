@@ -704,21 +704,26 @@ export default function UsersPage() {
 
       {/* ─── Add Staff Member Dialog ─── */}
       <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
-        <DialogContent className="bg-white rounded-2xl max-w-xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <div className="w-10 h-10 rounded-xl bg-slate-100 text-[#0b1d3a] flex items-center justify-center mb-1">
-              <User className="w-5 h-5" />
+        <DialogContent className="bg-white rounded-2xl sm:max-w-3xl w-full max-h-[92vh] overflow-y-auto p-6 sm:p-7 shadow-2xl border border-gray-100">
+          <DialogHeader className="pb-3 border-b border-gray-100">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-slate-100 text-[#0b1d3a] flex items-center justify-center shrink-0">
+                <User className="w-5 h-5" />
+              </div>
+              <div>
+                <DialogTitle className="text-base sm:text-lg font-bold text-gray-900">
+                  Create New Staff Account
+                </DialogTitle>
+                <DialogDescription className="text-xs text-gray-500 mt-0.5">
+                  Add a staff member for <span className="font-semibold text-gray-800">{myCompanyName}</span> and define what they can view and perform.
+                </DialogDescription>
+              </div>
             </div>
-            <DialogTitle className="text-base font-bold text-gray-900">
-              Create New Staff Account
-            </DialogTitle>
-            <DialogDescription className="text-xs text-gray-500">
-              Add a staff member for <span className="font-semibold">{myCompanyName}</span> and define what they can view and perform.
-            </DialogDescription>
           </DialogHeader>
 
-          <form onSubmit={handleCreateStaff} className="space-y-4 pt-2">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <form onSubmit={handleCreateStaff} className="space-y-5 pt-3">
+            {/* Top row: Credentials & Basic Details */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div>
                 <Label className="text-xs font-semibold text-gray-700">Username *</Label>
                 <Input
@@ -726,7 +731,7 @@ export default function UsersPage() {
                   placeholder="Username"
                   value={createForm.username}
                   onChange={(e) => setCreateForm({ ...createForm, username: e.target.value })}
-                  className="mt-1 h-9 text-xs rounded-xl"
+                  className="mt-1 h-9 text-xs rounded-xl border-gray-200 focus:border-[#0b1d3a] focus:ring-[#0b1d3a]"
                 />
               </div>
 
@@ -738,17 +743,31 @@ export default function UsersPage() {
                   placeholder="Staff Email"
                   value={createForm.email}
                   onChange={(e) => setCreateForm({ ...createForm, email: e.target.value })}
-                  className="mt-1 h-9 text-xs rounded-xl"
+                  className="mt-1 h-9 text-xs rounded-xl border-gray-200 focus:border-[#0b1d3a] focus:ring-[#0b1d3a]"
                 />
               </div>
 
+              <div>
+                <Label className="text-xs font-semibold text-gray-700">Password *</Label>
+                <Input
+                  type="password"
+                  required
+                  placeholder="Secure password for login"
+                  value={createForm.password}
+                  onChange={(e) => setCreateForm({ ...createForm, password: e.target.value })}
+                  className="mt-1 h-9 text-xs rounded-xl border-gray-200 focus:border-[#0b1d3a] focus:ring-[#0b1d3a]"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <Label className="text-xs font-semibold text-gray-700">First Name</Label>
                 <Input
                   placeholder="First name"
                   value={createForm.first_name}
                   onChange={(e) => setCreateForm({ ...createForm, first_name: e.target.value })}
-                  className="mt-1 h-9 text-xs rounded-xl"
+                  className="mt-1 h-9 text-xs rounded-xl border-gray-200 focus:border-[#0b1d3a] focus:ring-[#0b1d3a]"
                 />
               </div>
 
@@ -758,44 +777,35 @@ export default function UsersPage() {
                   placeholder="Last name"
                   value={createForm.last_name}
                   onChange={(e) => setCreateForm({ ...createForm, last_name: e.target.value })}
-                  className="mt-1 h-9 text-xs rounded-xl"
+                  className="mt-1 h-9 text-xs rounded-xl border-gray-200 focus:border-[#0b1d3a] focus:ring-[#0b1d3a]"
                 />
               </div>
             </div>
 
-            <div>
-              <Label className="text-xs font-semibold text-gray-700">Password *</Label>
-              <Input
-                type="password"
-                required
-                placeholder="Secure password for login"
-                value={createForm.password}
-                onChange={(e) => setCreateForm({ ...createForm, password: e.target.value })}
-                className="mt-1 h-9 text-xs rounded-xl"
-              />
-            </div>
-
             {/* Role Preset Quick Selection */}
             <div>
-              <Label className="text-xs font-semibold text-gray-700 mb-1.5 block">
+              <Label className="text-xs font-semibold text-gray-700 mb-2 block">
                 Role & Permission Preset
               </Label>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                 <button
                   type="button"
                   onClick={() => {
                     setCreateForm({ ...createForm, role: "cashier" });
                     handleApplyPreset("cashier");
                   }}
-                  className={`p-2.5 rounded-xl border text-left transition-all ${
+                  className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
                     createForm.role === "cashier"
-                      ? "border-[#1b5ebe] bg-blue-50/70 text-[#1b5ebe]"
-                      : "border-gray-200 hover:border-gray-300 text-gray-700"
+                      ? "border-[#0b1d3a] bg-slate-50 text-[#0b1d3a] ring-1 ring-[#0b1d3a]/20 shadow-xs"
+                      : "border-gray-200 hover:border-gray-300 text-gray-700 bg-white"
                   }`}
                 >
-                  <p className="text-xs font-bold">Cashier (Supermarket)</p>
-                  <p className="text-[10px] text-gray-500 mt-0.5">
-                    POS sales only. No delete or update permissions.
+                  <p className="text-xs font-bold flex items-center justify-between">
+                    <span>Cashier</span>
+                    {createForm.role === "cashier" && <span className="w-2 h-2 rounded-full bg-[#0b1d3a]" />}
+                  </p>
+                  <p className="text-[11px] text-gray-500 mt-1 leading-snug">
+                    POS sales only. Cannot edit past sales or delete products.
                   </p>
                 </button>
 
@@ -805,15 +815,18 @@ export default function UsersPage() {
                     setCreateForm({ ...createForm, role: "sales" });
                     handleApplyPreset("sales");
                   }}
-                  className={`p-2.5 rounded-xl border text-left transition-all ${
+                  className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
                     createForm.role === "sales"
-                      ? "border-[#1b5ebe] bg-blue-50/70 text-[#1b5ebe]"
-                      : "border-gray-200 hover:border-gray-300 text-gray-700"
+                      ? "border-[#0b1d3a] bg-slate-50 text-[#0b1d3a] ring-1 ring-[#0b1d3a]/20 shadow-xs"
+                      : "border-gray-200 hover:border-gray-300 text-gray-700 bg-white"
                   }`}
                 >
-                  <p className="text-xs font-bold">Salesperson</p>
-                  <p className="text-[10px] text-gray-500 mt-0.5">
-                    POS & Customers. View catalog.
+                  <p className="text-xs font-bold flex items-center justify-between">
+                    <span>Salesperson</span>
+                    {createForm.role === "sales" && <span className="w-2 h-2 rounded-full bg-[#0b1d3a]" />}
+                  </p>
+                  <p className="text-[11px] text-gray-500 mt-1 leading-snug">
+                    POS, customer management & catalog view. No edits.
                   </p>
                 </button>
 
@@ -823,146 +836,151 @@ export default function UsersPage() {
                     setCreateForm({ ...createForm, role: "manager" });
                     handleApplyPreset("manager");
                   }}
-                  className={`p-2.5 rounded-xl border text-left transition-all ${
+                  className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
                     createForm.role === "manager"
-                      ? "border-[#1b5ebe] bg-blue-50/70 text-[#1b5ebe]"
-                      : "border-gray-200 hover:border-gray-300 text-gray-700"
+                      ? "border-[#0b1d3a] bg-slate-50 text-[#0b1d3a] ring-1 ring-[#0b1d3a]/20 shadow-xs"
+                      : "border-gray-200 hover:border-gray-300 text-gray-700 bg-white"
                   }`}
                 >
-                  <p className="text-xs font-bold">Store Manager</p>
-                  <p className="text-[10px] text-gray-500 mt-0.5">
-                    Full store rights including reports & edits.
+                  <p className="text-xs font-bold flex items-center justify-between">
+                    <span>Store Manager</span>
+                    {createForm.role === "manager" && <span className="w-2 h-2 rounded-full bg-[#0b1d3a]" />}
+                  </p>
+                  <p className="text-[11px] text-gray-500 mt-1 leading-snug">
+                    Full store administrative rights, sales edits & balance reports.
                   </p>
                 </button>
               </div>
             </div>
 
             {/* Granular Permissions Checklist */}
-            <div className="bg-gray-50 border border-gray-200 rounded-xl p-3.5 space-y-3">
-              <div className="flex items-center justify-between">
+            <div className="bg-slate-50/70 border border-gray-200 rounded-xl p-4 space-y-3">
+              <div className="flex items-center justify-between border-b border-gray-200/60 pb-2">
                 <span className="text-xs font-bold text-gray-900 flex items-center gap-1.5">
-                  <Shield className="w-4 h-4 text-[#1b5ebe]" />
+                  <Shield className="w-4 h-4 text-[#0b1d3a]" />
                   Granular Action Permissions
                 </span>
-                <span className="text-[10px] text-gray-500">Fine-tune staff abilities</span>
+                <span className="text-[11px] text-gray-500">Fine-tune individual capabilities</span>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                <label className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-white cursor-pointer transition-colors">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2.5 text-xs">
+                <label className="flex items-center gap-2.5 p-2 rounded-lg bg-white border border-gray-100 hover:border-gray-200 cursor-pointer transition-colors shadow-2xs">
                   <input
                     type="checkbox"
                     checked={permissionsForm.can_view_pos}
                     onChange={(e) =>
                       setPermissionsForm({ ...permissionsForm, can_view_pos: e.target.checked })
                     }
-                    className="rounded border-gray-300 text-[#1b5ebe] focus:ring-[#1b5ebe]"
+                    className="rounded border-gray-300 text-[#0b1d3a] focus:ring-[#0b1d3a]"
                   />
-                  <span>Access POS & Make Sales</span>
+                  <span className="font-medium text-gray-800">Access POS & Make Sales</span>
                 </label>
 
-                <label className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-white cursor-pointer transition-colors">
+                <label className="flex items-center gap-2.5 p-2 rounded-lg bg-white border border-gray-100 hover:border-gray-200 cursor-pointer transition-colors shadow-2xs">
                   <input
                     type="checkbox"
                     checked={permissionsForm.can_view_sales}
                     onChange={(e) =>
                       setPermissionsForm({ ...permissionsForm, can_view_sales: e.target.checked })
                     }
-                    className="rounded border-gray-300 text-[#1b5ebe] focus:ring-[#1b5ebe]"
+                    className="rounded border-gray-300 text-[#0b1d3a] focus:ring-[#0b1d3a]"
                   />
-                  <span>View Sales Records</span>
+                  <span className="font-medium text-gray-800">View Sales Records</span>
                 </label>
 
-                <label className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-white cursor-pointer transition-colors">
+                <label className="flex items-center gap-2.5 p-2 rounded-lg bg-white border border-gray-100 hover:border-gray-200 cursor-pointer transition-colors shadow-2xs">
                   <input
                     type="checkbox"
                     checked={permissionsForm.can_edit_sales}
                     onChange={(e) =>
                       setPermissionsForm({ ...permissionsForm, can_edit_sales: e.target.checked })
                     }
-                    className="rounded border-gray-300 text-[#1b5ebe] focus:ring-[#1b5ebe]"
+                    className="rounded border-gray-300 text-[#0b1d3a] focus:ring-[#0b1d3a]"
                   />
-                  <span className={permissionsForm.can_edit_sales ? "text-gray-900" : "text-amber-700 font-medium"}>
+                  <span className={permissionsForm.can_edit_sales ? "text-gray-900 font-medium" : "text-amber-700 font-medium"}>
                     Can Edit Past Sales {permissionsForm.can_edit_sales ? "" : "(Disabled)"}
                   </span>
                 </label>
 
-                <label className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-white cursor-pointer transition-colors">
+                <label className="flex items-center gap-2.5 p-2 rounded-lg bg-white border border-gray-100 hover:border-gray-200 cursor-pointer transition-colors shadow-2xs">
                   <input
                     type="checkbox"
                     checked={permissionsForm.can_delete_sales}
                     onChange={(e) =>
                       setPermissionsForm({ ...permissionsForm, can_delete_sales: e.target.checked })
                     }
-                    className="rounded border-gray-300 text-[#1b5ebe] focus:ring-[#1b5ebe]"
+                    className="rounded border-gray-300 text-red-600 focus:ring-red-500"
                   />
-                  <span className={permissionsForm.can_delete_sales ? "text-gray-900" : "text-red-600 font-bold"}>
+                  <span className={permissionsForm.can_delete_sales ? "text-gray-900 font-medium" : "text-red-600 font-bold"}>
                     Can Delete / Cancel Sales {permissionsForm.can_delete_sales ? "" : "(Restricted)"}
                   </span>
                 </label>
 
-                <label className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-white cursor-pointer transition-colors">
+                <label className="flex items-center gap-2.5 p-2 rounded-lg bg-white border border-gray-100 hover:border-gray-200 cursor-pointer transition-colors shadow-2xs">
                   <input
                     type="checkbox"
                     checked={permissionsForm.can_view_products}
                     onChange={(e) =>
                       setPermissionsForm({ ...permissionsForm, can_view_products: e.target.checked })
                     }
-                    className="rounded border-gray-300 text-[#1b5ebe] focus:ring-[#1b5ebe]"
+                    className="rounded border-gray-300 text-[#0b1d3a] focus:ring-[#0b1d3a]"
                   />
-                  <span>View Products Catalog</span>
+                  <span className="font-medium text-gray-800">View Products Catalog</span>
                 </label>
 
-                <label className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-white cursor-pointer transition-colors">
+                <label className="flex items-center gap-2.5 p-2 rounded-lg bg-white border border-gray-100 hover:border-gray-200 cursor-pointer transition-colors shadow-2xs">
                   <input
                     type="checkbox"
                     checked={permissionsForm.can_edit_products}
                     onChange={(e) =>
                       setPermissionsForm({ ...permissionsForm, can_edit_products: e.target.checked })
                     }
-                    className="rounded border-gray-300 text-[#1b5ebe] focus:ring-[#1b5ebe]"
+                    className="rounded border-gray-300 text-[#0b1d3a] focus:ring-[#0b1d3a]"
                   />
-                  <span>Edit Products & Prices</span>
+                  <span className="font-medium text-gray-800">Edit Products & Prices</span>
                 </label>
 
-                <label className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-white cursor-pointer transition-colors">
+                <label className="flex items-center gap-2.5 p-2 rounded-lg bg-white border border-gray-100 hover:border-gray-200 cursor-pointer transition-colors shadow-2xs">
                   <input
                     type="checkbox"
                     checked={permissionsForm.can_delete_products}
                     onChange={(e) =>
                       setPermissionsForm({ ...permissionsForm, can_delete_products: e.target.checked })
                     }
-                    className="rounded border-gray-300 text-[#1b5ebe] focus:ring-[#1b5ebe]"
+                    className="rounded border-gray-300 text-red-600 focus:ring-red-500"
                   />
-                  <span>Delete Products</span>
+                  <span className={permissionsForm.can_delete_products ? "text-gray-900 font-medium" : "text-gray-600"}>
+                    Delete Products from Catalog
+                  </span>
                 </label>
 
-                <label className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-white cursor-pointer transition-colors">
+                <label className="flex items-center gap-2.5 p-2 rounded-lg bg-white border border-gray-100 hover:border-gray-200 cursor-pointer transition-colors shadow-2xs">
                   <input
                     type="checkbox"
                     checked={permissionsForm.can_view_reports}
                     onChange={(e) =>
                       setPermissionsForm({ ...permissionsForm, can_view_reports: e.target.checked })
                     }
-                    className="rounded border-gray-300 text-[#1b5ebe] focus:ring-[#1b5ebe]"
+                    className="rounded border-gray-300 text-[#0b1d3a] focus:ring-[#0b1d3a]"
                   />
-                  <span>View Reports & Balance</span>
+                  <span className="font-medium text-gray-800">View Reports & Store Balance</span>
                 </label>
               </div>
             </div>
 
-            <DialogFooter className="gap-2 pt-2">
+            <DialogFooter className="gap-2 pt-3 border-t border-gray-100 flex items-center justify-end">
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => setIsCreateModalOpen(false)}
-                className="rounded-xl text-xs"
+                className="rounded-xl text-xs px-5 h-9 font-medium"
               >
                 Cancel
               </Button>
               <Button
                 type="submit"
                 disabled={creatingStaff}
-                className="bg-[#0b1d3a] hover:bg-[#142a4d] text-white rounded-xl text-xs font-semibold gap-1.5"
+                className="bg-[#0b1d3a] hover:bg-[#142a4d] text-white rounded-xl text-xs px-6 h-9 font-semibold gap-1.5 shadow-sm"
               >
                 {creatingStaff ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
                 Create Staff Account
@@ -974,71 +992,75 @@ export default function UsersPage() {
 
       {/* ─── Edit Permissions Dialog ─── */}
       <Dialog open={!!editingUser} onOpenChange={(open) => !open && setEditingUser(null)}>
-        <DialogContent className="bg-white rounded-2xl max-w-lg max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center mb-1">
-              <SlidersHorizontal className="w-5 h-5" />
+        <DialogContent className="bg-white rounded-2xl sm:max-w-2xl w-full max-h-[92vh] overflow-y-auto p-6 sm:p-7 shadow-2xl border border-gray-100">
+          <DialogHeader className="pb-3 border-b border-gray-100">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-slate-100 text-[#0b1d3a] flex items-center justify-center shrink-0">
+                <SlidersHorizontal className="w-5 h-5" />
+              </div>
+              <div>
+                <DialogTitle className="text-base sm:text-lg font-bold text-gray-900">
+                  Manage Permissions: {editingUser?.username}
+                </DialogTitle>
+                <DialogDescription className="text-xs text-gray-500 mt-0.5">
+                  Control what this employee can see and do in <span className="font-semibold text-gray-800">{myCompanyName}</span>.
+                </DialogDescription>
+              </div>
             </div>
-            <DialogTitle className="text-base font-bold text-gray-900">
-              Manage Permissions: {editingUser?.username}
-            </DialogTitle>
-            <DialogDescription className="text-xs text-gray-500">
-              Control what this employee can see and do in <span className="font-semibold">{myCompanyName}</span>.
-            </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4 pt-2">
+          <div className="space-y-4 pt-3">
             {/* Quick Presets */}
             <div className="flex items-center gap-2">
               <span className="text-xs text-gray-500 font-medium">Quick Presets:</span>
               <button
                 type="button"
                 onClick={() => handleApplyPreset("cashier")}
-                className="px-2.5 py-1 text-xs font-semibold rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100"
+                className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-100 text-[#0b1d3a] hover:bg-slate-200 cursor-pointer transition-colors"
               >
-                Cashier (No delete/edit)
+                Cashier (POS Only)
               </button>
               <button
                 type="button"
                 onClick={() => handleApplyPreset("manager")}
-                className="px-2.5 py-1 text-xs font-semibold rounded-lg bg-purple-50 text-purple-700 hover:bg-purple-100"
+                className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-[#0b1d3a] text-white hover:bg-[#142a4d] cursor-pointer transition-colors shadow-2xs"
               >
                 Manager (Full Access)
               </button>
             </div>
 
-            <div className="bg-gray-50 border border-gray-200 rounded-xl p-3.5 space-y-2.5">
-              <p className="text-xs font-bold text-gray-900 mb-2">Permissions Configuration</p>
+            <div className="bg-slate-50/70 border border-gray-200 rounded-xl p-4 space-y-2.5">
+              <p className="text-xs font-bold text-gray-900 mb-1 border-b border-gray-200/60 pb-2">Permissions Configuration</p>
 
-              <div className="space-y-2 text-xs">
-                <label className="flex items-center justify-between p-2 rounded-lg bg-white border border-gray-100 cursor-pointer">
-                  <span>Point of Sale Access (Make Sales)</span>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                <label className="flex items-center justify-between p-2.5 rounded-lg bg-white border border-gray-100 hover:border-gray-200 cursor-pointer shadow-2xs transition-colors">
+                  <span className="font-medium text-gray-800">Point of Sale (Make Sales)</span>
                   <input
                     type="checkbox"
                     checked={permissionsForm.can_view_pos}
                     onChange={(e) =>
                       setPermissionsForm({ ...permissionsForm, can_view_pos: e.target.checked })
                     }
-                    className="rounded border-gray-300 text-[#1b5ebe]"
+                    className="rounded border-gray-300 text-[#0b1d3a] focus:ring-[#0b1d3a]"
                   />
                 </label>
 
-                <label className="flex items-center justify-between p-2 rounded-lg bg-white border border-gray-100 cursor-pointer">
-                  <span>View Past Sales Records</span>
+                <label className="flex items-center justify-between p-2.5 rounded-lg bg-white border border-gray-100 hover:border-gray-200 cursor-pointer shadow-2xs transition-colors">
+                  <span className="font-medium text-gray-800">View Past Sales Records</span>
                   <input
                     type="checkbox"
                     checked={permissionsForm.can_view_sales}
                     onChange={(e) =>
                       setPermissionsForm({ ...permissionsForm, can_view_sales: e.target.checked })
                     }
-                    className="rounded border-gray-300 text-[#1b5ebe]"
+                    className="rounded border-gray-300 text-[#0b1d3a] focus:ring-[#0b1d3a]"
                   />
                 </label>
 
-                <label className="flex items-center justify-between p-2 rounded-lg bg-white border border-gray-100 cursor-pointer">
+                <label className="flex items-center justify-between p-2.5 rounded-lg bg-white border border-gray-100 hover:border-gray-200 cursor-pointer shadow-2xs transition-colors">
                   <div>
-                    <span className="font-medium">Edit Past Sales / Receipts</span>
-                    <p className="text-[10px] text-gray-400">Can modify price or quantity on existing receipts</p>
+                    <span className="font-medium text-gray-800">Edit Past Sales / Receipts</span>
+                    <p className="text-[10px] text-gray-400">Can modify price or quantity</p>
                   </div>
                   <input
                     type="checkbox"
@@ -1046,14 +1068,14 @@ export default function UsersPage() {
                     onChange={(e) =>
                       setPermissionsForm({ ...permissionsForm, can_edit_sales: e.target.checked })
                     }
-                    className="rounded border-gray-300 text-[#1b5ebe]"
+                    className="rounded border-gray-300 text-[#0b1d3a] focus:ring-[#0b1d3a]"
                   />
                 </label>
 
-                <label className="flex items-center justify-between p-2 rounded-lg bg-white border border-gray-100 cursor-pointer">
+                <label className="flex items-center justify-between p-2.5 rounded-lg bg-white border border-gray-100 hover:border-gray-200 cursor-pointer shadow-2xs transition-colors">
                   <div>
-                    <span className="font-semibold text-red-600">Delete / Cancel / Refund Sales</span>
-                    <p className="text-[10px] text-gray-400">Supermarket cashier rule: uncheck to prevent deleting sales</p>
+                    <span className="font-semibold text-red-600">Delete / Cancel Sales</span>
+                    <p className="text-[10px] text-gray-400">Prevent cashier refund bypass</p>
                   </div>
                   <input
                     type="checkbox"
@@ -1065,32 +1087,32 @@ export default function UsersPage() {
                   />
                 </label>
 
-                <label className="flex items-center justify-between p-2 rounded-lg bg-white border border-gray-100 cursor-pointer">
-                  <span>View Products Inventory Catalog</span>
+                <label className="flex items-center justify-between p-2.5 rounded-lg bg-white border border-gray-100 hover:border-gray-200 cursor-pointer shadow-2xs transition-colors">
+                  <span className="font-medium text-gray-800">View Products Inventory</span>
                   <input
                     type="checkbox"
                     checked={permissionsForm.can_view_products}
                     onChange={(e) =>
                       setPermissionsForm({ ...permissionsForm, can_view_products: e.target.checked })
                     }
-                    className="rounded border-gray-300 text-[#1b5ebe]"
+                    className="rounded border-gray-300 text-[#0b1d3a] focus:ring-[#0b1d3a]"
                   />
                 </label>
 
-                <label className="flex items-center justify-between p-2 rounded-lg bg-white border border-gray-100 cursor-pointer">
-                  <span>Edit Products & Modify Stock Prices</span>
+                <label className="flex items-center justify-between p-2.5 rounded-lg bg-white border border-gray-100 hover:border-gray-200 cursor-pointer shadow-2xs transition-colors">
+                  <span className="font-medium text-gray-800">Edit Products & Prices</span>
                   <input
                     type="checkbox"
                     checked={permissionsForm.can_edit_products}
                     onChange={(e) =>
                       setPermissionsForm({ ...permissionsForm, can_edit_products: e.target.checked })
                     }
-                    className="rounded border-gray-300 text-[#1b5ebe]"
+                    className="rounded border-gray-300 text-[#0b1d3a] focus:ring-[#0b1d3a]"
                   />
                 </label>
 
-                <label className="flex items-center justify-between p-2 rounded-lg bg-white border border-gray-100 cursor-pointer">
-                  <span>Delete Products From Catalog</span>
+                <label className="flex items-center justify-between p-2.5 rounded-lg bg-white border border-gray-100 hover:border-gray-200 cursor-pointer shadow-2xs transition-colors">
+                  <span className="font-medium text-gray-800">Delete Products from Catalog</span>
                   <input
                     type="checkbox"
                     checked={permissionsForm.can_delete_products}
@@ -1101,33 +1123,33 @@ export default function UsersPage() {
                   />
                 </label>
 
-                <label className="flex items-center justify-between p-2 rounded-lg bg-white border border-gray-100 cursor-pointer">
-                  <span>Access Financial Reports & Store Balance</span>
+                <label className="flex items-center justify-between p-2.5 rounded-lg bg-white border border-gray-100 hover:border-gray-200 cursor-pointer shadow-2xs transition-colors">
+                  <span className="font-medium text-gray-800">View Financial Reports</span>
                   <input
                     type="checkbox"
                     checked={permissionsForm.can_view_reports}
                     onChange={(e) =>
                       setPermissionsForm({ ...permissionsForm, can_view_reports: e.target.checked })
                     }
-                    className="rounded border-gray-300 text-[#1b5ebe]"
+                    className="rounded border-gray-300 text-[#0b1d3a] focus:ring-[#0b1d3a]"
                   />
                 </label>
               </div>
             </div>
 
-            <DialogFooter className="gap-2 pt-2">
+            <DialogFooter className="gap-2 pt-3 border-t border-gray-100 flex items-center justify-end">
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => setEditingUser(null)}
-                className="rounded-xl text-xs"
+                className="rounded-xl text-xs px-5 h-9 font-medium"
               >
                 Cancel
               </Button>
               <Button
                 onClick={handleSavePermissions}
                 disabled={savingPermissions}
-                className="bg-[#0b1d3a] hover:bg-[#142a4d] text-white rounded-xl text-xs font-semibold gap-1.5"
+                className="bg-[#0b1d3a] hover:bg-[#142a4d] text-white rounded-xl text-xs px-6 h-9 font-semibold gap-1.5 shadow-sm"
               >
                 {savingPermissions ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
                 Save Permissions
