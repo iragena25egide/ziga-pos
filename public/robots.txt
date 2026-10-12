@@ -1,2 +1,25 @@
 User-agent: *
 Allow: /
+Allow: /presentation/
+Allow: /login/
+Allow: /site.webmanifest
+Allow: /favicon.png
+Allow: /icon.png
+
+Disallow: /api/
+Disallow: /admin/
+Disallow: /pos/
+Disallow: /sales/
+Disallow: /products/
+Disallow: /customers/
+Disallow: /companies/
+Disallow: /reports/
+Disallow: /balance/
+Disallow: /loans/
+Disallow: /payments/
+Disallow: /trash/
+Disallow: /users/
+Disallow: /profile/
+Disallow: /receipt/
+
+Sitemap: https://pos.zigga.io/sitemap.xml
