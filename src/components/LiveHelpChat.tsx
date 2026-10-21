@@ -58,7 +58,9 @@ export default function LiveHelpChat({ currentUser }: { currentUser?: any }) {
   const [editLoading, setEditLoading] = useState(false);
 
   // Full-size image modal preview
-  const [activePreviewImage, setActivePreviewImage] = useState<string | null>(null);
+  const [activePreviewImage, setActivePreviewImage] = useState<string | null>(
+    null,
+  );
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -67,9 +69,10 @@ export default function LiveHelpChat({ currentUser }: { currentUser?: any }) {
     currentUser?.company?.id != null
       ? currentUser.company.id
       : currentUser?.company != null
-      ? currentUser.company
-      : null;
-  const isAdmin = currentUser?.is_superuser || currentUser?.role === "super_admin";
+        ? currentUser.company
+        : null;
+  const isAdmin =
+    currentUser?.is_superuser || currentUser?.role === "super_admin";
 
   const isOpenRef = useRef(isOpen);
   useEffect(() => {
@@ -93,7 +96,7 @@ export default function LiveHelpChat({ currentUser }: { currentUser?: any }) {
   useEffect(() => {
     if (typeof window !== "undefined") {
       window.dispatchEvent(
-        new CustomEvent("support_unread_count", { detail: unreadCount })
+        new CustomEvent("support_unread_count", { detail: unreadCount }),
       );
     }
   }, [unreadCount]);
@@ -103,7 +106,9 @@ export default function LiveHelpChat({ currentUser }: { currentUser?: any }) {
     if (isAdmin) return;
     try {
       const res = await api.get("/support-messages/");
-      const list: Message[] = Array.isArray(res.data) ? res.data : res.data?.results || [];
+      const list: Message[] = Array.isArray(res.data)
+        ? res.data
+        : res.data?.results || [];
 
       setMessages((prev) => {
         // Keep optimistic messages that haven't received server response yet
@@ -113,15 +118,18 @@ export default function LiveHelpChat({ currentUser }: { currentUser?: any }) {
             !list.some(
               (s) =>
                 (p.client_id && s.client_id === p.client_id) ||
-                (s.message === p.message && Boolean(s.is_admin) === Boolean(p.is_admin))
-            )
+                (s.message === p.message &&
+                  Boolean(s.is_admin) === Boolean(p.is_admin)),
+            ),
         );
 
         // If list is identical to existing, skip state update to prevent UI flicker
         if (
           pendingOptimistic.length === 0 &&
           prev.length === list.length &&
-          prev.every((p, i) => p.id === list[i].id && p.message === list[i].message)
+          prev.every(
+            (p, i) => p.id === list[i].id && p.message === list[i].message,
+          )
         ) {
           return prev;
         }
@@ -153,19 +161,18 @@ export default function LiveHelpChat({ currentUser }: { currentUser?: any }) {
     }
   }, [isOpen, fetchHistory]);
 
-  // Background Auto-Sync Polling:
-  // When chat is open: poll every 3.5s so messages are delivered even if socket is disconnected/offline!
-  // When chat is closed: poll every 12s in background to update unread badge!
   useEffect(() => {
     if (isAdmin) return;
-    const pollInterval = setInterval(() => {
-      fetchHistory();
-    }, isOpen ? 3500 : 12000);
+    const pollInterval = setInterval(
+      () => {
+        fetchHistory();
+      },
+      isOpen ? 3500 : 12000,
+    );
 
     return () => clearInterval(pollInterval);
   }, [isAdmin, isOpen, fetchHistory]);
 
-  // Connect to Socket.IO and listen for events
   useEffect(() => {
     if (isAdmin) return;
     const socket = getSocket();
@@ -175,7 +182,6 @@ export default function LiveHelpChat({ currentUser }: { currentUser?: any }) {
       if (companyId) {
         socket.emit("join_company", { company_id: companyId });
       }
-      // Instantly catch up on any messages received while offline/reconnecting
       fetchHistory();
     };
 
@@ -187,14 +193,18 @@ export default function LiveHelpChat({ currentUser }: { currentUser?: any }) {
       const msgCompanyId = newMsg.company_id ?? newMsg.company;
       if (String(msgCompanyId) === String(companyId) || !msgCompanyId) {
         setMessages((prev) => {
-          // 1. Check if message already exists by server ID
           if (newMsg.id && prev.some((m) => m.id === newMsg.id)) {
-            return prev.map((m) => (m.id === newMsg.id ? { ...m, ...newMsg } : m));
+            return prev.map((m) =>
+              m.id === newMsg.id ? { ...m, ...newMsg } : m,
+            );
           }
-
-          // 2. Check if client_id matches an optimistic message
-          if (newMsg.client_id && prev.some((m) => m.client_id === newMsg.client_id)) {
-            return prev.map((m) => (m.client_id === newMsg.client_id ? newMsg : m));
+          if (
+            newMsg.client_id &&
+            prev.some((m) => m.client_id === newMsg.client_id)
+          ) {
+            return prev.map((m) =>
+              m.client_id === newMsg.client_id ? newMsg : m,
+            );
           }
 
           // 3. Fallback: match optimistic placeholder (no id, same message text and sender type)
@@ -202,7 +212,7 @@ export default function LiveHelpChat({ currentUser }: { currentUser?: any }) {
             (m) =>
               !m.id &&
               m.message === newMsg.message &&
-              Boolean(m.is_admin) === Boolean(newMsg.is_admin)
+              Boolean(m.is_admin) === Boolean(newMsg.is_admin),
           );
           if (optimisticIndex !== -1) {
             const updated = [...prev];
@@ -215,7 +225,9 @@ export default function LiveHelpChat({ currentUser }: { currentUser?: any }) {
 
         if (!isOpen && newMsg.is_admin) {
           setUnreadCount((c) => c + 1);
-          toast.info(`New reply from Support: "${(newMsg.message || "Sent an attachment").slice(0, 40)}..."`);
+          toast.info(
+            `New reply from Support: "${(newMsg.message || "Sent an attachment").slice(0, 40)}..."`,
+          );
         }
       }
     };
@@ -224,7 +236,9 @@ export default function LiveHelpChat({ currentUser }: { currentUser?: any }) {
       const msgCompanyId = updatedMsg.company_id ?? updatedMsg.company;
       if (String(msgCompanyId) === String(companyId) || !msgCompanyId) {
         setMessages((prev) =>
-          prev.map((m) => (m.id === updatedMsg.id ? { ...m, ...updatedMsg } : m))
+          prev.map((m) =>
+            m.id === updatedMsg.id ? { ...m, ...updatedMsg } : m,
+          ),
         );
       }
     };
@@ -274,7 +288,6 @@ export default function LiveHelpChat({ currentUser }: { currentUser?: any }) {
     };
   }, [companyId, isOpen, isAdmin]);
 
-  // Scroll to bottom on new messages
   useEffect(() => {
     if (isOpen) {
       messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -282,7 +295,6 @@ export default function LiveHelpChat({ currentUser }: { currentUser?: any }) {
     }
   }, [messages, isOpen]);
 
-  // File Picker Handling
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -352,7 +364,11 @@ export default function LiveHelpChat({ currentUser }: { currentUser?: any }) {
 
         const savedData: Message = res.data;
         setMessages((prev) =>
-          prev.map((m) => (m.client_id === clientId ? { ...savedData, client_id: clientId } : m))
+          prev.map((m) =>
+            m.client_id === clientId
+              ? { ...savedData, client_id: clientId }
+              : m,
+          ),
         );
       } else {
         const res = await api.post("/support-messages/", {
@@ -362,7 +378,11 @@ export default function LiveHelpChat({ currentUser }: { currentUser?: any }) {
 
         const savedData: Message = res.data;
         setMessages((prev) =>
-          prev.map((m) => (m.client_id === clientId ? { ...savedData, client_id: clientId } : m))
+          prev.map((m) =>
+            m.client_id === clientId
+              ? { ...savedData, client_id: clientId }
+              : m,
+          ),
         );
       }
     } catch (err: any) {
@@ -404,7 +424,7 @@ export default function LiveHelpChat({ currentUser }: { currentUser?: any }) {
         message: editingText.trim(),
       });
       setMessages((prev) =>
-        prev.map((m) => (m.id === msgId ? { ...m, ...res.data } : m))
+        prev.map((m) => (m.id === msgId ? { ...m, ...res.data } : m)),
       );
       setEditingId(null);
       setEditingText("");
@@ -461,19 +481,31 @@ export default function LiveHelpChat({ currentUser }: { currentUser?: any }) {
             className="fixed bottom-3 sm:bottom-6 left-2 sm:left-4 md:left-60 z-50 w-[95vw] sm:w-[420px] max-w-[420px] h-[82vh] sm:h-[580px] max-h-[640px] bg-white border border-gray-200 rounded-2xl shadow-2xl flex flex-col overflow-hidden"
           >
             {/* Header */}
-            <div className="px-5 py-4 text-white flex items-center justify-between shadow-xs" style={{ backgroundColor: "#0b1d3a" }}>
+            <div
+              className="px-5 py-4 text-white flex items-center justify-between shadow-xs"
+              style={{ backgroundColor: "#0b1d3a" }}
+            >
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: "#1b5ebe" }}>
+                <div
+                  className="w-8 h-8 rounded-lg flex items-center justify-center"
+                  style={{ backgroundColor: "#1b5ebe" }}
+                >
                   <Headphones className="w-4 h-4 text-white" />
                 </div>
                 <div>
                   <div className="flex items-center gap-1.5">
-                    <h3 className="font-semibold text-sm tracking-tight text-white">Ziga Live Support</h3>
+                    <h3 className="font-semibold text-sm tracking-tight text-white">
+                      Ziga Live Support
+                    </h3>
                     <ShieldCheck className="w-3.5 h-3.5 text-blue-300" />
                   </div>
                   <div className="flex items-center gap-1.5 text-[10px] text-gray-300">
-                    <span className={`w-1.5 h-1.5 rounded-full ${isConnected ? "bg-emerald-400" : "bg-amber-400"}`} />
-                    <span>{isConnected ? "Super Admin Online" : "Connecting..."}</span>
+                    <span
+                      className={`w-1.5 h-1.5 rounded-full ${isConnected ? "bg-emerald-400" : "bg-amber-400"}`}
+                    />
+                    <span>
+                      {isConnected ? "Super Admin Online" : "Connecting..."}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -492,16 +524,22 @@ export default function LiveHelpChat({ currentUser }: { currentUser?: any }) {
                   <div className="w-10 h-10 rounded-xl bg-gray-200 flex items-center justify-center mb-3 text-gray-500">
                     <MessageSquareText className="w-5 h-5" />
                   </div>
-                  <p className="font-semibold text-gray-800">How can we help you today?</p>
+                  <p className="font-semibold text-gray-800">
+                    How can we help you today?
+                  </p>
                   <p className="text-[11px] mt-1 text-gray-500 max-w-[240px]">
-                    Have a question or need assistance? Write below to chat directly with support.
+                    Have a question or need assistance? Write below to chat
+                    directly with support.
                   </p>
                 </div>
               ) : (
                 messages.map((m, idx) => {
                   const isMe = !m.is_admin;
                   const time = m.created_at
-                    ? new Date(m.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+                    ? new Date(m.created_at).toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })
                     : "";
                   const isEditingThis = editingId === m.id;
                   const hasImage = isImageFile(m.attachment_url);
@@ -518,12 +556,16 @@ export default function LiveHelpChat({ currentUser }: { currentUser?: any }) {
                             <ShieldCheck className="w-3 h-3" /> Ziga Support
                           </span>
                         ) : (
-                          <span className="font-medium text-gray-600">{m.sender_name || "You"}</span>
+                          <span className="font-medium text-gray-600">
+                            {m.sender_name || "You"}
+                          </span>
                         )}
                         <span>•</span>
                         <span>{time}</span>
                         {m.updated_at && m.updated_at !== m.created_at && (
-                          <span className="italic text-[9px] text-gray-400">(edited)</span>
+                          <span className="italic text-[9px] text-gray-400">
+                            (edited)
+                          </span>
                         )}
                       </div>
 
@@ -551,7 +593,11 @@ export default function LiveHelpChat({ currentUser }: { currentUser?: any }) {
                                 disabled={editLoading || !editingText.trim()}
                                 className="px-2.5 py-1 text-[11px] bg-[#1b5ebe] text-white rounded font-medium flex items-center gap-1 disabled:opacity-50"
                               >
-                                {editLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
+                                {editLoading ? (
+                                  <Loader2 className="w-3 h-3 animate-spin" />
+                                ) : (
+                                  <Check className="w-3 h-3" />
+                                )}
                                 Save
                               </button>
                             </div>
@@ -563,7 +609,9 @@ export default function LiveHelpChat({ currentUser }: { currentUser?: any }) {
                                 ? "text-white border-transparent rounded-br-xs"
                                 : "bg-white text-gray-900 border-gray-200 rounded-bl-xs"
                             }`}
-                            style={{ backgroundColor: isMe ? "#1b5ebe" : "#ffffff" }}
+                            style={{
+                              backgroundColor: isMe ? "#1b5ebe" : "#ffffff",
+                            }}
                           >
                             {/* Attached Image */}
                             {hasImage && m.attachment_url && (
@@ -571,7 +619,9 @@ export default function LiveHelpChat({ currentUser }: { currentUser?: any }) {
                                 <img
                                   src={m.attachment_url}
                                   alt="Attachment"
-                                  onClick={() => setActivePreviewImage(m.attachment_url!)}
+                                  onClick={() =>
+                                    setActivePreviewImage(m.attachment_url!)
+                                  }
                                   className="max-h-48 w-full object-cover rounded cursor-pointer hover:opacity-95 transition-opacity"
                                 />
                                 <div className="absolute top-1.5 right-1.5 flex items-center gap-1 opacity-0 group-hover/img:opacity-100 transition-opacity bg-black/60 backdrop-blur-xs rounded-md p-1">
@@ -625,7 +675,9 @@ export default function LiveHelpChat({ currentUser }: { currentUser?: any }) {
                               </div>
                             )}
 
-                            {m.message && <p className="whitespace-pre-wrap">{m.message}</p>}
+                            {m.message && (
+                              <p className="whitespace-pre-wrap">{m.message}</p>
+                            )}
                           </div>
                         )}
 
@@ -656,7 +708,10 @@ export default function LiveHelpChat({ currentUser }: { currentUser?: any }) {
 
               {adminTyping && (
                 <div className="flex items-center gap-2 text-[11px] text-gray-500 font-medium">
-                  <span className="w-2 h-2 rounded-full animate-bounce" style={{ backgroundColor: "#1b5ebe" }} />
+                  <span
+                    className="w-2 h-2 rounded-full animate-bounce"
+                    style={{ backgroundColor: "#1b5ebe" }}
+                  />
                   <span>Admin is typing a reply...</span>
                 </div>
               )}
@@ -695,7 +750,10 @@ export default function LiveHelpChat({ currentUser }: { currentUser?: any }) {
             )}
 
             {/* Input Bar */}
-            <form onSubmit={handleSendMessage} className="p-3 bg-white border-t border-gray-200 flex items-center gap-2">
+            <form
+              onSubmit={handleSendMessage}
+              className="p-3 bg-white border-t border-gray-200 flex items-center gap-2"
+            >
               <input
                 type="file"
                 ref={fileInputRef}

@@ -121,8 +121,6 @@ export function ThermalReceipt({
             </thead>
           </table>
         </div>
-
-        {/* Scrollable Items Area (roughly 3-4 items height) */}
         <ScrollArea
           type="always"
           className="h-[140px] px-6 print:h-auto print:max-h-none print:overflow-visible"
@@ -156,7 +154,6 @@ export function ThermalReceipt({
           </table>
         </ScrollArea>
 
-        {/* Fixed Footer Area */}
         <div className="px-6 pb-6 pt-2 shrink-0">
           <div className="border-t-2 border-dashed border-gray-300 pt-3 space-y-1">
             <div className="flex justify-between text-sm font-bold">
@@ -176,7 +173,6 @@ export function ThermalReceipt({
           </div>
 
           <div className="mt-8 text-center text-gray-500 flex flex-col items-center">
-            {/* Simulated Barcode via CSS blocks for visual aesthetics */}
             <div className="flex gap-[2px] justify-center h-8 mb-2 opacity-80">
               {[...Array(30)].map((_, i) => (
                 <div
